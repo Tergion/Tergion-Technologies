@@ -1,5 +1,3 @@
-import { createHash } from "crypto";
-
 const seenLeads = new Map<string, number>();
 const duplicateWindowMs = 24 * 60 * 60 * 1000;
 
@@ -7,8 +5,14 @@ function normalize(value: string | undefined) {
   return value?.trim().toLowerCase() ?? "";
 }
 
-function hash(value: string) {
-  return createHash("sha256").update(value).digest("hex").slice(0, 24);
+async function hash(value: string) {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 24);
 }
 
 export async function checkDuplicateLead(
@@ -23,7 +27,7 @@ export async function checkDuplicateLead(
     }
   }
 
-  const key = hash(`${normalize(email)}:${normalize(phone)}`);
+  const key = await hash(`${normalize(email)}:${normalize(phone)}`);
   const existing = seenLeads.get(key);
 
   seenLeads.set(key, now + duplicateWindowMs);

@@ -1,5 +1,3 @@
-import { createHash } from "crypto";
-
 type RateLimitBucket = {
   count: number;
   resetAt: number;
@@ -9,11 +7,17 @@ const windowMs = 10 * 60 * 1000;
 const maxRequests = 5;
 const buckets = new Map<string, RateLimitBucket>();
 
-function hashSignal(value: string) {
-  return createHash("sha256").update(value).digest("hex").slice(0, 24);
+async function hashSignal(value: string) {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 24);
 }
 
-function getClientSignal(request: Request) {
+async function getClientSignal(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for") ?? "";
   const realIp = request.headers.get("x-real-ip") ?? "";
   const userAgent = request.headers.get("user-agent") ?? "unknown-agent";
@@ -25,7 +29,7 @@ function getClientSignal(request: Request) {
 export async function checkLeadRateLimit(
   request: Request,
 ): Promise<{ allowed: boolean; reason?: string }> {
-  const key = getClientSignal(request);
+  const key = await getClientSignal(request);
   const now = Date.now();
   const current = buckets.get(key);
 
