@@ -11,10 +11,12 @@ export const siteConfig = {
     secondary: "See example automations",
   },
   navLinks: [
+    { label: "Home", href: "/" },
     { label: "Services", href: "/services" },
     { label: "Examples", href: "/examples" },
-    { label: "Process", href: "/#process" },
-    { label: "Contact", href: "/#contact" },
+    { label: "Process", href: "/process" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
   ],
   legalLinks: [
     { label: "Privacy", href: "/privacy" },

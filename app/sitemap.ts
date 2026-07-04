@@ -8,8 +8,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     "",
     "/services",
-    "/about",
     "/examples",
+    "/process",
+    "/about",
+    "/contact",
     "/privacy",
     "/terms",
     "/ai-disclosure",
@@ -25,6 +27,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: route.includes("privacy") || route.includes("terms")
       ? "yearly"
       : "monthly",
-    priority: route === "" ? 1 : 0.7,
+    priority: route === "" ? 1 : route === "/contact" ? 0.9 : 0.7,
   }));
 }
