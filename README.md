@@ -61,6 +61,7 @@ Cloudflare production defaults:
 
 - Worker name: `tergion`
 - Custom domain: `https://tergion.com`
+- Secondary domain: `https://www.tergion.com`
 - Node.js: `22.16.0` or newer
 - Build output: `.open-next`
 - Local deploy command: `npm run cf:deploy`

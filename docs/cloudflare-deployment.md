@@ -7,6 +7,7 @@ This site deploys to Cloudflare Workers through the OpenNext Cloudflare adapter.
 - Production domain: `https://tergion.com`
 - Worker name: `tergion`
 - Runtime config: `wrangler.jsonc`
+- Worker domains: `tergion.com`, `www.tergion.com`
 - Build output: `.open-next`
 - Required Node.js version: `22.16.0` or newer
 
@@ -33,7 +34,7 @@ Use `npm run cf:upload` when you want to upload a Worker version without immedia
 4. Use `npm run cf:build` as the Workers Builds build command.
 5. Use `npm run cf:deploy-only` as the Workers Builds deploy command.
 6. Keep the Worker name aligned with `wrangler.jsonc`: `tergion`.
-7. Attach `tergion.com` and `www.tergion.com` to the Worker route or custom domain configuration.
+7. Keep `tergion.com` and `www.tergion.com` source-controlled as custom domain routes in `wrangler.jsonc`.
 8. Configure `https://tergion.com` as the canonical production URL through `NEXT_PUBLIC_SITE_URL`.
 
 ## Runtime Settings
@@ -44,6 +45,8 @@ Use `npm run cf:upload` when you want to upload a Worker version without immedia
 - `global_fetch_strictly_public`
 - `.open-next/worker.js` as the Worker entrypoint
 - `.open-next/assets` as the static asset directory
+- `tergion.com` and `www.tergion.com` as custom domain routes
+- `workers_dev: false` so production only publishes to the custom domains
 
 Do not manually change these values in the dashboard without also updating the repo config.
 
@@ -69,6 +72,7 @@ After deployment:
 
 1. Open `https://tergion.com`.
 2. Open `https://tergion.com/api/health` and confirm `ok: true`.
-3. Submit a test lead using non-production contact details.
-4. Confirm the response does not expose provider errors.
-5. Check Cloudflare logs for Worker exceptions.
+3. Open `https://www.tergion.com/api/health` and confirm `ok: true`.
+4. Submit a test lead using non-production contact details.
+5. Confirm the response does not expose provider errors.
+6. Check Cloudflare logs for Worker exceptions.
