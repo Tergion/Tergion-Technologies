@@ -5,7 +5,7 @@
 This site deploys to Cloudflare Workers through the OpenNext Cloudflare adapter.
 
 - Production domain: `https://tergion.com`
-- Worker name: `tergion-technologies`
+- Worker name: `tergion`
 - Runtime config: `wrangler.jsonc`
 - Build output: `.open-next`
 - Required Node.js version: `22.16.0` or newer
@@ -20,6 +20,7 @@ npm run build
 npm run cf:build
 npm run cf:preview
 npm run cf:deploy
+npm run cf:deploy-only
 ```
 
 Use `npm run cf:upload` when you want to upload a Worker version without immediately promoting it.
@@ -29,10 +30,11 @@ Use `npm run cf:upload` when you want to upload a Worker version without immedia
 1. Connect the GitHub repository to Cloudflare Workers Builds or deploy from a local authenticated Wrangler session.
 2. Use `main` as the production branch.
 3. Use `npm ci` for dependency installation.
-4. Use `npm run cf:deploy` as the deployment command.
-5. Keep the Worker name aligned with `wrangler.jsonc`: `tergion-technologies`.
-6. Attach `tergion.com` and `www.tergion.com` to the Worker route or custom domain configuration.
-7. Configure `https://tergion.com` as the canonical production URL through `NEXT_PUBLIC_SITE_URL`.
+4. Use `npm run cf:build` as the Workers Builds build command.
+5. Use `npm run cf:deploy-only` as the Workers Builds deploy command.
+6. Keep the Worker name aligned with `wrangler.jsonc`: `tergion`.
+7. Attach `tergion.com` and `www.tergion.com` to the Worker route or custom domain configuration.
+8. Configure `https://tergion.com` as the canonical production URL through `NEXT_PUBLIC_SITE_URL`.
 
 ## Runtime Settings
 

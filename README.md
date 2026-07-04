@@ -31,6 +31,7 @@ npm run build
 npm run cf:build
 npm run cf:preview
 npm run cf:deploy
+npm run cf:deploy-only
 npm run lint
 npm run typecheck
 npm run start
@@ -58,11 +59,12 @@ The project is configured for Cloudflare Workers with the OpenNext Cloudflare ad
 
 Cloudflare production defaults:
 
-- Worker name: `tergion-technologies`
+- Worker name: `tergion`
 - Custom domain: `https://tergion.com`
 - Node.js: `22.16.0` or newer
 - Build output: `.open-next`
-- Deploy command: `npm run cf:deploy`
+- Local deploy command: `npm run cf:deploy`
+- Workers Builds deploy command: `npm run cf:deploy-only`
 
 Before live lead capture, configure production environment variables and secrets in Cloudflare, then verify `/api/health` and the lead form in the deployed Worker.
 
