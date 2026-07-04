@@ -2,9 +2,10 @@
 
 ## Prerequisites
 
-- Node.js and npm.
+- Node.js `22.16.0` or newer.
+- npm `10.9.2` or newer.
 - Package installs should use npm because this project has `package-lock.json`.
-- The local environment used during setup reported Node `20.18.0`, which may produce package engine warnings from some current packages. Upgrade Node only as a deliberate environment decision.
+- Use `.nvmrc` when your Node version manager supports it.
 
 ## Install
 
@@ -46,9 +47,19 @@ The local verification helper runs the same checks and runs tests if a test scri
 npm run verify:local
 ```
 
+Cloudflare Worker build and preview:
+
+```bash
+npm run cf:build
+npm run cf:preview
+```
+
+`cf:preview` builds the OpenNext Worker output and runs it through Wrangler so API routes and Cloudflare runtime behavior can be checked before deployment.
+
 ## Environment Variables
 
 - Use `.env.local` for local values.
+- Copy `.dev.vars.example` to `.dev.vars` when using Wrangler preview.
 - Do not commit real credentials.
 - `.env.example` documents expected variables with placeholders only.
 - Missing integration credentials should keep local development usable through safe stubs.

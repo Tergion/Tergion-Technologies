@@ -1,5 +1,5 @@
 export const env = {
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://tergiontechnologies.com",
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://tergion.com",
   siteName: process.env.NEXT_PUBLIC_SITE_NAME || "Tergion Technologies",
   turnstileSiteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
   turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || "",
@@ -14,7 +14,7 @@ export const env = {
   leadNotificationEmail: process.env.LEAD_NOTIFICATION_EMAIL || "",
   leadFromEmail:
     process.env.LEAD_FROM_EMAIL ||
-    "Tergion Technologies <hello@tergiontechnologies.com>",
+    "Tergion Technologies <hello@tergion.com>",
   nodeEnv: process.env.NODE_ENV || "development",
 };
 

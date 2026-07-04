@@ -16,6 +16,7 @@ Professional B2B website foundation for Tergion Technologies: AI-powered CRM, au
 ## Local Setup
 
 ```bash
+nvm use
 npm install
 npm run dev
 ```
@@ -27,6 +28,9 @@ Open `http://localhost:3000`.
 ```bash
 npm run dev
 npm run build
+npm run cf:build
+npm run cf:preview
+npm run cf:deploy
 npm run lint
 npm run typecheck
 npm run start
@@ -50,4 +54,16 @@ Lead capture submits to a server-side route. Secrets must stay server-side. Lega
 
 ## Deployment
 
-The project is Vercel-compatible. Configure production environment variables before enabling live lead capture integrations.
+The project is configured for Cloudflare Workers with the OpenNext Cloudflare adapter. Runtime configuration is tracked in `wrangler.jsonc`, and deployment commands are in `package.json`.
+
+Cloudflare production defaults:
+
+- Worker name: `tergion-technologies`
+- Custom domain: `https://tergion.com`
+- Node.js: `22.16.0` or newer
+- Build output: `.open-next`
+- Deploy command: `npm run cf:deploy`
+
+Before live lead capture, configure production environment variables and secrets in Cloudflare, then verify `/api/health` and the lead form in the deployed Worker.
+
+See `docs/cloudflare-deployment.md` for the deployment checklist.

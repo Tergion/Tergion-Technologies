@@ -3,8 +3,8 @@ export const siteConfig = {
   shortName: "Tergion",
   description:
     "AI-powered CRM, automation, and business systems for growing companies.",
-  domain: "https://tergiontechnologies.com",
-  contactEmail: "hello@tergiontechnologies.com",
+  domain: "https://tergion.com",
+  contactEmail: "hello@tergion.com",
   cta: {
     primary: "Request a free automation review",
     start: "Start the request",

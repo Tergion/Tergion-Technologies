@@ -25,6 +25,7 @@
 
 ## Operational Config
 
+- `NEXTJS_ENV`: OpenNext environment mode for local Wrangler preview. Use `development` locally.
 - `GOOGLE_SHEETS_WORKSHEET_NAME`: worksheet name, defaults to `Leads`.
 - `EMAIL_PROVIDER`: expected values later include `resend` or `postmark`.
 - `LEAD_NOTIFICATION_EMAIL`: internal lead notification recipient.
@@ -34,4 +35,4 @@
 
 ## Current Requirement Status
 
-Most variables are optional in local development. Production should configure Turnstile, a lead destination, email sending, and distributed rate limiting before public launch.
+Most variables are optional in local development. Production should configure these values as Cloudflare Worker variables or secrets before public launch, especially Turnstile, a lead destination, email sending, and distributed rate limiting.

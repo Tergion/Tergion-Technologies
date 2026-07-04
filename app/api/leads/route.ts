@@ -11,8 +11,6 @@ import { checkLeadSpamSignals } from "@/features/leads/spam-check";
 import { verifyTurnstileToken } from "@/features/leads/turnstile";
 import type { LeadRecord } from "@/features/leads/lead.types";
 
-export const runtime = "edge";
-
 function getRemoteIp(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for") ?? "";
   const realIp = request.headers.get("x-real-ip") ?? "";

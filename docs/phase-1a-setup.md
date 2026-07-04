@@ -6,6 +6,7 @@
 - Dark liquid-glass marketing shell with desktop header, mobile action bar, footer, SEO metadata, robots, sitemap, and security headers.
 - Routes for home, services, about, examples, example detail pages, legal draft pages, `/api/health`, and `/api/leads`.
 - A 3-step lead form with server-side validation and safe provider stubs.
+- Cloudflare Workers deployment config through OpenNext and Wrangler.
 
 ## Folder Structure
 
