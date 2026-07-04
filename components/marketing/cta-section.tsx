@@ -1,10 +1,12 @@
-import { LeadFormModal } from "@/components/forms/lead-form-modal";
+import Link from "next/link";
+
 import { GlassCard } from "@/components/marketing/glass-card";
+import { buttonVariants } from "@/components/ui/button";
 
 export function CTASection() {
   return (
-    <section id="contact" className="px-6 py-16 md:py-24">
-      <div className="mx-auto max-w-7xl">
+    <section className="py-16 md:py-24">
+      <div className="site-container">
         <GlassCard className="overflow-hidden p-8 md:p-12">
           <div className="max-w-3xl">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
@@ -18,7 +20,12 @@ export function CTASection() {
               Tergion will follow up based on your preferred contact method.
             </p>
             <div className="mt-8">
-              <LeadFormModal label="Start the request" className="h-12 px-5" />
+              <Link
+                href="/contact"
+                className={buttonVariants({ className: "h-12 px-5" })}
+              >
+                Start the request
+              </Link>
             </div>
           </div>
         </GlassCard>

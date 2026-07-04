@@ -1,72 +1,70 @@
-import { AutomationPreview } from "@/components/marketing/automation-preview";
-import { CapabilitiesGrid } from "@/components/marketing/capabilities-grid";
-import { CTASection } from "@/components/marketing/cta-section";
-import { ExampleCard } from "@/components/marketing/example-card";
-import { FAQ } from "@/components/marketing/faq";
 import { Hero } from "@/components/marketing/hero";
-import { ProcessSteps } from "@/components/marketing/process-steps";
-import { ReviewsPlaceholder } from "@/components/marketing/reviews-placeholder";
 import { SectionShell } from "@/components/marketing/section-shell";
-import { examples } from "@/features/examples/examples.data";
+import { WorkflowShowcase } from "@/components/marketing/workflow-showcase";
+import { workflows } from "@/features/workflows/workflows.data";
+
+const focusAreas = [
+  {
+    title: "Business systems",
+    description:
+      "Organize the tools, handoffs, and visibility a growing business needs to manage work consistently.",
+  },
+  {
+    title: "CRM implementation",
+    description:
+      "Set up contacts, pipelines, calendars, conversations, and ownership rules around the way the business operates.",
+  },
+  {
+    title: "Workflow automation",
+    description:
+      "Reduce repetitive follow-up and reminders while keeping review points and manual control where they matter.",
+  },
+  {
+    title: "Lead follow-up",
+    description:
+      "Connect forms, calls, calendars, and communication steps so new inquiries do not depend on memory.",
+  },
+  {
+    title: "AI-assisted operations",
+    description:
+      "Use AI support for drafting, routing, notes, and workflow planning without removing business judgment.",
+  },
+];
 
 export default function Home() {
   return (
     <>
       <Hero />
-      <SectionShell
-        eyebrow="Capabilities"
-        title="Systems that support sales, operations, and customer communication."
-        description="Tergion Technologies builds practical automation infrastructure with clear visibility and control points."
-      >
-        <CapabilitiesGrid />
-      </SectionShell>
 
       <SectionShell
-        eyebrow="Workflow"
-        title="Automation with handoffs, review points, and operational clarity."
-        description="This is an illustrative workflow preview, not a live client automation or real customer data."
-        className="border-y border-white/10 bg-white/[0.02]"
+        eyebrow="What Tergion does"
+        title="Practical systems for sales, customer communication, and operations."
+        description="Tergion Technologies helps growing companies capture leads, follow up faster, automate repetitive work, and keep control of the process."
       >
-        <AutomationPreview />
-      </SectionShell>
-
-      <SectionShell
-        eyebrow="Examples"
-        title="Realistic automation patterns for growing businesses."
-        description="Each example focuses on operational consistency without unsupported revenue guarantees."
-      >
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {examples.slice(0, 6).map((example) => (
-            <ExampleCard key={example.slug} example={example} />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {focusAreas.map((area) => (
+            <div
+              key={area.title}
+              className="rounded-lg border border-border bg-surface p-5 shadow-sm shadow-accent-strong/5"
+            >
+              <h2 className="text-base font-semibold text-foreground">
+                {area.title}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                {area.description}
+              </p>
+            </div>
           ))}
         </div>
       </SectionShell>
 
       <SectionShell
-        id="process"
-        eyebrow="Process"
-        title="A practical build process with control built in."
-        description="Automation should make a business easier to manage, not harder to control."
-        className="border-y border-white/10 bg-white/[0.02]"
+        eyebrow="WORKFLOW EXAMPLES"
+        title="Choose a workflow. See how the system works."
+        description="Every business has a few steps where leads, follow-ups, or customer communication fall through the cracks. These examples show how Tergion turns those steps into trackable systems with clear control points."
       >
-        <ProcessSteps />
+        <WorkflowShowcase workflows={workflows} />
       </SectionShell>
-
-      <section className="px-6 py-12 md:py-16">
-        <div className="mx-auto max-w-7xl">
-          <ReviewsPlaceholder />
-        </div>
-      </section>
-
-      <SectionShell
-        eyebrow="FAQ"
-        title="Direct answers before you start."
-        description="No hype, no fake metrics, and no requirement to know the full automation plan before reaching out."
-      >
-        <FAQ />
-      </SectionShell>
-
-      <CTASection />
     </>
   );
 }

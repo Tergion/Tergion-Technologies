@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 export default function ExamplesPage() {
   return (
     <>
-      <section className="px-6 pb-8 pt-28 md:pt-36">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+      <section className="pb-8 pt-28 md:pt-36">
+        <div className="site-container">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-strong">
             Examples
           </p>
           <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl">

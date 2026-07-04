@@ -7,6 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-soft-green: var(--surface-soft-green);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-geist-sans);
@@ -14,6 +17,11 @@
   --color-glass-strong: var(--glass-strong);
   --color-glass-border: var(--glass-border);
   --color-soft-glow: var(--soft-glow);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent-strong: var(--accent-strong);
+  --color-border-strong: var(--border-strong);
+  --color-deep-panel: var(--deep-panel);
+  --color-deep-panel-foreground: var(--deep-panel-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -55,49 +63,61 @@
 }
 
 :root {
-  color-scheme: dark;
-  --background: #05070b;
-  --foreground: #f7fbff;
-  --card: rgba(10, 18, 31, 0.72);
-  --card-foreground: #f7fbff;
-  --popover: #0a1220;
-  --popover-foreground: #f7fbff;
-  --primary: #66e8ff;
-  --primary-foreground: #021019;
-  --secondary: rgba(210, 222, 235, 0.14);
-  --secondary-foreground: #edf7ff;
-  --muted: rgba(139, 160, 181, 0.16);
-  --muted-foreground: #a8b8c9;
-  --accent: rgba(88, 166, 255, 0.18);
-  --accent-foreground: #d9f5ff;
-  --destructive: #ff6b7a;
-  --border: rgba(193, 225, 255, 0.18);
-  --input: rgba(214, 233, 255, 0.15);
-  --ring: #66e8ff;
-  --glass: rgba(8, 15, 28, 0.58);
-  --glass-strong: rgba(12, 24, 43, 0.78);
-  --glass-border: rgba(197, 232, 255, 0.2);
-  --soft-glow: rgba(102, 232, 255, 0.28);
-  --success: #69e6a5;
-  --warning: #ffd166;
-  --chart-1: #66e8ff;
-  --chart-2: #8ab4ff;
-  --chart-3: #d4dde8;
-  --chart-4: #69e6a5;
-  --chart-5: #ffd166;
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #172015;
+  --surface: #ffffff;
+  --surface-muted: #ffffff;
+  --surface-soft-green: #f0f5e6;
+  --card: rgba(255, 255, 255, 0.84);
+  --card-foreground: #172015;
+  --popover: #ffffff;
+  --popover-foreground: #172015;
+  --primary: #a8c96b;
+  --primary-foreground: #132010;
+  --primary-hover: #96b85d;
+  --secondary: #f0f5e6;
+  --secondary-foreground: #172015;
+  --muted: #f3f6ef;
+  --muted-foreground: #5f6b58;
+  --accent: #e8eedb;
+  --accent-foreground: #172015;
+  --accent-strong: #647f3d;
+  --destructive: #a33a2e;
+  --border: #d9e2d0;
+  --border-strong: #aebb98;
+  --input: #d9e2d0;
+  --ring: #7fa54a;
+  --deep-panel: #101a12;
+  --deep-panel-foreground: #f7faf4;
+  --glass-surface: rgba(255, 255, 255, 0.76);
+  --glass-surface-strong: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(84, 101, 62, 0.18);
+  --glass-shadow: 0 24px 80px rgba(63, 79, 43, 0.12);
+  --glass: var(--glass-surface);
+  --glass-strong: var(--glass-surface-strong);
+  --soft-glow: rgba(168, 201, 107, 0.18);
+  --success: #557a3a;
+  --warning: #a1792b;
+  --danger: #a33a2e;
+  --chart-1: #647f3d;
+  --chart-2: #a8c96b;
+  --chart-3: #aebb98;
+  --chart-4: #557a3a;
+  --chart-5: #a1792b;
   --radius: 0.5rem;
-  --sidebar: #0a1220;
-  --sidebar-foreground: #f7fbff;
-  --sidebar-primary: #66e8ff;
-  --sidebar-primary-foreground: #021019;
-  --sidebar-accent: rgba(88, 166, 255, 0.18);
-  --sidebar-accent-foreground: #d9f5ff;
-  --sidebar-border: rgba(193, 225, 255, 0.18);
-  --sidebar-ring: #66e8ff;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #172015;
+  --sidebar-primary: #a8c96b;
+  --sidebar-primary-foreground: #132010;
+  --sidebar-accent: #e8eedb;
+  --sidebar-accent-foreground: #172015;
+  --sidebar-border: #d9e2d0;
+  --sidebar-ring: #7fa54a;
 }
 
 .dark {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @layer base {
@@ -107,6 +127,7 @@
 
   html {
     @apply scroll-smooth font-sans;
+    background-color: var(--background);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -126,10 +147,12 @@
 
   body {
     @apply min-h-dvh overflow-x-hidden bg-background pb-24 text-foreground antialiased xl:pb-0;
-    background:
-      radial-gradient(circle at 18% 8%, rgba(102, 232, 255, 0.12), transparent 30rem),
-      radial-gradient(circle at 82% 14%, rgba(138, 180, 255, 0.1), transparent 28rem),
-      linear-gradient(135deg, #05070b 0%, #07101b 42%, #05070b 100%);
+    background-color: var(--background);
+  }
+
+  main,
+  section {
+    background-color: transparent;
   }
 
   a {
@@ -137,22 +160,51 @@
   }
 
   ::selection {
-    background: rgba(102, 232, 255, 0.35);
-    color: #ffffff;
+    background: rgba(168, 201, 107, 0.5);
+    color: #132010;
   }
 }
 
 @layer components {
+  .site-container {
+    width: min(calc(100% - 40px), 1360px);
+    margin-inline: auto;
+  }
+
+  @media (min-width: 640px) {
+    .site-container {
+      width: min(calc(100% - 48px), 1360px);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .site-container {
+      width: min(calc(100% - 64px), 1360px);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .site-container {
+      width: min(calc(100% - 96px), 1360px);
+    }
+  }
+
+  @media (min-width: 1536px) {
+    .site-container {
+      width: min(calc(100% - 128px), 1400px);
+    }
+  }
+
   .glass-panel {
     border: 1px solid var(--glass-border);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(240, 245, 230, 0.56));
+    box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.72);
   }
 
   @supports (backdrop-filter: blur(16px)) {
     .glass-panel {
       background: var(--glass);
-      backdrop-filter: blur(18px);
+      backdrop-filter: blur(14px);
     }
   }
 
@@ -167,7 +219,7 @@
     padding: 1px;
     pointer-events: none;
     position: absolute;
-    background: linear-gradient(135deg, rgba(102, 232, 255, 0.55), rgba(212, 221, 232, 0.14), rgba(105, 230, 165, 0.24));
+    background: linear-gradient(135deg, rgba(100, 127, 61, 0.32), rgba(217, 226, 208, 0.32), rgba(168, 201, 107, 0.24));
     mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);

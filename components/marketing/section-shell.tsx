@@ -20,12 +20,12 @@ export function SectionShell({
   className,
 }: SectionShellProps) {
   return (
-    <section id={id} className={cn("px-6 py-16 md:py-24", className)}>
-      <div className="mx-auto max-w-7xl">
+    <section id={id} className={cn("py-16 md:py-24", className)}>
+      <div className="site-container">
         {title ? (
           <div className="mb-8 max-w-3xl md:mb-10">
             {eyebrow ? (
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-strong">
                 {eyebrow}
               </p>
             ) : null}

@@ -40,7 +40,7 @@ function DetailList({ title, items }: { title: string; items: string[] }) {
       <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
         {items.map((item) => (
           <li key={item} className="flex gap-3">
-            <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+            <span className="mt-2 size-1.5 shrink-0 rounded-full bg-accent-strong" />
             <span>{item}</span>
           </li>
         ))}
@@ -59,9 +59,9 @@ export default async function ExampleDetailPage({ params }: ExamplePageProps) {
 
   return (
     <>
-      <article className="px-6 pb-10 pt-28 md:pt-36">
-        <div className="mx-auto max-w-7xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+      <article className="pb-10 pt-28 md:pt-36">
+        <div className="site-container">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-strong">
             Example automation
           </p>
           <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
@@ -104,7 +104,7 @@ export default async function ExampleDetailPage({ params }: ExamplePageProps) {
               title="What would be customized"
               items={example.customizationOptions}
             />
-            <GlassCard className="border-primary/25 bg-primary/5 p-6">
+            <GlassCard className="border-border-strong bg-surface-soft-green p-6">
               <h2 className="text-xl font-semibold text-foreground">
                 Next step
               </h2>

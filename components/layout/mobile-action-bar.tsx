@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, Boxes, Layers3 } from "lucide-react";
+import { Boxes, Home, Layers3, Mail } from "lucide-react";
 
-import { LeadFormModal } from "@/components/forms/lead-form-modal";
+import { cn } from "@/lib/utils";
 
 const legalPaths = new Set([
   "/privacy",
@@ -14,6 +14,13 @@ const legalPaths = new Set([
   "/third-party-notices",
   "/accessibility",
 ]);
+
+const mobileLinks = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/services", label: "Services", icon: Layers3 },
+  { href: "/examples", label: "Examples", icon: Boxes },
+  { href: "/contact", label: "Contact", icon: Mail },
+] as const;
 
 export function MobileActionBar() {
   const pathname = usePathname();
@@ -25,40 +32,38 @@ export function MobileActionBar() {
   return (
     <nav
       aria-label="Mobile"
-      className="fixed z-40 flex gap-1.5 rounded-lg border border-white/10 bg-popover/90 p-1.5 shadow-lg shadow-black/25 supports-[backdrop-filter]:backdrop-blur-md xl:hidden"
+      className="fixed z-40 flex gap-1 rounded-lg border border-glass-border bg-glass-strong p-1.5 shadow-lg shadow-accent-strong/10 supports-[backdrop-filter]:backdrop-blur-md xl:hidden"
       style={{
         bottom: "max(0.75rem, env(safe-area-inset-bottom))",
         left: "50%",
-        width: "min(20rem, calc(100vw - 1.5rem))",
+        width: "min(22rem, calc(100vw - 1.5rem))",
         transform: "translateX(-50%)",
       }}
     >
-      <Link
-        href="/examples"
-        className="flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md text-[0.7rem] font-medium text-muted-foreground transition hover:bg-white/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        style={{ flex: "1 1 0%", minWidth: 0 }}
-      >
-        <Boxes className="size-4" aria-hidden="true" />
-        Examples
-      </Link>
-      <Link
-        href="/services"
-        className="flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md text-[0.7rem] font-medium text-muted-foreground transition hover:bg-white/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        style={{ flex: "1 1 0%", minWidth: 0 }}
-      >
-        <Layers3 className="size-4" aria-hidden="true" />
-        Services
-      </Link>
-      <div
-        className="min-w-0 basis-0 flex-1"
-        style={{ flex: "1 1 0%", minWidth: 0 }}
-      >
-        <LeadFormModal
-          label="Start"
-          className="h-11 w-full min-w-0 shrink flex-col gap-0.5 overflow-hidden whitespace-normal px-1 text-[0.7rem] shadow-none"
-          icon={<ArrowRight className="size-4" aria-hidden="true" />}
-        />
-      </div>
+      {mobileLinks.map((link) => {
+        const Icon = link.icon;
+        const isActive =
+          link.href === "/"
+            ? pathname === "/"
+            : pathname === link.href || pathname.startsWith(`${link.href}/`);
+
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={cn(
+              "flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border text-[0.68rem] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              isActive
+                ? "border-border-strong bg-accent text-foreground"
+                : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
+            )}
+            style={{ flex: "1 1 0%", minWidth: 0 }}
+          >
+            <Icon className="size-4" aria-hidden="true" />
+            {link.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

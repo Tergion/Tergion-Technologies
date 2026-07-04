@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-import { LeadFormModal } from "@/components/forms/lead-form-modal";
+import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site-config";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 px-6 pb-10 pt-14">
-      <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.2fr_1fr]">
+    <footer className="border-t border-border bg-surface pb-10 pt-14">
+      <div className="site-container grid gap-10 md:grid-cols-[1.2fr_1fr]">
         <div>
           <Link
             href="/"
@@ -20,7 +20,12 @@ export function SiteFooter() {
             harder to control.
           </p>
           <div className="mt-6">
-            <LeadFormModal label="Request a free automation review" />
+            <Link
+              href="/contact"
+              className={buttonVariants({ className: "h-10 px-4" })}
+            >
+              Request a free automation review
+            </Link>
           </div>
         </div>
 
@@ -28,7 +33,7 @@ export function SiteFooter() {
           <div>
             <h2 className="text-sm font-semibold text-foreground">Company</h2>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
-              {siteConfig.navLinks.slice(0, 3).map((link) => (
+              {siteConfig.navLinks.map((link) => (
                 <li key={link.href}>
                   <Link className="hover:text-foreground" href={link.href}>
                     {link.label}
