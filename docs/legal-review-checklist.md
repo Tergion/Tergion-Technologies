@@ -12,3 +12,4 @@
 - CAN-SPAM, SMS, and TCPA review before any marketing or text messaging expansion.
 - Review/testimonial compliance review before adding Google reviews or public testimonials.
 - User-generated content policy only if future accounts, uploads, comments, chatbot logs, or client portal features are added.
+- Codebase license review. The current repository is marked proprietary, all rights reserved, and UNLICENSED in package metadata.

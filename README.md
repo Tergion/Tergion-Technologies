@@ -53,6 +53,12 @@ Cloudflare Turnstile, Google Sheets, email sending, analytics, GoHighLevel, prod
 
 Lead capture submits to a server-side route. Secrets must stay server-side. Legal pages are draft templates and require attorney review before public launch.
 
+## License
+
+This project is proprietary and all rights are reserved. No license is granted
+for reuse, redistribution, modification, or derivative works without written
+permission from Tergion Technologies.
+
 ## Deployment
 
 The project is configured for Cloudflare Workers with the OpenNext Cloudflare adapter. Runtime configuration is tracked in `wrangler.jsonc`, and deployment commands are in `package.json`.
