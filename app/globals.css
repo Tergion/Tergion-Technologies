@@ -64,42 +64,65 @@
 
 :root {
   color-scheme: light;
-  --background: #ffffff;
+  --background: #fefcf7;
   --foreground: #172015;
-  --surface: #ffffff;
-  --surface-muted: #ffffff;
-  --surface-soft-green: #f0f5e6;
-  --card: rgba(255, 255, 255, 0.84);
+  --surface: #fffdf8;
+  --surface-muted: #f7f2e8;
+  --surface-soft-green: #eff5e6;
+  --card: #fffdf8;
   --card-foreground: #172015;
-  --popover: #ffffff;
+  --popover: #fffdf8;
   --popover-foreground: #172015;
   --primary: #a8c96b;
   --primary-foreground: #132010;
   --primary-hover: #96b85d;
-  --secondary: #f0f5e6;
+  --secondary: #eff5e6;
   --secondary-foreground: #172015;
-  --muted: #f3f6ef;
+  --muted: #f4f1e8;
   --muted-foreground: #5f6b58;
-  --accent: #e8eedb;
+  --accent: #eff6e4;
   --accent-foreground: #172015;
   --accent-strong: #647f3d;
   --destructive: #a33a2e;
-  --border: #d9e2d0;
-  --border-strong: #aebb98;
-  --input: #d9e2d0;
-  --ring: #7fa54a;
+  --border: #d8e1c7;
+  --border-strong: #afc488;
+  --input: #d8e1c7;
+  --ring: #6e8f3f;
   --deep-panel: #101a12;
   --deep-panel-foreground: #f7faf4;
-  --glass-surface: rgba(255, 255, 255, 0.76);
-  --glass-surface-strong: rgba(255, 255, 255, 0.92);
-  --glass-border: rgba(84, 101, 62, 0.18);
-  --glass-shadow: 0 24px 80px rgba(63, 79, 43, 0.12);
+  --glass-surface: #fffdf8;
+  --glass-surface-strong: #ffffff;
+  --glass-border: rgba(111, 137, 74, 0.24);
+  --glass-shadow: 0 18px 44px rgba(40, 54, 24, 0.1), 0 2px 8px rgba(40, 54, 24, 0.05);
   --glass: var(--glass-surface);
   --glass-strong: var(--glass-surface-strong);
   --soft-glow: rgba(168, 201, 107, 0.18);
+  --island-bg: #fffdf8;
+  --island-bg-strong: #ffffff;
+  --island-border: rgba(111, 137, 74, 0.26);
+  --island-border-strong: rgba(111, 137, 74, 0.42);
+  --island-shadow: 0 18px 44px rgba(40, 54, 24, 0.12), 0 2px 8px rgba(40, 54, 24, 0.06);
+  --island-inner-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --island-hover-bg: #f4f9ec;
+  --island-active-bg: #eff6e4;
+  --island-active-border: #9cbd65;
+  --island-focus-ring: rgba(111, 143, 63, 0.36);
+  --field-bg: #fffdf8;
+  --field-bg-muted: #f7f2e8;
+  --field-border: rgba(111, 137, 74, 0.24);
+  --modal-bg: #fffdf8;
+  --modal-border: rgba(111, 137, 74, 0.32);
+  --modal-shadow: 0 24px 80px rgba(40, 54, 24, 0.16), 0 4px 18px rgba(40, 54, 24, 0.08);
+  --workflow-panel-bg: #fffdf8;
+  --workflow-panel-border: rgba(111, 137, 74, 0.32);
+  --workflow-panel-shadow: 0 16px 36px rgba(40, 54, 24, 0.14), 0 2px 8px rgba(40, 54, 24, 0.06);
   --success: #557a3a;
   --warning: #a1792b;
   --danger: #a33a2e;
+  --success-panel-bg: #eef6e7;
+  --warning-panel-bg: #fff7e5;
+  --danger-panel-bg: #fbeeea;
+  --active-chip-bg: #e8f1da;
   --chart-1: #647f3d;
   --chart-2: #a8c96b;
   --chart-3: #aebb98;
@@ -197,15 +220,25 @@
 
   .glass-panel {
     border: 1px solid var(--glass-border);
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(240, 245, 230, 0.56));
-    box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    background: linear-gradient(145deg, var(--glass-strong), var(--surface-soft-green));
+    box-shadow: var(--glass-shadow), var(--island-inner-highlight);
   }
 
-  @supports (backdrop-filter: blur(16px)) {
-    .glass-panel {
-      background: var(--glass);
-      backdrop-filter: blur(14px);
-    }
+  .island-panel {
+    border: 1px solid var(--island-border);
+    background: var(--island-bg);
+    box-shadow: var(--island-shadow), var(--island-inner-highlight);
+  }
+
+  .field-panel {
+    border: 1px solid var(--field-border);
+    background: var(--field-bg);
+  }
+
+  .workflow-panel {
+    border: 1px solid var(--workflow-panel-border);
+    background: var(--workflow-panel-bg);
+    box-shadow: var(--workflow-panel-shadow);
   }
 
   .gradient-border {

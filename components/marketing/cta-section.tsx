@@ -1,7 +1,5 @@
-import Link from "next/link";
-
+import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { GlassCard } from "@/components/marketing/glass-card";
-import { buttonVariants } from "@/components/ui/button";
 
 export function CTASection() {
   return (
@@ -20,12 +18,9 @@ export function CTASection() {
               Tergion will follow up based on your preferred contact method.
             </p>
             <div className="mt-8">
-              <Link
-                href="/contact"
-                className={buttonVariants({ className: "h-12 px-5" })}
-              >
+              <RequestModalTrigger className="h-12 px-5">
                 Start the request
-              </Link>
+              </RequestModalTrigger>
             </div>
           </div>
         </GlassCard>

@@ -14,7 +14,7 @@ export const env = {
   leadNotificationEmail: process.env.LEAD_NOTIFICATION_EMAIL || "",
   leadFromEmail:
     process.env.LEAD_FROM_EMAIL ||
-    "Tergion Technologies <hello@tergion.com>",
+    "Tergion Technologies <contact@tergion.com>",
   nodeEnv: process.env.NODE_ENV || "development",
 };
 

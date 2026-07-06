@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Boxes, Home, Layers3, Mail } from "lucide-react";
+import { Boxes, Home, Layers3, Send } from "lucide-react";
 
+import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { cn } from "@/lib/utils";
 
 const legalPaths = new Set([
@@ -19,22 +20,21 @@ const mobileLinks = [
   { href: "/", label: "Home", icon: Home },
   { href: "/services", label: "Services", icon: Layers3 },
   { href: "/examples", label: "Examples", icon: Boxes },
-  { href: "/contact", label: "Contact", icon: Mail },
 ] as const;
 
 export function MobileActionBar() {
   const pathname = usePathname();
 
-  if (legalPaths.has(pathname)) {
+  if (legalPaths.has(pathname) || pathname === "/contact") {
     return null;
   }
 
   return (
     <nav
       aria-label="Mobile"
-      className="fixed z-40 flex gap-1 rounded-lg border border-glass-border bg-glass-strong p-1.5 shadow-lg shadow-accent-strong/10 supports-[backdrop-filter]:backdrop-blur-md xl:hidden"
+      className="island-panel fixed z-40 flex gap-1 rounded-lg p-1.5 xl:hidden"
       style={{
-        bottom: "max(0.75rem, env(safe-area-inset-bottom))",
+        bottom: "max(0.85rem, env(safe-area-inset-bottom))",
         left: "50%",
         width: "min(22rem, calc(100vw - 1.5rem))",
         transform: "translateX(-50%)",
@@ -54,8 +54,8 @@ export function MobileActionBar() {
             className={cn(
               "flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border text-[0.68rem] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               isActive
-                ? "border-border-strong bg-accent text-foreground"
-                : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground",
+                ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] text-foreground"
+                : "border-transparent text-muted-foreground hover:bg-[var(--island-hover-bg)] hover:text-foreground",
             )}
             style={{ flex: "1 1 0%", minWidth: 0 }}
           >
@@ -64,6 +64,14 @@ export function MobileActionBar() {
           </Link>
         );
       })}
+      <RequestModalTrigger
+        variant="default"
+        className="flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 text-[0.68rem] font-semibold"
+        style={{ flex: "1 1 0%", minWidth: 0 }}
+      >
+        <Send className="size-4" aria-hidden="true" />
+        <span>Start</span>
+      </RequestModalTrigger>
     </nav>
   );
 }

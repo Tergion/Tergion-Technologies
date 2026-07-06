@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { automationInterestOptions } from "@/features/leads/lead.constants";
+import {
+  automationInterestOptions,
+  requestPriorityOptions,
+  usesCrmValues,
+} from "@/features/leads/lead.constants";
 
 const optionalText = (max: number) =>
   z
@@ -12,6 +16,12 @@ const optionalText = (max: number) =>
 
 const requiredText = (label: string, max: number) =>
   z.string().trim().min(1, `${label} is required.`).max(max);
+
+const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
+  z
+    .enum(values)
+    .optional()
+    .or(z.literal("").transform(() => undefined));
 
 export const preferredContactMethodSchema = z.enum([
   "email",
@@ -37,14 +47,14 @@ export const leadBaseSchema = z.object({
   industry: optionalText(120),
   businessSize: optionalText(80),
   locationOrServiceArea: optionalText(160),
+  usesCrm: z.enum(usesCrmValues).optional().default("not-sure"),
   currentCrm: optionalText(120),
-  monthlyLeadVolume: optionalText(80),
   automationInterests: z
     .array(z.enum(automationInterestOptions))
     .max(10)
     .optional()
     .default([]),
-  timeline: optionalText(80),
+  requestPriority: optionalEnum(requestPriorityOptions),
   notes: optionalText(1200),
   contactConsent: z.boolean().default(false),
   privacyTermsConsent: z.boolean().default(false),

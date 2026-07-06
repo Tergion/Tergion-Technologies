@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-const steps = ["Contact", "Context", "Review"];
+const steps = ["Basics", "Context", "Review"];
 
 export function FormProgress({ currentStep }: { currentStep: number }) {
   return (
@@ -9,7 +9,7 @@ export function FormProgress({ currentStep }: { currentStep: number }) {
         <li key={step}>
           <div
             className={cn(
-              "h-1.5 rounded-full bg-white/10",
+              "h-1.5 rounded-full bg-[var(--field-bg-muted)]",
               index <= currentStep && "bg-primary",
             )}
           />

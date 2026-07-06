@@ -40,7 +40,7 @@ export function CapabilitiesGrid() {
             key={capability.title}
             className="p-5 transition duration-200 hover:-translate-y-1 hover:border-primary/30 md:p-6"
           >
-            <div className="flex size-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-primary">
+            <div className="flex size-11 items-center justify-center rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] text-primary">
               <Icon className="size-5" aria-hidden="true" />
             </div>
             <h3 className="mt-5 text-lg font-semibold text-foreground">

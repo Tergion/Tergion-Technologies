@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 
 import { CTASection } from "@/components/marketing/cta-section";
+import { CapabilityGroup } from "@/components/marketing/capability-group";
 import { GlassCard } from "@/components/marketing/glass-card";
+import { SectionShell } from "@/components/marketing/section-shell";
+import { serviceCapabilityGroups } from "@/features/services/service-capabilities.data";
 
 export const metadata: Metadata = {
   title: "Services",
@@ -13,7 +16,7 @@ const services = [
   {
     title: "CRM Setup & Implementation",
     description:
-      "Configure contacts, pipelines, calendars, conversations, lead stages, and ownership rules so the team has one operational source of truth.",
+      "Configure contacts, pipelines, calendars, conversations, lead stages, and ownership rules so the team can manage follow-up from one organized system.",
   },
   {
     title: "Workflow Automation",
@@ -29,11 +32,6 @@ const services = [
     title: "Lead Capture & Follow-Up Systems",
     description:
       "Connect website forms, calls, calendars, and CRM records so new inquiries receive consistent next steps without relying on memory.",
-  },
-  {
-    title: "Review Request Workflows",
-    description:
-      "Create controlled customer feedback workflows that help teams request reviews at appropriate times without fake or pressured reviews.",
   },
   {
     title: "Website and Funnel Form Workflows",
@@ -85,6 +83,19 @@ export default function ServicesPage() {
           ))}
         </div>
       </section>
+
+      <SectionShell
+        eyebrow="Platform-enabled capabilities"
+        title="Systems Tergion can configure without making the platform the whole identity."
+        description="These are common capability areas Tergion can support when they fit the business process. The work starts with the operating need, then uses the right platform features to support it."
+        className="pt-8 md:pt-12"
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          {serviceCapabilityGroups.map((group) => (
+            <CapabilityGroup key={group.title} group={group} />
+          ))}
+        </div>
+      </SectionShell>
 
       <CTASection />
     </>

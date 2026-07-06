@@ -62,7 +62,7 @@ export function WorkflowShowcaseTabs({
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-3 border-b border-white/10 pb-4 md:flex-row md:items-center md:justify-between">
+    <div className="flex min-w-0 flex-col gap-3 border-b border-[color:var(--field-border)] pb-4 md:flex-row md:items-center md:justify-between">
       <div
         role="tablist"
         aria-label="Workflow examples"
@@ -86,8 +86,8 @@ export function WorkflowShowcaseTabs({
               className={cn(
                 "inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isActive
-                  ? "border-primary/70 bg-primary/[0.12] text-foreground shadow-md shadow-primary/10"
-                  : "border-white/10 bg-white/[0.035] text-muted-foreground hover:border-white/20 hover:bg-white/[0.06] hover:text-foreground",
+                  ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] text-foreground shadow-md shadow-accent-strong/10"
+                  : "border-[color:var(--field-border)] bg-[var(--field-bg)] text-muted-foreground hover:bg-[var(--island-hover-bg)] hover:text-foreground",
               )}
               onClick={() => onSelect(index)}
               onKeyDown={(event) => handleTabKeyDown(event, index)}
@@ -96,8 +96,8 @@ export function WorkflowShowcaseTabs({
                 className={cn(
                   "grid size-6 place-items-center rounded-md border text-[0.68rem]",
                   isActive
-                    ? "border-primary/50 bg-primary/[0.15] text-primary"
-                    : "border-white/10 text-muted-foreground",
+                    ? "border-[color:var(--island-active-border)] bg-[var(--active-chip-bg)] text-accent-strong"
+                    : "border-[color:var(--field-border)] text-muted-foreground",
                 )}
                 aria-hidden="true"
               >
@@ -113,7 +113,7 @@ export function WorkflowShowcaseTabs({
         <button
           type="button"
           aria-label="Show previous workflow"
-          className="grid size-10 place-items-center rounded-lg border border-white/10 bg-white/[0.035] text-muted-foreground transition hover:border-white/20 hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="grid size-10 place-items-center rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg)] text-muted-foreground transition hover:bg-[var(--island-hover-bg)] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={onPrevious}
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
@@ -121,7 +121,7 @@ export function WorkflowShowcaseTabs({
         <button
           type="button"
           aria-label="Show next workflow"
-          className="grid size-10 place-items-center rounded-lg border border-white/10 bg-white/[0.035] text-muted-foreground transition hover:border-white/20 hover:bg-white/[0.06] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="grid size-10 place-items-center rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg)] text-muted-foreground transition hover:bg-[var(--island-hover-bg)] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onClick={onNext}
         >
           <ChevronRight className="size-4" aria-hidden="true" />

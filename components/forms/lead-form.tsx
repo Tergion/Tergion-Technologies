@@ -83,10 +83,10 @@ export function LeadForm() {
       industry: "",
       businessSize: "",
       locationOrServiceArea: "",
+      usesCrm: "not-sure",
       currentCrm: "",
-      monthlyLeadVolume: "",
       automationInterests: [],
-      timeline: "",
+      requestPriority: "",
       notes: "",
       contactConsent: false,
       privacyTermsConsent: false,
@@ -207,7 +207,7 @@ export function LeadForm() {
 
   if (submitted) {
     return (
-      <div className="rounded-lg border border-success/30 bg-success/10 p-5">
+      <div className="m-5 rounded-lg border border-success/30 bg-[var(--surface-soft-green)] p-5">
         <h3 className="text-lg font-semibold text-foreground">
           Request received
         </h3>
@@ -220,29 +220,31 @@ export function LeadForm() {
 
   return (
     <form
-      className="space-y-6"
+      className="flex min-h-0 flex-1 flex-col bg-[var(--modal-bg)]"
       onSubmit={form.handleSubmit(onSubmit, (errors) => {
         setFormError("Please review the highlighted fields.");
         focusFirstFieldError(errors);
       })}
     >
-      <FormProgress currentStep={step} />
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[var(--modal-bg)] px-5 py-5">
+        <FormProgress currentStep={step} />
 
-      {step === 0 ? <LeadFormStepContact form={form} /> : null}
-      {step === 1 ? <LeadFormStepContext form={form} /> : null}
-      {step === 2 ? <LeadFormStepReview form={form} /> : null}
+        {step === 0 ? <LeadFormStepContact form={form} /> : null}
+        {step === 1 ? <LeadFormStepContext form={form} /> : null}
+        {step === 2 ? <LeadFormStepReview form={form} /> : null}
 
-      {formError ? (
-        <p className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {formError}
-        </p>
-      ) : null}
+        {formError ? (
+          <p className="rounded-md border border-destructive/30 bg-[#fbeeea] px-3 py-2 text-sm text-destructive">
+            {formError}
+          </p>
+        ) : null}
+      </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-white/10 pt-5 sm:flex-row sm:justify-between">
+      <div className="flex flex-col-reverse gap-3 border-t border-[color:var(--field-border)] bg-[var(--modal-bg)] px-5 py-4 sm:flex-row sm:justify-between">
         <Button
           type="button"
           variant="outline"
-          className="h-11 border-white/10 bg-white/[0.035]"
+          className="h-11 border-[color:var(--field-border)] bg-[var(--field-bg)]"
           onClick={goBack}
           disabled={step === 0 || submitting}
         >

@@ -27,7 +27,7 @@ export function ProcessSteps() {
       {processSteps.map((step, index) => (
         <div
           key={step.title}
-          className="rounded-lg border border-white/10 bg-white/[0.025] p-5 md:p-6"
+          className="rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-5 md:p-6"
         >
           <span className="text-sm font-semibold text-primary">
             {String(index + 1).padStart(2, "0")}

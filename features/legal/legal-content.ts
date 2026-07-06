@@ -22,7 +22,7 @@ export const legalPages: Record<string, LegalPageContent> = {
         heading: "Information We Collect",
         body: [
           "We may collect contact/request form information, optional business context, scheduling preferences, website usage data, and spam or security signals submitted through the site.",
-          "Optional business information may include industry, business size, service area, current CRM, lead volume, automation interests, timeline, and notes.",
+          "Optional business information may include CRM use, current CRM, request priority, automation interests, and notes.",
         ],
       },
       {
@@ -43,7 +43,7 @@ export const legalPages: Record<string, LegalPageContent> = {
         heading: "Retention, Rights, and Contact",
         body: [
           "Data retention periods and user rights procedures are placeholders until the production operating process is approved.",
-          "Privacy requests should be directed to hello@tergion.com unless a different contact is approved.",
+          "Privacy requests should be directed to contact@tergion.com unless a different contact is approved.",
         ],
       },
       {
@@ -165,7 +165,7 @@ export const legalPages: Record<string, LegalPageContent> = {
         heading: "Current Practices",
         body: [
           "This site is being developed with semantic HTML, keyboard navigation, visible focus states, readable contrast, form labels, and reduced motion support.",
-          "Accessibility issues can be reported to hello@tergion.com until a final accessibility contact process is approved.",
+          "Accessibility issues can be reported to contact@tergion.com until a final accessibility contact process is approved.",
         ],
       },
     ],

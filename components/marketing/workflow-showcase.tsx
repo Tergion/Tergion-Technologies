@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useId, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 
+import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { GlassCard } from "@/components/marketing/glass-card";
 import { WorkflowShowcaseTabs } from "@/components/marketing/workflow-showcase-tabs";
 import { WorkflowShowcaseVisual } from "@/components/marketing/workflow-showcase-visual";
@@ -40,7 +41,7 @@ export function WorkflowShowcase({ workflows }: WorkflowShowcaseProps) {
   }
 
   return (
-    <GlassCard className="overflow-hidden p-4 sm:p-5 lg:p-6">
+    <GlassCard className="overflow-visible p-4 sm:p-5 lg:p-6">
       <WorkflowShowcaseTabs
         workflows={workflows}
         activeIndex={activeIndex}
@@ -60,7 +61,7 @@ export function WorkflowShowcase({ workflows }: WorkflowShowcaseProps) {
       >
         <div className="min-w-0 space-y-5">
           <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)] xl:items-start">
-            <div className="rounded-lg border border-white/10 bg-white/[0.025] p-5 sm:p-6">
+            <div className="rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-5 sm:p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                 {activeWorkflow.eyebrow}
               </p>
@@ -82,16 +83,12 @@ export function WorkflowShowcase({ workflows }: WorkflowShowcaseProps) {
                   <span>{activeWorkflow.primaryCta}</span>
                   <ArrowUpRight className="size-4" aria-hidden="true" />
                 </Link>
-                <Link
-                  href="/contact"
-                  className={buttonVariants({
-                    variant: "outline",
-                    className:
-                      "h-auto min-h-11 w-full border-white/15 bg-white/5 px-4 py-2.5 text-foreground hover:bg-white/10 sm:w-auto",
-                  })}
+                <RequestModalTrigger
+                  variant="outline"
+                  className="h-auto min-h-11 w-full border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 py-2.5 text-foreground hover:bg-[var(--island-hover-bg)] sm:w-auto"
                 >
                   Start the request
-                </Link>
+                </RequestModalTrigger>
               </div>
             </div>
 

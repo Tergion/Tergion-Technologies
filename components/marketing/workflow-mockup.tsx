@@ -98,7 +98,7 @@ export function WorkflowMockup({ compact = false }: { compact?: boolean }) {
   return (
     <GlassCard
       className={cn(
-        "min-w-0 p-5",
+        "relative min-w-0 overflow-visible p-5",
         compact ? "lg:p-6" : "p-6 md:p-8",
       )}
       onKeyDown={(event) => {
@@ -107,7 +107,7 @@ export function WorkflowMockup({ compact = false }: { compact?: boolean }) {
         }
       }}
     >
-      <div className="flex min-w-0 items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex min-w-0 items-center justify-between gap-4 border-b border-[color:var(--field-border)] pb-4">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
             Example workflow preview
@@ -116,7 +116,7 @@ export function WorkflowMockup({ compact = false }: { compact?: boolean }) {
             Lead handling system
           </h3>
         </div>
-        <span className="rounded-full border border-success/30 bg-success/10 px-3 py-1 text-xs font-medium text-success">
+        <span className="rounded-full border border-success/30 bg-[var(--success-panel-bg)] px-3 py-1 text-xs font-medium text-success">
           Controlled
         </span>
       </div>
@@ -125,16 +125,20 @@ export function WorkflowMockup({ compact = false }: { compact?: boolean }) {
         {workflowSteps.map((step, index) => {
           const isVisible = visibleStep === index;
           const detailId = `workflow-step-${index + 1}-details`;
+          const opensUp = index >= workflowSteps.length - 2;
 
           return (
             <li
               key={step.title}
               className={cn(
                 "relative grid grid-cols-[1.5rem_1fr] gap-3",
-                isVisible ? "z-40" : "z-0",
+                isVisible ? "z-50" : "z-0",
               )}
               onMouseEnter={() => setActiveStep(index)}
-              onMouseLeave={() => setActiveStep(null)}
+              onMouseLeave={() => {
+                setActiveStep(null);
+                setPinnedStep(null);
+              }}
             >
               <div className="flex flex-col items-center">
                 {index === 0 ? (
@@ -166,9 +170,12 @@ export function WorkflowMockup({ compact = false }: { compact?: boolean }) {
                 <button
                   type="button"
                   className={cn(
-                    "w-full rounded-md border border-white/10 bg-white/[0.035] px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "w-full rounded-md border border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     isVisible &&
-                      "relative z-20 rounded-b-none border-primary/60 bg-primary/[0.08] shadow-md shadow-primary/10",
+                      "relative z-20 rounded-b-none border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] shadow-md shadow-accent-strong/10",
+                    isVisible &&
+                      opensUp &&
+                      "md:rounded-b-md md:rounded-t-none",
                   )}
                   aria-expanded={isVisible}
                   aria-controls={detailId}
@@ -194,8 +201,8 @@ export function WorkflowMockup({ compact = false }: { compact?: boolean }) {
                       className={cn(
                         "shrink-0 rounded-full border px-2 py-1 text-[0.65rem] font-medium transition-colors",
                         isVisible
-                          ? "border-primary/50 bg-primary/10 text-primary"
-                          : "border-white/10 text-muted-foreground",
+                          ? "border-[color:var(--island-active-border)] bg-[var(--active-chip-bg)] text-accent-strong"
+                          : "border-[color:var(--field-border)] text-muted-foreground",
                       )}
                     >
                       {step.label}
@@ -208,7 +215,12 @@ export function WorkflowMockup({ compact = false }: { compact?: boolean }) {
                     id={detailId}
                     role="region"
                     aria-label={`${step.title} details`}
-                    className="absolute left-0 right-0 top-full z-10 -mt-px rounded-b-md border border-t-0 border-primary/60 bg-popover p-3 shadow-lg shadow-black/25"
+                    className={cn(
+                      "workflow-panel relative z-30 -mt-px rounded-b-md border-t-0 p-3 md:absolute md:left-0 md:right-0 md:z-50",
+                      opensUp
+                        ? "md:bottom-full md:mb-[-1px] md:mt-0 md:rounded-b-none md:rounded-t-md md:border-b-0 md:border-t"
+                        : "md:top-full md:-mt-px md:rounded-b-md md:border-t-0",
+                    )}
                   >
                     <div className="grid gap-2.5 text-xs leading-5 sm:grid-cols-2">
                       <WorkflowDetail title="Trigger" body={step.trigger} />
@@ -232,7 +244,7 @@ export function WorkflowMockup({ compact = false }: { compact?: boolean }) {
 
 function WorkflowDetail({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-md border border-white/10 bg-white/[0.025] p-3">
+    <div className="rounded-md border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3">
       <p className="font-semibold text-foreground">{title}</p>
       <p className="mt-1 text-muted-foreground">{body}</p>
     </div>

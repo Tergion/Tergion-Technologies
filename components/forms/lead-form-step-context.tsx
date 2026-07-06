@@ -1,11 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import {
   automationInterestOptions,
-  businessSizeOptions,
-  timelineOptions,
+  requestPriorityOptions,
+  usesCrmOptions,
 } from "@/features/leads/lead.constants";
 import type {
   LeadSubmission,
@@ -22,11 +23,22 @@ type LeadFormStepProps = {
 };
 
 const inputClass =
-  "h-11 border-white/10 bg-white/[0.045] text-foreground placeholder:text-muted-foreground";
+  "h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] text-foreground placeholder:text-muted-foreground";
 
 export function LeadFormStepContext({ form }: LeadFormStepProps) {
   const { register, setValue, watch } = form;
   const interests = watch("automationInterests") ?? [];
+  const usesCrm = watch("usesCrm") ?? "not-sure";
+  const requestPriority = watch("requestPriority");
+
+  useEffect(() => {
+    if (usesCrm === "no") {
+      setValue("currentCrm", "", {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }
+  }, [setValue, usesCrm]);
 
   function toggleInterest(interest: (typeof automationInterestOptions)[number]) {
     const next = interests.includes(interest)
@@ -39,93 +51,94 @@ export function LeadFormStepContext({ form }: LeadFormStepProps) {
     });
   }
 
+  function selectPriority(priority: (typeof requestPriorityOptions)[number]) {
+    setValue("requestPriority", requestPriority === priority ? "" : priority, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+  }
+
   return (
     <div className="space-y-5">
       <p className="text-sm leading-6 text-muted-foreground">
-        Business context is optional. Add only what helps explain the workflow
-        you want to improve.
+        Add context only if it helps.
       </p>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="industry">Industry</Label>
-          <Input id="industry" className={inputClass} {...register("industry")} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="businessSize">Business size</Label>
-          <select
-            id="businessSize"
-            className={cn(
-              inputClass,
-              "w-full rounded-lg border px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-            )}
-            {...register("businessSize")}
-          >
-            <option value="">Select if useful</option>
-            {businessSizeOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium text-foreground">
+          Do you use a CRM?
+        </legend>
+        <div className="grid grid-cols-3 gap-2">
+          {usesCrmOptions.map((option) => {
+            const selected = usesCrm === option.value;
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="locationOrServiceArea">
-            Location or service area
-          </Label>
-          <Input
-            id="locationOrServiceArea"
-            className={inputClass}
-            {...register("locationOrServiceArea")}
-          />
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={cn(
+                  "h-10 rounded-lg border px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--island-focus-ring)]",
+                  selected
+                    ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] text-foreground"
+                    : "border-[color:var(--field-border)] bg-[var(--field-bg-muted)] text-muted-foreground hover:bg-[var(--island-hover-bg)] hover:text-foreground",
+                )}
+                aria-pressed={selected}
+                onClick={() =>
+                  setValue("usesCrm", option.value, {
+                    shouldDirty: true,
+                    shouldValidate: false,
+                  })
+                }
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
+      </fieldset>
+
+      {usesCrm !== "no" ? (
         <div className="space-y-2">
           <Label htmlFor="currentCrm">Current CRM</Label>
           <Input
             id="currentCrm"
-            placeholder="None, HubSpot, GoHighLevel, etc."
+            placeholder="GoHighLevel, HubSpot, not sure, etc."
             className={inputClass}
             {...register("currentCrm")}
           />
         </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="monthlyLeadVolume">Monthly lead volume</Label>
-          <Input
-            id="monthlyLeadVolume"
-            placeholder="Approximate is fine"
-            className={inputClass}
-            {...register("monthlyLeadVolume")}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="timeline">Timeline</Label>
-          <select
-            id="timeline"
-            className={cn(
-              inputClass,
-              "w-full rounded-lg border px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-            )}
-            {...register("timeline")}
-          >
-            <option value="">Select if useful</option>
-            {timelineOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+      ) : null}
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-medium text-foreground">
-          Automation interests
+          Priority
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {requestPriorityOptions.map((priority) => {
+            const selected = requestPriority === priority;
+
+            return (
+              <Button
+                key={priority}
+                type="button"
+                variant={selected ? "default" : "outline"}
+                className={cn(
+                  "h-9 border-[color:var(--field-border)] px-3",
+                  !selected && "bg-[var(--field-bg-muted)] text-muted-foreground",
+                )}
+                aria-pressed={selected}
+                onClick={() => selectPriority(priority)}
+              >
+                {priority}
+              </Button>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-medium text-foreground">
+          What do you want help with?
         </legend>
         <div className="flex flex-wrap gap-2">
           {automationInterestOptions.map((interest) => {
@@ -137,9 +150,10 @@ export function LeadFormStepContext({ form }: LeadFormStepProps) {
                 type="button"
                 variant={selected ? "default" : "outline"}
                 className={cn(
-                  "h-9 border-white/10 px-3",
-                  !selected && "bg-white/[0.035] text-muted-foreground",
+                  "h-auto min-h-9 whitespace-normal border-[color:var(--field-border)] px-3 py-1.5",
+                  !selected && "bg-[var(--field-bg-muted)] text-muted-foreground",
                 )}
+                aria-pressed={selected}
                 onClick={() => toggleInterest(interest)}
               >
                 {interest}
@@ -149,16 +163,21 @@ export function LeadFormStepContext({ form }: LeadFormStepProps) {
         </div>
       </fieldset>
 
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          rows={4}
-          className="min-h-28 border-white/10 bg-white/[0.045] text-foreground placeholder:text-muted-foreground"
-          placeholder="Anything we should understand before following up."
-          {...register("notes")}
-        />
-      </div>
+      <details className="group rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-4">
+        <summary className="cursor-pointer text-sm font-semibold text-foreground outline-none focus-visible:ring-3 focus-visible:ring-[var(--island-focus-ring)]">
+          Optional notes
+        </summary>
+        <div className="mt-4 space-y-2">
+          <Label htmlFor="notes">Anything else we should know?</Label>
+          <Textarea
+            id="notes"
+            rows={3}
+            className="min-h-24 border-[color:var(--field-border)] bg-[var(--field-bg)] text-foreground placeholder:text-muted-foreground"
+            placeholder="Add a short note if it helps explain the request."
+            {...register("notes")}
+          />
+        </div>
+      </details>
     </div>
   );
 }

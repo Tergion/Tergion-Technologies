@@ -12,9 +12,9 @@ export function TurnstileWidget() {
 
   return (
     <div
-      className="rounded-md border border-white/10 bg-white/[0.035] p-3 text-xs text-muted-foreground"
+      className="rounded-md border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3 text-xs text-muted-foreground"
       data-sitekey={siteKey}
-  >
+    >
       Spam protection will run automatically before this request is accepted.
     </div>
   );

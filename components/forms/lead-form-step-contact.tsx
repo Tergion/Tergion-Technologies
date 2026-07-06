@@ -31,11 +31,12 @@ function FieldError({ message, id }: { message?: string; id: string }) {
 }
 
 const inputClass =
-  "h-11 border-white/10 bg-white/[0.045] text-foreground placeholder:text-muted-foreground";
+  "h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] text-foreground placeholder:text-muted-foreground";
 
 export function LeadFormStepContact({ form }: LeadFormStepProps) {
   const {
     register,
+    setValue,
     watch,
     formState: { errors },
   } = form;
@@ -80,45 +81,71 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            className={inputClass}
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby="email-error"
-            {...register("email")}
-          />
-          <FieldError id="email-error" message={errors.email?.message} />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="preferredContactMethod">
-            Preferred contact method *
-          </Label>
-          <select
-            id="preferredContactMethod"
-            className={cn(
-              inputClass,
-              "w-full rounded-lg border px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-            )}
-            aria-invalid={Boolean(errors.preferredContactMethod)}
-            {...register("preferredContactMethod")}
-          >
-            {preferredContactMethods.map((method) => (
-              <option key={method.value} value={method.value}>
-                {method.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email *</Label>
+        <Input
+          id="email"
+          type="email"
+          autoComplete="email"
+          className={inputClass}
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby="email-error"
+          {...register("email")}
+        />
+        <FieldError id="email-error" message={errors.email?.message} />
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="schedulingPreference">Scheduling preference *</Label>
+        <Input
+          id="schedulingPreference"
+          placeholder="Weekdays after 5 PM"
+          className={inputClass}
+          aria-invalid={Boolean(errors.schedulingPreference)}
+          aria-describedby="schedulingPreference-error"
+          {...register("schedulingPreference")}
+        />
+        <FieldError
+          id="schedulingPreference-error"
+          message={errors.schedulingPreference?.message}
+        />
+      </div>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium text-foreground">
+          Preferred contact method *
+        </legend>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {preferredContactMethods.map((method) => {
+            const selected = preferredContactMethod === method.value;
+
+            return (
+              <button
+                key={method.value}
+                type="button"
+                className={cn(
+                  "h-10 rounded-lg border px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--island-focus-ring)]",
+                  selected
+                    ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] text-foreground"
+                    : "border-[color:var(--field-border)] bg-[var(--field-bg-muted)] text-muted-foreground hover:bg-[var(--island-hover-bg)] hover:text-foreground",
+                )}
+                aria-pressed={selected}
+                onClick={() =>
+                  setValue("preferredContactMethod", method.value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+              >
+                {method.label}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+
       {phoneIsRequired ? (
-        <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+        <div className="space-y-2 rounded-lg border border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] p-3">
           <Label htmlFor="phone">Phone *</Label>
           <Input
             id="phone"
@@ -139,74 +166,6 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
           <FieldError id="phone-error" message={errors.phone?.message} />
         </div>
       ) : null}
-
-      <div className="space-y-2">
-        <Label htmlFor="schedulingPreference">Scheduling preference *</Label>
-        <Input
-          id="schedulingPreference"
-          placeholder="Weekdays after 5 PM"
-          className={inputClass}
-          aria-invalid={Boolean(errors.schedulingPreference)}
-          aria-describedby="schedulingPreference-error"
-          {...register("schedulingPreference")}
-        />
-        <FieldError
-          id="schedulingPreference-error"
-          message={errors.schedulingPreference?.message}
-        />
-      </div>
-
-      <div className="rounded-lg border border-white/10 bg-white/[0.025] p-4">
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-foreground">
-            Optional details
-          </h3>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Add these only if they help us understand the business before
-            following up.
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="lastName">Last name</Label>
-            <Input
-              id="lastName"
-              autoComplete="family-name"
-              className={inputClass}
-              {...register("lastName")}
-            />
-          </div>
-
-          {!phoneIsRequired ? (
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                type="tel"
-                autoComplete="tel"
-                className={inputClass}
-                aria-invalid={Boolean(errors.phone)}
-                aria-describedby={errors.phone ? "phone-error" : undefined}
-                {...register("phone")}
-              />
-              <FieldError id="phone-error" message={errors.phone?.message} />
-            </div>
-          ) : null}
-
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="website">Website</Label>
-            <Input
-              id="website"
-              type="url"
-              autoComplete="url"
-              placeholder="https://example.com"
-              className={inputClass}
-              {...register("website")}
-            />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

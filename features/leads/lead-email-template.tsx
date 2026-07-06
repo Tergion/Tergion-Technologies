@@ -1,5 +1,11 @@
 import type { LeadRecord } from "@/features/leads/lead.types";
 
+const usesCrmLabels = {
+  yes: "Yes",
+  no: "No",
+  "not-sure": "Not sure",
+} as const;
+
 export function renderInternalLeadText(lead: LeadRecord) {
   const interests = lead.automationInterests?.join(", ") || "Not provided";
 
@@ -13,6 +19,9 @@ export function renderInternalLeadText(lead: LeadRecord) {
     `Preferred contact: ${lead.preferredContactMethod}`,
     `Scheduling preference: ${lead.schedulingPreference}`,
     `Website: ${lead.website ?? "Not provided"}`,
+    `Uses CRM: ${usesCrmLabels[lead.usesCrm] ?? "Not sure"}`,
+    `Current CRM: ${lead.currentCrm ?? "Not provided"}`,
+    `Request priority: ${lead.requestPriority ?? "Not provided"}`,
     `Automation interests: ${interests}`,
     `Notes: ${lead.notes ?? "Not provided"}`,
     `Spam score: ${lead.security.spamScore}`,

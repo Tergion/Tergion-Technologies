@@ -9,7 +9,7 @@ export function LegalPage({ content }: { content: LegalPageContent }) {
       <h1 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
         {content.title}
       </h1>
-      <p className="mt-5 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm leading-6 text-warning">
+      <p className="mt-5 rounded-lg border border-warning/30 bg-[var(--warning-panel-bg)] p-4 text-sm leading-6 text-warning">
         {content.effectiveNote}
       </p>
       <p className="mt-8 text-lg leading-8 text-muted-foreground">

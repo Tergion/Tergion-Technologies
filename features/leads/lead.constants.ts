@@ -11,31 +11,30 @@ export const automationInterestOptions = [
   "Missed calls",
   "Appointment booking",
   "Quote follow-up",
-  "Customer reminders",
-  "Review requests",
-  "Website forms",
-  "AI-assisted operations",
-  "Reporting and visibility",
+  "Email/SMS campaigns",
+  "Website/funnel forms",
+  "AI-assisted workflows",
+  "Reporting/visibility",
+  "Not sure yet",
 ] as const;
 
-export const businessSizeOptions = [
-  "Solo operator",
-  "2-10 team members",
-  "11-50 team members",
-  "51-200 team members",
-  "Not sure",
+export const usesCrmValues = ["yes", "no", "not-sure"] as const;
+
+export const usesCrmOptions = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+  { value: "not-sure", label: "Not sure" },
 ] as const;
 
-export const timelineOptions = [
-  "As soon as practical",
-  "Within 30 days",
-  "This quarter",
-  "Researching options",
-  "Not sure",
+export const requestPriorityOptions = [
+  "Just exploring",
+  "Soon",
+  "High priority",
+  "Urgent",
 ] as const;
 
 export const leadSuccessMessage =
   "Thanks. We received your request. We'll review your information and follow up based on your preferred contact method. No obligation, no pressure.";
 
 export const leadFormHelperCopy =
-  "Start with the basics. The business details are optional. We can figure out the rest during the strategy session.";
+  "Start with the basics. The business details are optional.";

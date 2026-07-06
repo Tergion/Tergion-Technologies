@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState, type FocusEvent } from "react";
+
 import type { WorkflowStep } from "@/features/workflows/workflow.types";
 import { cn } from "@/lib/utils";
 
@@ -16,8 +18,60 @@ export function WorkflowStepList({
   activeStepIndex,
   onStepChange,
 }: WorkflowStepListProps) {
+  const [openStepIndex, setOpenStepIndex] = useState<number | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const openedByFocus = useRef(false);
+
+  useEffect(() => {
+    if (openStepIndex === null) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        event.target instanceof Node &&
+        !listRef.current?.contains(event.target)
+      ) {
+        setOpenStepIndex(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [openStepIndex]);
+
+  function openStep(index: number) {
+    setOpenStepIndex(index);
+    onStepChange(index);
+  }
+
+  function openStepFromFocus(index: number) {
+    if (openStepIndex !== index) {
+      openedByFocus.current = true;
+    }
+
+    openStep(index);
+  }
+
+  function toggleStep(index: number) {
+    setOpenStepIndex((current) => (current === index ? null : index));
+    onStepChange(index);
+  }
+
+  function handleBlur(event: FocusEvent<HTMLLIElement>) {
+    if (!event.currentTarget.contains(event.relatedTarget)) {
+      setOpenStepIndex(null);
+    }
+  }
+
   return (
-    <div className="min-w-0 rounded-lg border border-white/10 bg-white/[0.025] p-3 sm:p-4">
+    <div
+      ref={listRef}
+      className="relative min-w-0 overflow-visible rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3 sm:p-4"
+    >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -32,32 +86,63 @@ export function WorkflowStepList({
         </p>
       </div>
 
-      <ol className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+      <ol className="relative mt-4 grid gap-2 overflow-visible md:grid-cols-2 xl:grid-cols-3">
         {steps.map((step, index) => {
           const isActive = index === activeStepIndex;
+          const isOpen = index === openStepIndex;
           const detailId = `${workflowSlug}-step-${index + 1}-details`;
+          const opensUp = index >= Math.max(steps.length - 3, 0);
 
           return (
-            <li key={`${workflowSlug}-${step.title}`} className="min-w-0">
+            <li
+              key={`${workflowSlug}-${step.title}`}
+              className={cn("relative min-w-0", isOpen ? "z-30" : "z-0")}
+              onPointerEnter={(event) => {
+                if (event.pointerType === "mouse") {
+                  openStep(index);
+                }
+              }}
+              onPointerLeave={(event) => {
+                if (event.pointerType === "mouse") {
+                  setOpenStepIndex(null);
+                }
+              }}
+              onBlur={handleBlur}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  setOpenStepIndex(null);
+                }
+              }}
+            >
               <button
                 type="button"
                 className={cn(
                   "flex w-full min-w-0 items-start gap-3 rounded-md border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  isActive
-                    ? "border-primary/70 bg-primary/[0.08] shadow-md shadow-primary/10"
-                    : "border-white/10 bg-white/[0.025] hover:border-white/20 hover:bg-white/[0.05]",
+                  isActive || isOpen
+                    ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] shadow-md shadow-accent-strong/10"
+                    : "border-[color:var(--field-border)] bg-[var(--field-bg)] hover:bg-[var(--island-hover-bg)]",
+                  isOpen && "rounded-b-none",
+                  isOpen && opensUp && "md:rounded-b-md md:rounded-t-none",
                 )}
-                aria-expanded={isActive}
+                aria-expanded={isOpen}
                 aria-controls={detailId}
-                onClick={() => onStepChange(index)}
-                onFocus={() => onStepChange(index)}
+                onClick={() => {
+                  if (openedByFocus.current && openStepIndex === index) {
+                    openedByFocus.current = false;
+                    return;
+                  }
+
+                  openedByFocus.current = false;
+                  toggleStep(index);
+                }}
+                onFocus={() => openStepFromFocus(index)}
               >
                 <span
                   className={cn(
                     "mt-0.5 grid size-7 shrink-0 place-items-center rounded-md border text-[0.68rem] font-semibold",
-                    isActive
-                      ? "border-primary/50 bg-primary/[0.15] text-primary"
-                      : "border-white/10 text-muted-foreground",
+                    isActive || isOpen
+                      ? "border-[color:var(--island-active-border)] bg-[var(--active-chip-bg)] text-accent-strong"
+                      : "border-[color:var(--field-border)] text-muted-foreground",
                   )}
                   aria-hidden="true"
                 >
@@ -67,7 +152,9 @@ export function WorkflowStepList({
                   <span
                     className={cn(
                       "block text-sm font-semibold",
-                      isActive ? "text-foreground" : "text-muted-foreground",
+                      isActive || isOpen
+                        ? "text-foreground"
+                        : "text-muted-foreground",
                     )}
                   >
                     {step.title}
@@ -76,9 +163,9 @@ export function WorkflowStepList({
                     <span
                       className={cn(
                         "mt-1 inline-flex rounded-full border px-2 py-0.5 text-[0.68rem] font-medium",
-                        isActive
-                          ? "border-primary/40 bg-primary/10 text-primary"
-                          : "border-white/10 text-muted-foreground",
+                        isActive || isOpen
+                          ? "border-[color:var(--island-active-border)] bg-[var(--active-chip-bg)] text-accent-strong"
+                          : "border-[color:var(--field-border)] text-muted-foreground",
                       )}
                     >
                       {step.controlPoint}
@@ -87,15 +174,21 @@ export function WorkflowStepList({
                 </span>
               </button>
 
-              <div
-                id={detailId}
-                role="region"
-                aria-label={`${step.title} explanation`}
-                hidden={!isActive}
-                className="rounded-b-md border border-t-0 border-primary/30 bg-black/15 px-4 py-3 text-sm leading-6 text-muted-foreground"
-              >
-                {step.summary}
-              </div>
+              {isOpen ? (
+                <div
+                  id={detailId}
+                  role="region"
+                  aria-label={`${step.title} explanation`}
+                  className={cn(
+                    "workflow-panel rounded-b-md border-t-0 px-4 py-3 text-sm leading-6 text-muted-foreground md:absolute md:left-0 md:right-0 md:z-30",
+                    opensUp
+                      ? "md:bottom-full md:mb-[-1px] md:rounded-b-none md:rounded-t-md md:border-b-0 md:border-t"
+                      : "md:top-full md:-mt-px md:rounded-b-md md:border-t-0",
+                  )}
+                >
+                  {step.summary}
+                </div>
+              ) : null}
             </li>
           );
         })}

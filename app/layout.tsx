@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@/lib/analytics";
 import { defaultMetadata, organizationJsonLd } from "@/lib/metadata";
+import { RequestModalProvider } from "@/components/forms/request-modal-provider";
 import { MobileActionBar } from "@/components/layout/mobile-action-bar";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#ffffff",
+  themeColor: "#fefcf7",
 };
 
 export default function RootLayout({
@@ -39,13 +40,15 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
-        <SkipLink />
-        <SiteHeader />
-        <main id="main-content" className="flex-1">
-          {children}
-        </main>
-        <SiteFooter />
-        <MobileActionBar />
+        <RequestModalProvider>
+          <SkipLink />
+          <SiteHeader />
+          <main id="main-content" className="flex-1">
+            {children}
+          </main>
+          <SiteFooter />
+          <MobileActionBar />
+        </RequestModalProvider>
         <Analytics />
         <script
           type="application/ld+json"

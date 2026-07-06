@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { CTASection } from "@/components/marketing/cta-section";
 import { GlassCard } from "@/components/marketing/glass-card";
-import { LeadFormModal } from "@/components/forms/lead-form-modal";
 import {
   examples,
   getExampleBySlug,
@@ -112,7 +112,9 @@ export default async function ExampleDetailPage({ params }: ExamplePageProps) {
                 {example.cta}
               </p>
               <div className="mt-5">
-                <LeadFormModal label="Start the request" className="h-11 px-4" />
+                <RequestModalTrigger className="h-11 px-4">
+                  Start the request
+                </RequestModalTrigger>
               </div>
             </GlassCard>
           </div>

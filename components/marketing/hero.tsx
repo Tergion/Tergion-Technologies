@@ -1,12 +1,13 @@
 import Link from "next/link";
 
+import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { WorkflowMockup } from "@/components/marketing/workflow-mockup";
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site-config";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden pb-12 pt-28 md:pb-16 md:pt-32 xl:pb-20 xl:pt-36">
+    <section className="relative z-10 overflow-visible pb-12 pt-28 md:pb-16 md:pt-32 xl:pb-20 xl:pt-36">
       <div className="site-container grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(24rem,0.72fr)] xl:items-center xl:gap-12">
         <div className="w-full min-w-0 md:max-w-4xl xl:max-w-none">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-strong">
@@ -22,14 +23,9 @@ export function Hero() {
             and customer operations.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/contact"
-              className={buttonVariants({
-                className: "h-12 w-full px-5 text-base sm:w-auto",
-              })}
-            >
+            <RequestModalTrigger className="h-12 w-full px-5 text-base sm:w-auto">
               {siteConfig.cta.primary}
-            </Link>
+            </RequestModalTrigger>
             <Link
               href="/examples"
               className={buttonVariants({

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { UseFormReturn } from "react-hook-form";
 
+import { preferredContactMethods, usesCrmOptions } from "@/features/leads/lead.constants";
 import type {
   LeadSubmission,
   LeadSubmissionInput,
@@ -33,10 +34,18 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
     formState: { errors },
   } = form;
   const values = watch();
+  const preferredContactLabel =
+    preferredContactMethods.find(
+      (method) => method.value === values.preferredContactMethod,
+    )?.label ?? values.preferredContactMethod;
+  const usesCrmLabel =
+    usesCrmOptions.find((option) => option.value === values.usesCrm)?.label ??
+    "Not sure";
+  const interests = values.automationInterests ?? [];
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-white/10 bg-white/[0.035] p-4">
+      <div className="rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-4">
         <h3 className="text-sm font-semibold text-foreground">
           Request summary
         </h3>
@@ -60,24 +69,58 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
           <div>
             <dt className="text-muted-foreground">Preference</dt>
             <dd className="font-medium text-foreground">
-              {values.preferredContactMethod}
+              {preferredContactLabel}
             </dd>
           </div>
+          {values.phone ? (
+            <div>
+              <dt className="text-muted-foreground">Phone</dt>
+              <dd className="font-medium text-foreground">{values.phone}</dd>
+            </div>
+          ) : null}
           <div className="sm:col-span-2">
             <dt className="text-muted-foreground">Scheduling</dt>
             <dd className="font-medium text-foreground">
               {values.schedulingPreference}
             </dd>
           </div>
+          <div>
+            <dt className="text-muted-foreground">Uses CRM</dt>
+            <dd className="font-medium text-foreground">{usesCrmLabel}</dd>
+          </div>
+          {values.currentCrm ? (
+            <div>
+              <dt className="text-muted-foreground">Current CRM</dt>
+              <dd className="font-medium text-foreground">
+                {values.currentCrm}
+              </dd>
+            </div>
+          ) : null}
+          {values.requestPriority ? (
+            <div>
+              <dt className="text-muted-foreground">Priority</dt>
+              <dd className="font-medium text-foreground">
+                {values.requestPriority}
+              </dd>
+            </div>
+          ) : null}
+          {interests.length ? (
+            <div className="sm:col-span-2">
+              <dt className="text-muted-foreground">Interests</dt>
+              <dd className="font-medium text-foreground">
+                {interests.join(", ")}
+              </dd>
+            </div>
+          ) : null}
         </dl>
       </div>
 
       <div className="space-y-4">
-        <div className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.025] p-3">
+        <div className="flex gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3">
           <input
             id="contactConsent"
             type="checkbox"
-            className="mt-0.5 size-5 rounded border-white/20 bg-white/10 accent-cyan-300"
+            className="mt-0.5 size-5 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
             aria-invalid={Boolean(errors.contactConsent)}
             aria-describedby="contactConsent-error"
             {...register("contactConsent")}
@@ -93,11 +136,11 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
           </div>
         </div>
 
-        <div className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.025] p-3">
+        <div className="flex gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3">
           <input
             id="privacyTermsConsent"
             type="checkbox"
-            className="mt-0.5 size-5 rounded border-white/20 bg-white/10 accent-cyan-300"
+            className="mt-0.5 size-5 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
             aria-invalid={Boolean(errors.privacyTermsConsent)}
             aria-describedby="privacyTermsConsent-error"
             {...register("privacyTermsConsent")}
@@ -121,11 +164,11 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
           </div>
         </div>
 
-        <div className="flex gap-3 rounded-lg border border-white/10 bg-white/[0.025] p-3">
+        <div className="flex gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3">
           <input
             id="smsConsent"
             type="checkbox"
-            className="mt-0.5 size-5 rounded border-white/20 bg-white/10 accent-cyan-300"
+            className="mt-0.5 size-5 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
             {...register("smsConsent")}
           />
           <Label htmlFor="smsConsent" className="leading-5">

@@ -47,7 +47,7 @@ export function FAQ() {
       {faqs.map((faq) => (
         <details
           key={faq.question}
-          className="group rounded-lg border border-white/10 bg-white/[0.035] p-5"
+          className="group rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-5"
         >
           <summary className="cursor-pointer list-none text-base font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {faq.question}

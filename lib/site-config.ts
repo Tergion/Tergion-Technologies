@@ -4,7 +4,7 @@ export const siteConfig = {
   description:
     "AI-powered CRM, automation, and business systems for growing companies.",
   domain: "https://tergion.com",
-  contactEmail: "hello@tergion.com",
+  contactEmail: "contact@tergion.com",
   cta: {
     primary: "Request a free automation review",
     start: "Start the request",

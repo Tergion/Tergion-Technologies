@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { CTASection } from "@/components/marketing/cta-section";
 import { GlassCard } from "@/components/marketing/glass-card";
 import { ProcessSteps } from "@/components/marketing/process-steps";
@@ -54,18 +55,15 @@ export default function ProcessPage() {
             business stays in control.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/contact"
-              className={buttonVariants({ className: "h-12 px-5" })}
-            >
+            <RequestModalTrigger className="h-12 px-5">
               Start the request
-            </Link>
+            </RequestModalTrigger>
             <Link
               href="/examples"
               className={buttonVariants({
                 variant: "outline",
                 className:
-                  "h-12 border-white/15 bg-white/5 px-5 text-foreground hover:bg-white/10",
+                  "h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground hover:bg-[var(--island-hover-bg)]",
               })}
             >
               See examples
@@ -116,7 +114,7 @@ export default function ProcessPage() {
               {outputs.map((output) => (
                 <li
                   key={output}
-                  className="rounded-lg border border-white/10 bg-white/[0.025] p-4"
+                  className="rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-4"
                 >
                   {output}
                 </li>
