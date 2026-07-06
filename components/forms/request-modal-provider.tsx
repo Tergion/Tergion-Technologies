@@ -13,7 +13,7 @@ import { LeadFormModal } from "@/components/forms/lead-form-modal";
 
 type RequestModalContextValue = {
   isRequestModalOpen: boolean;
-  openRequestModal: () => void;
+  openRequestModal: (trigger?: HTMLElement | null) => void;
   closeRequestModal: () => void;
 };
 
@@ -24,8 +24,10 @@ export function RequestModalProvider({ children }: { children: ReactNode }) {
   const lastFocusedElement = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(false);
 
-  function openRequestModal() {
-    if (document.activeElement instanceof HTMLElement) {
+  function openRequestModal(trigger?: HTMLElement | null) {
+    if (trigger) {
+      lastFocusedElement.current = trigger;
+    } else if (document.activeElement instanceof HTMLElement) {
       lastFocusedElement.current = document.activeElement;
     }
 
@@ -35,19 +37,6 @@ export function RequestModalProvider({ children }: { children: ReactNode }) {
   function closeRequestModal() {
     setOpen(false);
   }
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [open]);
 
   useEffect(() => {
     if (!open && wasOpen.current) {
