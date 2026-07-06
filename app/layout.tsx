@@ -4,6 +4,7 @@ import { Analytics } from "@/lib/analytics";
 import { defaultMetadata, organizationJsonLd } from "@/lib/metadata";
 import { RequestModalProvider } from "@/components/forms/request-modal-provider";
 import { MobileActionBar } from "@/components/layout/mobile-action-bar";
+import { PageBodyTransition } from "@/components/layout/page-body-transition";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SkipLink } from "@/components/layout/skip-link";
@@ -44,7 +45,7 @@ export default function RootLayout({
           <SkipLink />
           <SiteHeader />
           <main id="main-content" className="flex-1">
-            {children}
+            <PageBodyTransition>{children}</PageBodyTransition>
           </main>
           <SiteFooter />
           <MobileActionBar />

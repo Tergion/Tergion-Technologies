@@ -241,6 +241,32 @@
     box-shadow: var(--workflow-panel-shadow);
   }
 
+  .page-body-transition {
+    animation: page-body-pop-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transform-origin: top center;
+    will-change: opacity, transform;
+  }
+
+  @keyframes page-body-pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.992);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-body-transition {
+      animation: none;
+      transform: none;
+      will-change: auto;
+    }
+  }
+
   .gradient-border {
     position: relative;
   }
