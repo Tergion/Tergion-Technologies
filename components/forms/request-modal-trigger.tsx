@@ -27,7 +27,7 @@ export function RequestModalTrigger({
     <Button
       type="button"
       className={cn(className)}
-      onClick={openRequestModal}
+      onClick={(event) => openRequestModal(event.currentTarget)}
       {...props}
     >
       {children ?? (
