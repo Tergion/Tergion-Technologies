@@ -1,15 +1,21 @@
 # Legal Review Checklist
 
-- Privacy Policy review.
-- Terms of Use review.
-- AI Disclosure review.
-- Data Notice review.
-- Third-Party Notices review.
-- Accessibility statement review.
-- Arbitration and class waiver language attorney review.
-- Governing law and dispute resolution review.
-- CCPA, GDPR, and state privacy applicability review.
-- CAN-SPAM, SMS, and TCPA review before any marketing or text messaging expansion.
-- Review/testimonial compliance review before adding Google reviews or public testimonials.
+- Privacy Policy review for current website collection, use, sharing, retention, and user request handling.
+- Terms of Use review for website use and lead-request interactions.
+- AI Disclosure review for internal AI-assisted planning, drafting, summarization, and workflow support.
+- Data Notice / Notice at Collection review for form placement and collection categories.
+- Third-Party Notices review before any provider is marked active.
+- Accessibility statement review before making conformance or audit claims.
+- Final legal entity name approval.
+- Physical mailing address decision before marketing email campaigns or other notices that require a postal address.
+- Governing law and forum review.
+- Arbitration or class waiver language only after Nicolas and counsel approve it.
+- CCPA/CPRA applicability review as growth, revenue, audience, or data volume changes.
+- GDPR and international scope review before targeting or materially serving non-U.S. visitors.
+- CAN-SPAM setup before marketing email campaigns, including postal address, sender identity, and opt-out process.
+- SMS/TCPA operational review before automated SMS campaigns or text-back workflows.
+- Review/testimonial compliance review before adding Google reviews, testimonials, ratings, or public feedback widgets.
+- Live provider list review before enabling analytics, Google Sheets append, transactional email sending, GoHighLevel lead routing, chatbot features, or review widgets.
+- GoHighLevel and client service contract terms review before using CRM access, client logins, paid SaaS-style services, or managed client systems.
 - User-generated content policy only if future accounts, uploads, comments, chatbot logs, or client portal features are added.
 - Codebase license review. The current repository is marked proprietary, all rights reserved, and UNLICENSED in package metadata.

@@ -3,7 +3,10 @@
 import Link from "next/link";
 import type { UseFormReturn } from "react-hook-form";
 
-import { preferredContactMethods, usesCrmOptions } from "@/features/leads/lead.constants";
+import {
+  preferredContactMethods,
+  usesCrmOptions,
+} from "@/features/leads/lead.constants";
 import type {
   LeadSubmission,
   LeadSubmissionInput,
@@ -115,6 +118,23 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
         </dl>
       </div>
 
+      <div className="rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3 text-sm leading-6 text-muted-foreground">
+        We collect the information you submit so we can respond to your request,
+        evaluate your business automation needs, prevent spam, and improve our
+        services. See our{" "}
+        <Link href="/privacy" className="text-primary hover:text-foreground">
+          Privacy Policy
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="/data-notice"
+          className="text-primary hover:text-foreground"
+        >
+          Data Notice
+        </Link>
+        .
+      </div>
+
       <div className="space-y-4">
         <div className="flex gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3">
           <input
@@ -173,8 +193,7 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
           />
           <Label htmlFor="smsConsent" className="leading-5">
             I agree to receive text messages from Tergion Technologies about my
-            request. Message and data rates may apply. I can opt out by replying
-            STOP.
+            request. Message and data rates may apply. Reply STOP to opt out.
           </Label>
         </div>
       </div>

@@ -41,9 +41,9 @@ npm run start
 
 Copy `.env.example` to a local `.env.local` when credentials are available. Do not commit real secrets. Only `NEXT_PUBLIC_*` values are safe for client-side exposure.
 
-## Phase 1A Scope
+## Current Site Scope
 
-This pass includes the public site foundation, legal draft pages, examples scaffold, a 3-step lead form, `/api/leads`, `/api/health`, SEO basics, security headers, and provider stubs.
+This site includes the public marketing foundation, implementation-aligned legal pages, examples scaffold, a 3-step lead form, `/api/leads`, `/api/health`, SEO basics, security headers, and provider boundaries.
 
 ## Integration Status
 
@@ -51,7 +51,7 @@ Cloudflare Turnstile, Google Sheets, email sending, analytics, GoHighLevel, prod
 
 ## Security And Legal Notes
 
-Lead capture submits to a server-side route. Secrets must stay server-side. Legal pages are draft templates and require attorney review before public launch.
+Lead capture submits to a server-side route. Secrets must stay server-side. Public legal pages cover website use and lead-request interactions, not final client service contracts. Final legal entity details, mailing address decisions, marketing-email/SMS operations, dispute terms, provider lists, and codebase license decisions still require business and legal review before production reliance.
 
 ## License
 
