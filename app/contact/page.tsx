@@ -71,7 +71,7 @@ export default function ContactPage() {
             <Link href="/terms" className="text-primary hover:text-foreground">
               Terms
             </Link>{" "}
-            pages for draft site policies.
+            pages for current site policies.
           </p>
         </div>
 

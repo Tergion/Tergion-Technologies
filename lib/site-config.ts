@@ -1,10 +1,33 @@
+const clientLoginUrl = process.env.NEXT_PUBLIC_GHL_LOGIN_URL ?? "";
+
 export const siteConfig = {
   name: "Tergion Technologies",
+  companyName: "Tergion Technologies",
+  publicBrandName: "Tergion Technologies",
   shortName: "Tergion",
   description:
     "AI-powered CRM, automation, and business systems for growing companies.",
   domain: "https://tergion.com",
   contactEmail: "contact@tergion.com",
+  privacyEmail: "contact@tergion.com",
+  supportEmail: "contact@tergion.com",
+  jurisdiction: "Washington, United States",
+  policyEffectiveDate: "July 6, 2026",
+  policyLastUpdatedDate: "July 6, 2026",
+  legalEntityName: "",
+  mailingAddress: "",
+  physicalAddress: "",
+  registeredAgentAddress: "",
+  clientLoginUrl,
+  analyticsProvider: "",
+  emailProvider: "",
+  hostingProvider: "Cloudflare Workers",
+  cloudflareTurnstileEnabled: false,
+  googleSheetsEnabled: false,
+  goHighLevelEnabled: false,
+  smsEnabled: false,
+  marketingEmailEnabled: false,
+  chatbotEnabled: false,
   cta: {
     primary: "Request a free automation review",
     start: "Start the request",
@@ -26,7 +49,7 @@ export const siteConfig = {
     { label: "Third-Party Notices", href: "/third-party-notices" },
     { label: "Accessibility", href: "/accessibility" },
   ],
-  ghlLoginUrl: process.env.NEXT_PUBLIC_GHL_LOGIN_URL ?? "",
+  ghlLoginUrl: clientLoginUrl,
   socialLinks: [] as Array<{ label: string; href: string }>,
 } as const;
 
