@@ -48,8 +48,11 @@ export function SiteHeader() {
               </Link>
             );
           })}
-          <RequestModalTrigger className="ml-2 h-10 px-4">
-            {siteConfig.cta.start}
+          <RequestModalTrigger
+            variant="outline"
+            className="ml-2 h-9 border-[color:var(--field-border)] bg-[var(--field-bg)] px-3 text-sm text-foreground shadow-none hover:bg-[var(--island-hover-bg)]"
+          >
+            {siteConfig.cta.nav}
           </RequestModalTrigger>
         </nav>
       </div>

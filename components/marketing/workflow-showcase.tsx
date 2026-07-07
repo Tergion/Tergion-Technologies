@@ -11,6 +11,7 @@ import { WorkflowShowcaseVisual } from "@/components/marketing/workflow-showcase
 import { WorkflowStepList } from "@/components/marketing/workflow-step-list";
 import { buttonVariants } from "@/components/ui/button";
 import type { WorkflowShowcase as WorkflowShowcaseItem } from "@/features/workflows/workflow.types";
+import { siteConfig } from "@/lib/site-config";
 
 type WorkflowShowcaseProps = {
   workflows: WorkflowShowcaseItem[];
@@ -87,7 +88,7 @@ export function WorkflowShowcase({ workflows }: WorkflowShowcaseProps) {
                   variant="outline"
                   className="h-auto min-h-11 w-full border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 py-2.5 text-foreground hover:bg-[var(--island-hover-bg)] sm:w-auto"
                 >
-                  Start the request
+                  {siteConfig.cta.workflow}
                 </RequestModalTrigger>
               </div>
             </div>

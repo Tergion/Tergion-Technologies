@@ -30,8 +30,14 @@ export const siteConfig = {
   chatbotEnabled: false,
   cta: {
     primary: "Request a free automation review",
-    start: "Start the request",
     secondary: "See example automations",
+    nav: "Start when ready",
+    contactPage: "Start with the basics",
+    workflow: "Ask about this workflow",
+    viewExample: "View example",
+    final: "Request review when ready",
+    footer: "Contact Tergion",
+    footerRequest: "Request an automation review",
   },
   navLinks: [
     { label: "Home", href: "/" },

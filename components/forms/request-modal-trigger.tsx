@@ -18,7 +18,7 @@ export function RequestModalTrigger({
   children,
   className,
   icon,
-  label = "Start the request",
+  label = "Start when ready",
   ...props
 }: RequestModalTriggerProps) {
   const { openRequestModal } = useRequestModal();

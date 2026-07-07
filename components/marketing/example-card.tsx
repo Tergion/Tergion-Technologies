@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { GlassCard } from "@/components/marketing/glass-card";
 import type { AutomationExample } from "@/features/examples/example.types";
+import { siteConfig } from "@/lib/site-config";
 
 export function ExampleCard({ example }: { example: AutomationExample }) {
   return (
@@ -20,7 +21,7 @@ export function ExampleCard({ example }: { example: AutomationExample }) {
         href={`/examples/${example.slug}`}
         className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-foreground"
       >
-        View workflow
+        {siteConfig.cta.viewExample}
         <ArrowUpRight className="size-4" aria-hidden="true" />
       </Link>
     </GlassCard>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
+import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site-config";
 
 const capabilityLinks = [
@@ -29,9 +30,16 @@ export function SiteFooter() {
               AI-assisted operations for growing companies.
             </p>
             <div className="mt-6">
-              <RequestModalTrigger className="h-10 px-4">
-                Start the request
-              </RequestModalTrigger>
+              <Link
+                href="/contact"
+                className={buttonVariants({
+                  variant: "outline",
+                  className:
+                    "h-10 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 text-foreground hover:bg-[var(--island-hover-bg)]",
+                })}
+              >
+                {siteConfig.cta.footer}
+              </Link>
             </div>
           </div>
 
@@ -104,7 +112,7 @@ export function SiteFooter() {
                 ) : null}
                 <li>
                   <RequestModalTrigger variant="link" className="h-auto p-0">
-                    Request review
+                    {siteConfig.cta.footerRequest}
                   </RequestModalTrigger>
                 </li>
               </ul>

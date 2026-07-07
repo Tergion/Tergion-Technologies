@@ -11,7 +11,7 @@ export const workflows: WorkflowShowcase[] = [
     imageSrc: null,
     imageAlt:
       "Illustrative website lead workflow showing intake, CRM creation, qualification notes, follow-up, task assignment, and booking.",
-    primaryCta: "Turn form submissions into follow-up",
+    primaryCta: "View example",
     exampleHref: "/examples/form-to-crm",
     steps: [
       {
@@ -62,7 +62,7 @@ export const workflows: WorkflowShowcase[] = [
     imageSrc: null,
     imageAlt:
       "Illustrative missed-call recovery workflow showing call detection, text-back, reply handling, CRM routing, appointment options, and scheduling.",
-    primaryCta: "Build a missed-call recovery system",
+    primaryCta: "View example",
     exampleHref: "/examples/missed-call-recovery",
     steps: [
       {
@@ -113,7 +113,7 @@ export const workflows: WorkflowShowcase[] = [
     imageSrc: null,
     imageAlt:
       "Illustrative quote follow-up workflow showing quote sent status, reminder scheduling, customer messaging, second follow-up, team task, and status update.",
-    primaryCta: "Automate quote follow-up",
+    primaryCta: "View example",
     exampleHref: "/examples/quote-follow-up",
     steps: [
       {
@@ -164,7 +164,7 @@ export const workflows: WorkflowShowcase[] = [
     imageSrc: null,
     imageAlt:
       "Illustrative review request workflow showing completed service, thank-you message, review request, customer review, team notification, and reporting update.",
-    primaryCta: "Create a review request workflow",
+    primaryCta: "View example",
     exampleHref: "/examples/review-automation",
     steps: [
       {
@@ -215,7 +215,7 @@ export const workflows: WorkflowShowcase[] = [
     imageSrc: null,
     imageAlt:
       "Illustrative appointment reminder workflow showing booking, reminder sequence, confirmation request, customer response, team notification, and calendar update.",
-    primaryCta: "Set up appointment reminders",
+    primaryCta: "View example",
     exampleHref: "/examples/appointment-reminders",
     steps: [
       {
@@ -266,7 +266,7 @@ export const workflows: WorkflowShowcase[] = [
     imageSrc: null,
     imageAlt:
       "Illustrative lead nurture workflow showing pipeline entry, interest tagging, follow-up sequence, behavior detection, sales task creation, and pipeline update.",
-    primaryCta: "Build a lead nurture system",
+    primaryCta: "View example",
     exampleHref: "/examples/lead-nurture",
     steps: [
       {

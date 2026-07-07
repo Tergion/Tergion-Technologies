@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Boxes, Home, Layers3, Send } from "lucide-react";
+import { Boxes, Home, Layers3, Mail } from "lucide-react";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { cn } from "@/lib/utils";
@@ -65,12 +65,13 @@ export function MobileActionBar() {
         );
       })}
       <RequestModalTrigger
-        variant="default"
-        className="flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 text-[0.68rem] font-semibold"
+        variant="outline"
+        aria-label="Contact Tergion"
+        className="flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border-[color:var(--field-border)] bg-[var(--field-bg)] px-2 text-[0.68rem] font-semibold text-foreground shadow-none hover:bg-[var(--island-hover-bg)]"
         style={{ flex: "1 1 0%", minWidth: 0 }}
       >
-        <Send className="size-4" aria-hidden="true" />
-        <span>Start</span>
+        <Mail className="size-4" aria-hidden="true" />
+        <span>Contact</span>
       </RequestModalTrigger>
     </nav>
   );
