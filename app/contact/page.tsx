@@ -34,7 +34,7 @@ export default function ContactPage() {
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <RequestModalTrigger className="h-12 px-5">
-              Start the request
+              {siteConfig.cta.contactPage}
             </RequestModalTrigger>
             <a
               href={`mailto:${siteConfig.contactEmail}`}
@@ -98,8 +98,11 @@ export default function ContactPage() {
             </ul>
           </div>
           <div className="mt-6">
-            <RequestModalTrigger className="h-11 px-4">
-              Request a free automation review
+            <RequestModalTrigger
+              variant="outline"
+              className="h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 text-foreground hover:bg-[var(--island-hover-bg)]"
+            >
+              {siteConfig.cta.footerRequest}
             </RequestModalTrigger>
           </div>
         </GlassCard>

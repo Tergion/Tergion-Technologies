@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
-import { CTASection } from "@/components/marketing/cta-section";
 import { GlassCard } from "@/components/marketing/glass-card";
 import {
   examples,
   getExampleBySlug,
 } from "@/features/examples/examples.data";
+import { siteConfig } from "@/lib/site-config";
 
 type ExamplePageProps = {
   params: Promise<{ slug: string }>;
@@ -112,15 +112,17 @@ export default async function ExampleDetailPage({ params }: ExamplePageProps) {
                 {example.cta}
               </p>
               <div className="mt-5">
-                <RequestModalTrigger className="h-11 px-4">
-                  Start the request
+                <RequestModalTrigger
+                  variant="outline"
+                  className="h-auto min-h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 py-2.5 text-foreground hover:bg-[var(--island-hover-bg)]"
+                >
+                  {siteConfig.cta.workflow}
                 </RequestModalTrigger>
               </div>
             </GlassCard>
           </div>
         </div>
       </article>
-      <CTASection />
     </>
   );
 }

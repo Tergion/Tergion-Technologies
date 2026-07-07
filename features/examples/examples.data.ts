@@ -41,7 +41,7 @@ export const examples: AutomationExample[] = [
       "Team assignment logic.",
       "Email, SMS, or phone-first follow-up preferences.",
     ],
-    cta: "Request a free automation review for missed-call recovery.",
+    cta: "Talk through a similar missed-call recovery workflow when you are ready.",
   },
   {
     slug: "quote-follow-up",
@@ -83,7 +83,7 @@ export const examples: AutomationExample[] = [
       "Short-cycle or long-cycle sales timing.",
       "Different workflows by service line or deal size.",
     ],
-    cta: "Request a free automation review for quote follow-up.",
+    cta: "Talk through a similar quote follow-up workflow when you are ready.",
   },
   {
     slug: "review-automation",
@@ -124,7 +124,7 @@ export const examples: AutomationExample[] = [
       "Review platform links.",
       "Customer segments and exclusion criteria.",
     ],
-    cta: "Request a free automation review for review request workflows.",
+    cta: "Talk through a similar review request workflow when you are ready.",
   },
   {
     slug: "lead-nurture",
@@ -166,7 +166,7 @@ export const examples: AutomationExample[] = [
       "Sales stages.",
       "Internal notification preferences.",
     ],
-    cta: "Request a free automation review for lead nurture workflows.",
+    cta: "Talk through a similar lead nurture workflow when you are ready.",
   },
   {
     slug: "appointment-reminders",
@@ -207,7 +207,7 @@ export const examples: AutomationExample[] = [
       "Appointment categories.",
       "Email, SMS, or call preference rules.",
     ],
-    cta: "Request a free automation review for appointment reminders.",
+    cta: "Talk through a similar appointment reminder workflow when you are ready.",
   },
   {
     slug: "form-to-crm",
@@ -249,7 +249,7 @@ export const examples: AutomationExample[] = [
       "UTM and source fields.",
       "CRM pipeline mapping.",
     ],
-    cta: "Request a free automation review for form-to-CRM workflows.",
+    cta: "Talk through a similar form-to-CRM workflow when you are ready.",
   },
 ];
 
