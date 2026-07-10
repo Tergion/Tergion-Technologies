@@ -471,70 +471,49 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
     title: "Third-Party Notices",
     effectiveDate,
     lastUpdatedDate,
-    intro: "This notice summarizes third-party service categories used or planned for the Tergion Technologies website. Providers process information only as needed to support the website, security, communications, lead handling, and business operations.",
+    intro: "This notice describes third-party services and provider categories that may support the Tergion Technologies website, request forms, security, lead handling, and business operations.",
     contact: defaultContact,
     sections: [
       {
-        heading: "Current and Planned Service Categories",
-        items: [
-          {
-            label: "Hosting and deployment",
-            status: "Active",
-            text: "The website is configured for Cloudflare Workers using the OpenNext Cloudflare adapter, with tergion.com and www.tergion.com configured as custom domains.",
-          },
-          {
-            label: "DNS and security provider",
-            status: "Configured",
-            text: "Cloudflare configuration is present for deployment and may support routing, DNS, and security services for the public site.",
-          },
-          {
-            label: "Cloudflare Turnstile",
-            status: "Configured",
-            text: "Cloudflare Turnstile token capture and server-side verification are implemented for the request form when production keys are configured.",
-          },
-          {
-            label: "Google Workspace or Google Sheets",
-            status: "Planned",
-            text: "The codebase includes a Google Sheets lead destination boundary, but live Sheets append is deferred in the inspected implementation.",
-          },
-          {
-            label: "Transactional email provider",
-            status: "Planned",
-            text: "The codebase includes email provider boundaries for internal notifications and confirmation emails, but live sending is deferred in the inspected implementation.",
-          },
-          {
-            label: "GoHighLevel or CRM platform",
-            status: "Configured",
-            text: "The codebase includes GoHighLevel contact sync for website leads when server-side credentials are configured. GoHighLevel may also be used as one possible CRM or automation platform for future client work or future integrations.",
-          },
-          {
-            label: "Analytics",
-            status: "Not currently active",
-            text: "The current Analytics component returns no script or tracking code. Analytics should be reviewed and disclosed before being enabled.",
-          },
-          {
-            label: "Google reviews or testimonials",
-            status: "Not currently active",
-            text: "The public site does not currently display live Google reviews, testimonials, or review widgets.",
-          },
-          {
-            label: "Open-source website packages",
-            status: "Active",
-            text: "The website uses open-source packages such as Next.js, React, TypeScript, Tailwind, Zod, React Hook Form, Motion, and related tooling. Package licenses govern those packages only. This notice does not grant rights to copy proprietary website content, branding, or implementation materials.",
-          },
+        heading: "Hosting, DNS, and security",
+        body: [
+          "Tergion Technologies uses Cloudflare to host, route, secure, and operate portions of the website and related infrastructure.",
+        ],
+      },
+      {
+        heading: "Bot and spam protection",
+        body: [
+          "Tergion Technologies uses Cloudflare Turnstile and related security controls to help protect request forms from spam, automated abuse, and suspicious activity.",
+        ],
+      },
+      {
+        heading: "CRM and lead management",
+        body: [
+          "Tergion Technologies may use a CRM and automation platform, including GoHighLevel/HighLevel where configured, to manage website inquiries, contact records, follow-up notes, tags, and related business operations.",
+        ],
+      },
+      {
+        heading: "Abuse prevention and rate limiting",
+        body: [
+          "Tergion Technologies may use infrastructure providers such as Upstash Redis to support rate limiting, duplicate request prevention, and abuse detection for website forms.",
+        ],
+      },
+      {
+        heading: "Communications providers",
+        body: [
+          "Tergion Technologies may use email, messaging, or business communication providers to respond to inquiries and manage business communications. Communication practices are also described in the Privacy Policy and Terms of Use.",
+        ],
+      },
+      {
+        heading: "Open-source website packages",
+        body: [
+          "The website uses open-source software packages such as Next.js, React, TypeScript, Tailwind, Zod, React Hook Form, and related tooling. Package licenses govern those packages only. This notice does not grant rights to copy Tergion Technologies' proprietary website content, branding, design, or implementation materials.",
         ],
       },
       {
         heading: "Updates",
         body: [
-          "This notice should be updated when analytics, live email sending, Google Sheets append, CRM lead routing, chatbot features, review widgets, or additional subprocessors are enabled.",
-        ],
-        items: [
-          {
-            text: "See the Privacy Policy for more information about sharing and service providers.",
-            href: "/privacy",
-            hrefLabel: "Privacy Policy",
-          },
+          "Tergion Technologies may update this notice if provider relationships, website operations, or service categories change.",
         ],
       },
     ],
