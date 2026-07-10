@@ -65,16 +65,23 @@ test("requires phone when text is the preferred contact method", async ({
   ).toBeVisible();
 });
 
-test("requires contact and privacy consent before submit", async ({ page }) => {
+test("keeps submit disabled until required consents are selected", async ({
+  page,
+}) => {
   const dialog = await openLeadForm(page);
 
   await completeContactStep(dialog);
   await dialog.getByRole("button", { name: "Continue" }).click();
   await dialog.getByRole("button", { name: "Continue" }).click();
-  await dialog.getByRole("button", { name: "Start the request" }).click();
+  const submitButton = dialog.getByRole("button", {
+    name: "Start the request",
+  });
 
-  await expect(dialog.getByText("Contact consent is required.")).toBeVisible();
-  await expect(
-    dialog.getByText("Privacy and terms consent is required."),
-  ).toBeVisible();
+  await expect(submitButton).toBeDisabled();
+
+  await dialog.getByLabel(/I agree to be contacted/).check();
+  await expect(submitButton).toBeDisabled();
+
+  await dialog.getByLabel(/I agree to the/).check();
+  await expect(submitButton).toBeEnabled();
 });

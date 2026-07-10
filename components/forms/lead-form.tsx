@@ -8,7 +8,7 @@ import type {
   Path,
   UseFormSetError,
 } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import type { ZodError } from "zod";
 
 import { FormProgress } from "@/components/forms/form-progress";
@@ -104,6 +104,11 @@ export function LeadForm() {
       aiDisclosureSeen: true,
     },
   });
+  const [contactConsent, privacyTermsConsent] = useWatch({
+    control: form.control,
+    name: ["contactConsent", "privacyTermsConsent"],
+  });
+  const requiredConsentsAccepted = contactConsent && privacyTermsConsent;
 
   useEffect(() => {
     form.setValue(
@@ -266,7 +271,11 @@ export function LeadForm() {
             Continue
           </Button>
         ) : (
-          <Button type="submit" className="h-11 px-5" disabled={submitting}>
+          <Button
+            type="submit"
+            className="h-11 px-5"
+            disabled={submitting || !requiredConsentsAccepted}
+          >
             {submitting ? "Submitting..." : "Start the request"}
           </Button>
         )}
