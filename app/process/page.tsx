@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
-import { CTASection } from "@/components/marketing/cta-section";
 import { GlassCard } from "@/components/marketing/glass-card";
 import { ProcessSteps } from "@/components/marketing/process-steps";
 import { buttonVariants } from "@/components/ui/button";
@@ -126,8 +125,6 @@ export default function ProcessPage() {
           </GlassCard>
         </div>
       </section>
-
-      <CTASection />
     </>
   );
 }
