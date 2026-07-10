@@ -44,24 +44,32 @@ export default function ContactPage() {
 
         <GlassCard className="p-6 md:p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-            Request path
+            What happens next
           </p>
           <h2 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
-            The form opens as a site-wide modal.
+            A simple request, reviewed by a person.
           </h2>
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            You can start from this page, the homepage, services, examples, or
-            the footer. The request goes through the same secure server-side
-            lead route either way.
+            The form asks for basic contact details, preferred follow-up method,
+            scheduling preference, and consent choices. Business context is
+            optional if it helps explain the workflow.
           </p>
           <div className="mt-6 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-4">
             <h3 className="text-sm font-semibold text-foreground">
-              What the request asks for
+              After you submit
             </h3>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
-              <li>Basic contact details and scheduling preference.</li>
-              <li>Optional CRM, priority, and workflow context.</li>
-              <li>Consent choices before anything is submitted.</li>
+              <li>
+                Your request is sent through the secure server-side lead route.
+              </li>
+              <li>
+                Tergion reviews the details and follows up using your selected
+                contact method.
+              </li>
+              <li>
+                Submitting a request does not confirm an appointment or create
+                an obligation.
+              </li>
             </ul>
           </div>
           <div className="mt-6">
