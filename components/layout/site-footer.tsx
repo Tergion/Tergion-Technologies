@@ -87,7 +87,7 @@ export function SiteFooter() {
 
             <div>
               <h2 className="text-sm font-semibold text-foreground">
-                Contact / Access
+                Contact
               </h2>
               <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
                 <li>
