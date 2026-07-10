@@ -61,10 +61,4 @@ export const serviceCapabilityGroups: ServiceCapabilityGroup[] = [
       "Planning support for approved social content calendars where it fits the business process.",
     items: ["Content calendar setup", "Post planning", "Approval flow support", "Visibility for owners"],
   },
-  {
-    title: "AI Features",
-    summary:
-      "AI-assisted drafting, notes, routing, and workflow planning can support operations with human review.",
-    items: ["Drafting support", "Internal notes", "Routing assistance", "Workflow planning"],
-  },
 ];
