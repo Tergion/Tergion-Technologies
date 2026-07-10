@@ -16,9 +16,11 @@ This site deploys to Cloudflare Workers through the OpenNext Cloudflare adapter.
 ```bash
 npm ci
 npm run lint
+npm run test
 npm run typecheck
 npm run build
 npm run cf:build
+npm run test:e2e
 npm run cf:preview
 npm run cf:deploy
 npm run cf:deploy-only
@@ -60,6 +62,8 @@ Set production values in Cloudflare before enabling live lead capture:
 - `TURNSTILE_SECRET_KEY`
 - `LEAD_NOTIFICATION_EMAIL`
 - `LEAD_FROM_EMAIL`
+- `GHL_PRIVATE_INTEGRATION_TOKEN`
+- `GHL_LOCATION_ID`
 - Email provider credentials when email sending is enabled
 - Google Sheets credentials when Sheets append is enabled
 - Distributed rate limit credentials when production persistence is enabled

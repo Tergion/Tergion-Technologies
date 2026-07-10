@@ -15,7 +15,7 @@
 - CAN-SPAM setup before marketing email campaigns, including postal address, sender identity, and opt-out process.
 - SMS/TCPA operational review before automated SMS campaigns or text-back workflows.
 - Review/testimonial compliance review before adding Google reviews, testimonials, ratings, or public feedback widgets.
-- Live provider list review before enabling analytics, Google Sheets append, transactional email sending, GoHighLevel lead routing, chatbot features, or review widgets.
+- Live provider list review before enabling analytics, Google Sheets append, transactional email sending, chatbot features, or review widgets; confirm GoHighLevel lead routing disclosures before production use.
 - GoHighLevel and client service contract terms review before using CRM access, client logins, paid SaaS-style services, or managed client systems.
 - User-generated content policy only if future accounts, uploads, comments, chatbot logs, or client portal features are added.
 - Codebase license review. The current repository is marked proprietary, all rights reserved, and UNLICENSED in package metadata.

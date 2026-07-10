@@ -33,6 +33,8 @@ npm run cf:preview
 npm run cf:deploy
 npm run cf:deploy-only
 npm run lint
+npm run test
+npm run test:e2e
 npm run typecheck
 npm run start
 ```
@@ -47,7 +49,7 @@ This site includes the public marketing foundation, implementation-aligned legal
 
 ## Integration Status
 
-Cloudflare Turnstile, Google Sheets, email sending, analytics, GoHighLevel, production rate limiting, and duplicate persistence are stubbed or deferred until credentials and provider choices are finalized.
+GoHighLevel contact sync is implemented when a Private Integration token and location ID are configured. Cloudflare Turnstile token handling is implemented when keys are configured. Production rate limiting and duplicate suppression use Upstash Redis when configured and fall back to in-memory development storage otherwise. Google Sheets, email sending, and analytics remain stubbed or deferred until credentials and provider choices are finalized.
 
 ## Security And Legal Notes
 

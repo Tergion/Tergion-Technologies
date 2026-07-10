@@ -37,14 +37,22 @@ npm run dev:smart
 
 ```bash
 npm run lint
+npm run test
 npm run typecheck
 npm run build
 ```
 
-The local verification helper runs the same checks and runs tests if a test script is later added:
+The local verification helper runs lint, typecheck, build, and the configured unit/integration test script:
 
 ```bash
 npm run verify:local
+```
+
+Browser form tests use Playwright against a production server, so build first:
+
+```bash
+npm run build
+npm run test:e2e
 ```
 
 Cloudflare Worker build and preview:
@@ -66,7 +74,7 @@ npm run cf:preview
 
 ## Stubbed Integrations
 
-The current site still uses stubs or deferred implementations for Google Sheets append, transactional email, live bot-protection widget loading, production distributed rate limiting, persistent duplicate detection, analytics, and future CRM integration.
+The current site still uses stubs or deferred implementations for Google Sheets append, transactional email, and analytics. GoHighLevel lead contact sync uses a safe development stub when credentials are missing and sends to GoHighLevel when `GHL_PRIVATE_INTEGRATION_TOKEN` or `GHL_API_KEY` plus `GHL_LOCATION_ID` are configured. Cloudflare Turnstile token capture and server verification are implemented when keys are configured. Rate limiting and duplicate suppression use Upstash Redis when configured and fall back to in-memory development storage otherwise.
 
 ## API Checks
 
