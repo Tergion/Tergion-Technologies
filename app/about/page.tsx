@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { CTASection } from "@/components/marketing/cta-section";
 import { GlassCard } from "@/components/marketing/glass-card";
 
 export const metadata: Metadata = {
@@ -58,8 +57,6 @@ export default function AboutPage() {
           </GlassCard>
         </div>
       </section>
-
-      <CTASection />
     </>
   );
 }
