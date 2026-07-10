@@ -95,6 +95,10 @@ export function LeadForm() {
       completionStartedAt: startedAt,
       turnstileToken: "",
       timezone: "",
+      utmSource: "",
+      utmMedium: "",
+      utmCampaign: "",
+      utmContent: "",
       referrer: "",
       landingPage: "",
       aiDisclosureSeen: true,
@@ -108,6 +112,12 @@ export function LeadForm() {
     );
     form.setValue("referrer", document.referrer || "");
     form.setValue("landingPage", window.location.href);
+    const searchParams = new URLSearchParams(window.location.search);
+
+    form.setValue("utmSource", searchParams.get("utm_source") || "");
+    form.setValue("utmMedium", searchParams.get("utm_medium") || "");
+    form.setValue("utmCampaign", searchParams.get("utm_campaign") || "");
+    form.setValue("utmContent", searchParams.get("utm_content") || "");
   }, [form]);
 
   function focusField(name?: Path<LeadSubmissionInput>) {

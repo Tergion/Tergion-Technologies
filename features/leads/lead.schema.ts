@@ -17,6 +17,24 @@ const optionalText = (max: number) =>
 const requiredText = (label: string, max: number) =>
   z.string().trim().min(1, `${label} is required.`).max(max);
 
+const requiredEmail = (max: number) =>
+  z.string().trim().max(max).superRefine((value, ctx) => {
+    if (!value) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Email is required.",
+      });
+      return;
+    }
+
+    if (!z.email().safeParse(value).success) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Enter a valid email address.",
+      });
+    }
+  });
+
 const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
   z
     .enum(values)
@@ -34,12 +52,7 @@ export const leadBaseSchema = z.object({
   firstName: requiredText("First name", 80),
   lastName: optionalText(80),
   businessName: requiredText("Business name", 140),
-  email: z
-    .string()
-    .trim()
-    .min(1, "Email is required.")
-    .email("Enter a valid email address.")
-    .max(180),
+  email: requiredEmail(180),
   phone: optionalText(40),
   website: optionalText(220),
   preferredContactMethod: preferredContactMethodSchema,

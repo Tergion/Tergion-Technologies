@@ -133,7 +133,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
           },
           {
             label: "CRM and automation tools",
-            text: "GoHighLevel or other CRM and automation platforms may be used for future client work or future lead handling if configured, but the inspected website lead route does not currently send leads to GoHighLevel.",
+            text: "GoHighLevel may receive website lead contact details, consent context, attribution details, and request notes when the GoHighLevel integration is configured. Other CRM and automation platforms may be used for future client work or lead handling if configured.",
           },
           {
             label: "Professional and legal needs",
@@ -299,7 +299,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         heading: "Third-Party Services",
         body: [
           "The website may use third-party providers for hosting, security, communications, lead handling, and business operations. Third-party services have their own terms and privacy practices.",
-          "GoHighLevel, CRM platforms, email providers, analytics tools, or other providers may have additional terms if used later for client work or live integrations.",
+          "GoHighLevel, CRM platforms, email providers, analytics tools, or other providers may have additional terms when used for website lead handling, client work, or live integrations.",
         ],
       },
       {
@@ -490,7 +490,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
           {
             label: "Cloudflare Turnstile",
             status: "Configured",
-            text: "A server-side Turnstile verification boundary exists. Production challenge behavior depends on configured keys and client token handoff.",
+            text: "Cloudflare Turnstile token capture and server-side verification are implemented for the request form when production keys are configured.",
           },
           {
             label: "Google Workspace or Google Sheets",
@@ -504,8 +504,8 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
           },
           {
             label: "GoHighLevel or CRM platform",
-            status: "Planned",
-            text: "GoHighLevel may be used as one possible CRM or automation platform for future client work or future integrations, but the inspected website lead route does not currently send leads to GoHighLevel.",
+            status: "Configured",
+            text: "The codebase includes GoHighLevel contact sync for website leads when server-side credentials are configured. GoHighLevel may also be used as one possible CRM or automation platform for future client work or future integrations.",
           },
           {
             label: "Analytics",

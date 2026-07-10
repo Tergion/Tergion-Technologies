@@ -1,9 +1,13 @@
+import { hasUpstashRedisConfig } from "@/lib/env";
+import { runUpstashPipeline } from "@/features/leads/upstash";
+
 type RateLimitBucket = {
   count: number;
   resetAt: number;
 };
 
 const windowMs = 10 * 60 * 1000;
+const windowSeconds = windowMs / 1000;
 const maxRequests = 5;
 const buckets = new Map<string, RateLimitBucket>();
 
@@ -26,10 +30,7 @@ async function getClientSignal(request: Request) {
   return hashSignal(`${ip}:${userAgent}`);
 }
 
-export async function checkLeadRateLimit(
-  request: Request,
-): Promise<{ allowed: boolean; reason?: string }> {
-  const key = await getClientSignal(request);
+async function checkInMemoryRateLimit(key: string) {
   const now = Date.now();
   const current = buckets.get(key);
 
@@ -48,4 +49,42 @@ export async function checkLeadRateLimit(
   }
 
   return { allowed: true };
+}
+
+async function checkUpstashRateLimit(key: string) {
+  const redisKey = `lead:rate:${key}`;
+  const results = await runUpstashPipeline([
+    ["INCR", redisKey],
+    ["EXPIRE", redisKey, windowSeconds],
+  ]);
+  const count = Number(results[0]?.result ?? 0);
+
+  if (count > maxRequests) {
+    return {
+      allowed: false,
+      reason: "upstash-rate-limit",
+    };
+  }
+
+  return { allowed: true };
+}
+
+export async function checkLeadRateLimit(
+  request: Request,
+): Promise<{ allowed: boolean; reason?: string }> {
+  const key = await getClientSignal(request);
+
+  if (hasUpstashRedisConfig()) {
+    try {
+      return await checkUpstashRateLimit(key);
+    } catch {
+      return checkInMemoryRateLimit(key);
+    }
+  }
+
+  return checkInMemoryRateLimit(key);
+}
+
+export function resetLeadRateLimitMemoryForTests() {
+  buckets.clear();
 }

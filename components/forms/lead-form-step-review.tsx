@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import {
@@ -33,6 +34,7 @@ function FieldError({ message, id }: { message?: string; id: string }) {
 export function LeadFormStepReview({ form }: LeadFormStepProps) {
   const {
     register,
+    setValue,
     watch,
     formState: { errors },
   } = form;
@@ -45,6 +47,15 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
     usesCrmOptions.find((option) => option.value === values.usesCrm)?.label ??
     "Not sure";
   const interests = values.automationInterests ?? [];
+  const handleTurnstileToken = useCallback(
+    (token: string) => {
+      setValue("turnstileToken", token, {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    },
+    [setValue],
+  );
 
   return (
     <div className="space-y-5">
@@ -198,7 +209,7 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
         </div>
       </div>
 
-      <TurnstileWidget />
+      <TurnstileWidget onToken={handleTurnstileToken} />
 
       <input
         type="text"

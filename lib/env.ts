@@ -15,6 +15,16 @@ export const env = {
   leadFromEmail:
     process.env.LEAD_FROM_EMAIL ||
     "Tergion Technologies <contact@tergion.com>",
+  goHighLevelToken:
+    process.env.GHL_PRIVATE_INTEGRATION_TOKEN ||
+    process.env.GHL_API_KEY ||
+    "",
+  goHighLevelLocationId: process.env.GHL_LOCATION_ID || "",
+  goHighLevelSource:
+    process.env.GHL_SOURCE || "Tergion website lead form",
+  goHighLevelLeadTags: process.env.GHL_LEAD_TAGS || "website-lead",
+  upstashRedisRestUrl: process.env.UPSTASH_REDIS_REST_URL || "",
+  upstashRedisRestToken: process.env.UPSTASH_REDIS_REST_TOKEN || "",
   nodeEnv: process.env.NODE_ENV || "development",
 };
 
@@ -40,4 +50,12 @@ export function hasEmailConfig() {
   }
 
   return false;
+}
+
+export function hasGoHighLevelConfig() {
+  return Boolean(env.goHighLevelToken && env.goHighLevelLocationId);
+}
+
+export function hasUpstashRedisConfig() {
+  return Boolean(env.upstashRedisRestUrl && env.upstashRedisRestToken);
 }

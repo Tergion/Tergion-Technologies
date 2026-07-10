@@ -7,6 +7,7 @@ import {
   sendInternalLeadNotification,
   sendLeadConfirmationEmail,
 } from "@/features/leads/email";
+import { sendLeadToGoHighLevel } from "@/features/leads/gohighlevel";
 import { checkLeadSpamSignals } from "@/features/leads/spam-check";
 import { verifyTurnstileToken } from "@/features/leads/turnstile";
 import type { LeadRecord } from "@/features/leads/lead.types";
@@ -81,6 +82,14 @@ export async function POST(request: Request) {
   }
 
   const duplicate = await checkDuplicateLead(payload.email, payload.phone);
+
+  if (duplicate.duplicateLikely) {
+    return Response.json({
+      ok: true,
+      message: leadSuccessMessage,
+    });
+  }
+
   const createdAt = new Date().toISOString();
   const lead: LeadRecord = {
     ...payload,
@@ -99,6 +108,7 @@ export async function POST(request: Request) {
   };
 
   try {
+    await sendLeadToGoHighLevel(lead);
     await appendLeadToGoogleSheet(lead);
     await sendInternalLeadNotification(lead);
     await sendLeadConfirmationEmail(lead);
