@@ -66,6 +66,7 @@ export function LeadForm() {
   const [startedAt] = useState(() => Date.now());
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState("");
+  const [successMessage, setSuccessMessage] = useState(leadSuccessMessage);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -209,7 +210,8 @@ export function LeadForm() {
 
     try {
       setSubmitting(true);
-      await submitLead(parsed.data);
+      const result = await submitLead(parsed.data);
+      setSuccessMessage(result.message || leadSuccessMessage);
       setSubmitted(true);
     } catch {
       setFormError(
@@ -227,7 +229,7 @@ export function LeadForm() {
           Request received
         </h3>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {leadSuccessMessage}
+          {successMessage}
         </p>
       </div>
     );

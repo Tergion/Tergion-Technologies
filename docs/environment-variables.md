@@ -21,8 +21,8 @@
 - `GHL_PRIVATE_INTEGRATION_TOKEN`: preferred GoHighLevel Private Integration token for lead contact sync.
 - `GHL_API_KEY`: legacy fallback for the GoHighLevel token value.
 - `GHL_LOCATION_ID`: GoHighLevel sub-account/location identifier for lead contact sync.
-- `UPSTASH_REDIS_REST_URL`: Upstash REST URL for production rate limiting.
-- `UPSTASH_REDIS_REST_TOKEN`: Upstash REST token.
+- `UPSTASH_REDIS_REST_URL`: Upstash REST URL for production rate limiting and duplicate suppression.
+- `UPSTASH_REDIS_REST_TOKEN`: Upstash REST token for production rate limiting and duplicate suppression.
 
 ## Operational Config
 
@@ -38,4 +38,4 @@
 
 ## Current Requirement Status
 
-Most variables are optional in local development. Production should configure these values as Cloudflare Worker variables or secrets before public launch, especially Turnstile, GoHighLevel lead sync, email sending, and distributed rate limiting.
+Most variables are optional in local development. Production should configure these values as Cloudflare Worker variables or secrets before public launch, especially Turnstile, GoHighLevel lead sync, email sending, and Upstash-backed distributed rate limiting and duplicate suppression. Without Upstash, the app falls back to in-memory checks that are useful locally but not durable across Cloudflare Worker isolates.

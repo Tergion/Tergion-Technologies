@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { leadDuplicateMessage } from "@/features/leads/lead.constants";
 import { makeLeadSubmission } from "@/tests/fixtures/leads";
 
 function clearIntegrationEnv() {
@@ -73,6 +74,7 @@ describe("/api/leads", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     clearIntegrationEnv();
   });
 
@@ -88,7 +90,7 @@ describe("/api/leads", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("suppresses duplicate email submissions before calling GoHighLevel again", async () => {
+  it("returns a calm duplicate message for repeated email submissions before calling GoHighLevel again", async () => {
     setGoHighLevelEnv();
     const fetchMock = mockSuccessfulGoHighLevelFetch();
     const POST = await importRoute();
@@ -103,11 +105,14 @@ describe("/api/leads", () => {
     );
 
     await expect(first.json()).resolves.toMatchObject({ ok: true });
-    await expect(second.json()).resolves.toMatchObject({ ok: true });
+    await expect(second.json()).resolves.toMatchObject({
+      ok: true,
+      message: leadDuplicateMessage,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it("suppresses duplicate phone submissions before calling GoHighLevel again", async () => {
+  it("returns a calm duplicate message for repeated phone submissions before calling GoHighLevel again", async () => {
     setGoHighLevelEnv();
     const fetchMock = mockSuccessfulGoHighLevelFetch();
     const POST = await importRoute();
@@ -129,14 +134,33 @@ describe("/api/leads", () => {
     );
 
     await expect(first.json()).resolves.toMatchObject({ ok: true });
-    await expect(second.json()).resolves.toMatchObject({ ok: true });
+    await expect(second.json()).resolves.toMatchObject({
+      ok: true,
+      message: leadDuplicateMessage,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it("blocks the sixth request from the same client signal", async () => {
+  it("allows repeated contact submissions after the duplicate cooldown", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-10T12:00:00.000Z"));
+    setGoHighLevelEnv();
+    const fetchMock = mockSuccessfulGoHighLevelFetch();
+    const POST = await importRoute();
+    const first = await POST(makePostRequest(makeLeadSubmission()));
+
+    vi.setSystemTime(new Date("2026-07-10T12:16:00.000Z"));
+    const second = await POST(makePostRequest(makeLeadSubmission()));
+
+    await expect(first.json()).resolves.toMatchObject({ ok: true });
+    await expect(second.json()).resolves.toMatchObject({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(6);
+  });
+
+  it("blocks the fourth request from the same client signal in an hour", async () => {
     const POST = await importRoute();
 
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 3; i += 1) {
       const response = await POST(
         makePostRequest(
           makeLeadSubmission({ email: `rate-${i}@example.com` }),
@@ -149,7 +173,7 @@ describe("/api/leads", () => {
 
     const blocked = await POST(
       makePostRequest(
-        makeLeadSubmission({ email: "rate-6@example.com" }),
+        makeLeadSubmission({ email: "rate-4@example.com" }),
         "203.0.113.20",
       ),
     );
@@ -181,6 +205,35 @@ describe("/api/leads", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns a generic verification error when Turnstile verification fails", async () => {
+    process.env.TURNSTILE_SECRET_KEY = "test-secret";
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes("challenges.cloudflare.com/turnstile")) {
+        return Response.json({ success: false });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const POST = await importRoute();
+    const response = await POST(
+      makePostRequest(
+        makeLeadSubmission({
+          turnstileToken: "XXXX.DUMMY.TOKEN.XXXX",
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      message: "We could not verify the request. Please try again.",
+    });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

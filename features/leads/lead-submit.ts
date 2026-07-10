@@ -1,5 +1,11 @@
 import type { LeadSubmission } from "@/features/leads/lead.types";
 
+type LeadSubmitResponse = {
+  ok?: boolean;
+  message?: string;
+  leadId?: string;
+};
+
 export async function submitLead(payload: LeadSubmission) {
   const response = await fetch("/api/leads", {
     method: "POST",
@@ -10,7 +16,7 @@ export async function submitLead(payload: LeadSubmission) {
   });
 
   const data = (await response.json().catch(() => null)) as
-    | { ok?: boolean; message?: string }
+    | LeadSubmitResponse
     | null;
 
   if (!response.ok || !data?.ok) {

@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { checkDuplicateLead, resetDuplicateLeadMemoryForTests } from "@/features/leads/duplicate-check";
-import { checkLeadRateLimit, resetLeadRateLimitMemoryForTests } from "@/features/leads/rate-limit";
+import {
+  checkDuplicateLead,
+  resetDuplicateLeadMemoryForTests,
+} from "@/features/leads/duplicate-check";
+import {
+  checkLeadRateLimit,
+  resetLeadRateLimitMemoryForTests,
+} from "@/features/leads/rate-limit";
 import { checkLeadSpamSignals } from "@/features/leads/spam-check";
 import { makeLeadSubmission } from "@/tests/fixtures/leads";
 
@@ -39,16 +45,44 @@ describe("lead rate limiting", () => {
     resetLeadRateLimitMemoryForTests();
   });
 
-  it("blocks the sixth request in the same ten minute window", async () => {
-    for (let i = 0; i < 5; i += 1) {
-      await expect(checkLeadRateLimit(makeRequest())).resolves.toMatchObject({
+  it("blocks the fourth request in the same hourly window", async () => {
+    const now = Date.UTC(2026, 6, 10, 12);
+
+    for (let i = 0; i < 3; i += 1) {
+      await expect(
+        checkLeadRateLimit(makeRequest(), now + i),
+      ).resolves.toMatchObject({
         allowed: true,
       });
     }
 
-    await expect(checkLeadRateLimit(makeRequest())).resolves.toMatchObject({
+    await expect(
+      checkLeadRateLimit(makeRequest(), now + 3),
+    ).resolves.toMatchObject({
       allowed: false,
-      reason: "development-in-memory-rate-limit",
+      reason: "development-in-memory-rate-limit-hour",
+    });
+  });
+
+  it("blocks the eleventh request in the same daily window", async () => {
+    const now = Date.UTC(2026, 6, 10, 12);
+
+    for (let i = 0; i < 10; i += 1) {
+      const hourOffset = Math.floor(i / 3) * 60 * 60 * 1000;
+      const secondOffset = (i % 3) * 1000;
+
+      await expect(
+        checkLeadRateLimit(makeRequest(), now + hourOffset + secondOffset),
+      ).resolves.toMatchObject({
+        allowed: true,
+      });
+    }
+
+    await expect(
+      checkLeadRateLimit(makeRequest(), now + 3 * 60 * 60 * 1000 + 1000),
+    ).resolves.toMatchObject({
+      allowed: false,
+      reason: "development-in-memory-rate-limit-day",
     });
   });
 });
@@ -58,29 +92,60 @@ describe("lead duplicate checks", () => {
     resetDuplicateLeadMemoryForTests();
   });
 
-  it("flags repeated emails within the duplicate window", async () => {
-    await expect(checkDuplicateLead("test@example.com")).resolves.toMatchObject({
+  it("flags repeated emails within the duplicate cooldown", async () => {
+    const now = Date.UTC(2026, 6, 10, 12);
+
+    await expect(
+      checkDuplicateLead("test@example.com", undefined, now),
+    ).resolves.toMatchObject({
       duplicateLikely: false,
     });
 
-    await expect(checkDuplicateLead(" TEST@example.com ")).resolves.toMatchObject({
+    await expect(
+      checkDuplicateLead(" TEST@example.com ", undefined, now + 1),
+    ).resolves.toMatchObject({
       duplicateLikely: true,
-      reason: "email-submitted-recently",
+      reason: "email-submitted-too-recently",
     });
   });
 
-  it("flags repeated phone numbers within the duplicate window", async () => {
+  it("flags repeated phone numbers within the duplicate cooldown", async () => {
+    const now = Date.UTC(2026, 6, 10, 12);
+
     await expect(
-      checkDuplicateLead("one@example.com", "+15551234567"),
+      checkDuplicateLead("one@example.com", "+1 (555) 123-4567", now),
     ).resolves.toMatchObject({
       duplicateLikely: false,
     });
 
     await expect(
-      checkDuplicateLead("two@example.com", "+15551234567"),
+      checkDuplicateLead("two@example.com", "15551234567", now + 1),
     ).resolves.toMatchObject({
       duplicateLikely: true,
-      reason: "phone-submitted-recently",
+      reason: "phone-submitted-too-recently",
+    });
+  });
+
+  it("allows three submissions per email across cooldown windows and blocks the fourth daily duplicate", async () => {
+    const now = Date.UTC(2026, 6, 10, 12);
+
+    for (let i = 0; i < 3; i += 1) {
+      await expect(
+        checkDuplicateLead(
+          "daily@example.com",
+          undefined,
+          now + i * 16 * 60 * 1000,
+        ),
+      ).resolves.toMatchObject({
+        duplicateLikely: false,
+      });
+    }
+
+    await expect(
+      checkDuplicateLead("daily@example.com", undefined, now + 48 * 60 * 1000),
+    ).resolves.toMatchObject({
+      duplicateLikely: true,
+      reason: "email-daily-limit",
     });
   });
 });

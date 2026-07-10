@@ -69,9 +69,32 @@ Set production values in Cloudflare before enabling live lead capture:
 - `GHL_LOCATION_ID`
 - Email provider credentials when email sending is enabled
 - Google Sheets credentials when Sheets append is enabled
-- Distributed rate limit credentials when production persistence is enabled
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 
 Keep server-only values as Cloudflare secrets.
+
+## Lead Form Abuse Protection
+
+The application includes local in-memory fallbacks for development, but
+production lead capture should configure Upstash Redis so rate limits and
+duplicate suppression survive across Cloudflare Worker isolates and regions.
+
+Configured production rules:
+
+- Same email: 1 request per 15 minutes and 3 requests per 24 hours.
+- Same phone: 1 request per 15 minutes and 3 requests per 24 hours.
+- Same client signal: 3 requests per hour and 10 requests per 24 hours.
+
+Recommended Cloudflare dashboard hardening:
+
+1. Enable Turnstile with production keys and set both
+   `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY`.
+2. Add a WAF or rate-limiting rule scoped to `http.request.uri.path eq "/api/leads"`.
+3. Start with a conservative challenge or block threshold above normal human use,
+   such as repeated POST requests to `/api/leads` from the same IP in a short
+   period.
+4. Monitor Cloudflare events and Worker logs before tightening thresholds.
 
 ## Verification
 

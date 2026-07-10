@@ -1,7 +1,10 @@
 import { appendLeadToGoogleSheet } from "@/features/leads/google-sheets";
 import { checkDuplicateLead } from "@/features/leads/duplicate-check";
 import { checkLeadRateLimit } from "@/features/leads/rate-limit";
-import { leadSuccessMessage } from "@/features/leads/lead.constants";
+import {
+  leadDuplicateMessage,
+  leadSuccessMessage,
+} from "@/features/leads/lead.constants";
 import { leadSubmissionSchema } from "@/features/leads/lead.schema";
 import {
   sendInternalLeadNotification,
@@ -13,10 +16,16 @@ import { verifyTurnstileToken } from "@/features/leads/turnstile";
 import type { LeadRecord } from "@/features/leads/lead.types";
 
 function getRemoteIp(request: Request) {
+  const connectingIp = request.headers.get("cf-connecting-ip") ?? "";
   const forwardedFor = request.headers.get("x-forwarded-for") ?? "";
   const realIp = request.headers.get("x-real-ip") ?? "";
 
-  return forwardedFor.split(",")[0]?.trim() || realIp || undefined;
+  return (
+    connectingIp.trim() ||
+    forwardedFor.split(",")[0]?.trim() ||
+    realIp ||
+    undefined
+  );
 }
 
 function validationErrorResponse() {
@@ -86,7 +95,7 @@ export async function POST(request: Request) {
   if (duplicate.duplicateLikely) {
     return Response.json({
       ok: true,
-      message: leadSuccessMessage,
+      message: leadDuplicateMessage,
     });
   }
 

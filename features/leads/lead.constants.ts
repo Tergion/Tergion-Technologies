@@ -36,5 +36,8 @@ export const requestPriorityOptions = [
 export const leadSuccessMessage =
   "Thanks. We received your request. We'll review your information and follow up based on your preferred contact method. No obligation, no pressure.";
 
+export const leadDuplicateMessage =
+  "We already received a recent request with this contact information. If you need to add something, email contact@tergion.com.";
+
 export const leadFormHelperCopy =
   "Start with the basics. The business details are optional.";
