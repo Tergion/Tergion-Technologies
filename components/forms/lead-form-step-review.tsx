@@ -151,7 +151,7 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
           <input
             id="contactConsent"
             type="checkbox"
-            className="mt-0.5 size-5 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
+            className="mt-1 size-4 shrink-0 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
             aria-invalid={Boolean(errors.contactConsent)}
             aria-describedby="contactConsent-error"
             {...register("contactConsent")}
@@ -171,7 +171,7 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
           <input
             id="privacyTermsConsent"
             type="checkbox"
-            className="mt-0.5 size-5 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
+            className="mt-1 size-4 shrink-0 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
             aria-invalid={Boolean(errors.privacyTermsConsent)}
             aria-describedby="privacyTermsConsent-error"
             {...register("privacyTermsConsent")}
@@ -199,7 +199,7 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
           <input
             id="smsConsent"
             type="checkbox"
-            className="mt-0.5 size-5 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
+            className="mt-1 size-4 shrink-0 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
             {...register("smsConsent")}
           />
           <Label htmlFor="smsConsent" className="leading-5">
