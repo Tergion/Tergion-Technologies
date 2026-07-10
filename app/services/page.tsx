@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { CTASection } from "@/components/marketing/cta-section";
 import { CapabilityGroup } from "@/components/marketing/capability-group";
 import { GlassCard } from "@/components/marketing/glass-card";
 import { SectionShell } from "@/components/marketing/section-shell";
@@ -24,9 +23,9 @@ const services = [
       "Build follow-up, reminder, assignment, and notification workflows with clear points where a person can review, pause, or adjust the system.",
   },
   {
-    title: "AI-Assisted Operations",
+    title: "Website and Funnel Form Workflows",
     description:
-      "Use AI support for drafting, qualification notes, routing, and workflow planning while keeping business judgment and review in the loop.",
+      "Route form submissions into structured CRM records with source details, assignment logic, and follow-up actions.",
   },
   {
     title: "Lead Capture & Follow-Up Systems",
@@ -34,19 +33,14 @@ const services = [
       "Connect website forms, calls, calendars, and CRM records so new inquiries receive consistent next steps without relying on memory.",
   },
   {
-    title: "Website and Funnel Form Workflows",
-    description:
-      "Route form submissions into structured CRM records with source details, assignment logic, and follow-up actions.",
-  },
-  {
     title: "Reporting and Visibility",
     description:
       "Organize lead, appointment, communication, and workflow data so owners can see what is active, stalled, or waiting for action.",
   },
   {
-    title: "White-Label CRM Access",
+    title: "AI-Assisted Operations",
     description:
-      "Tergion can configure white-label CRM access for businesses that need a centralized place to manage leads, appointments, conversations, automations, and follow-up.",
+      "Use AI support for drafting, qualification notes, routing, and workflow planning while keeping business judgment and review in the loop.",
   },
 ];
 
@@ -96,8 +90,6 @@ export default function ServicesPage() {
           ))}
         </div>
       </SectionShell>
-
-      <CTASection />
     </>
   );
 }
