@@ -30,14 +30,17 @@ Use `npm run cf:upload` when you want to upload a Worker version without immedia
 
 ## Cloudflare Setup
 
-1. Connect the GitHub repository to Cloudflare Workers Builds or deploy from a local authenticated Wrangler session.
-2. Use `main` as the production branch.
-3. Use `npm ci` for dependency installation.
-4. Use `npm run cf:build` as the Workers Builds build command.
-5. Use `npm run cf:deploy-only` as the Workers Builds deploy command.
-6. Keep the Worker name aligned with `wrangler.jsonc`: `tergion`.
-7. Keep `tergion.com` and `www.tergion.com` source-controlled as custom domain routes in `wrangler.jsonc`.
-8. Configure `https://tergion.com` as the canonical production URL through `NEXT_PUBLIC_SITE_URL`.
+1. Disable Cloudflare Workers Builds automatic Git deployments for this Worker so production deploys cannot bypass GitHub CI.
+2. Use GitHub Actions as the production deployment path from `main`.
+3. Configure GitHub repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+4. Configure GitHub repository variables `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SITE_NAME`, and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` for production builds.
+5. Keep server-only runtime secrets, including `TURNSTILE_SECRET_KEY`, `GHL_PRIVATE_INTEGRATION_TOKEN`, and `GHL_LOCATION_ID`, in Cloudflare Worker secrets.
+6. Protect `main` in GitHub and require the `Verify` status check before merging.
+7. Keep the Worker name aligned with `wrangler.jsonc`: `tergion`.
+8. Keep `tergion.com` and `www.tergion.com` source-controlled as custom domain routes in `wrangler.jsonc`.
+9. Configure `https://tergion.com` as the canonical production URL through `NEXT_PUBLIC_SITE_URL`.
+
+The GitHub Actions `Deploy production` job depends on the `Verify` job. A Worker deploy will not run unless lint, typecheck, unit and route tests, production build, Cloudflare build, and Playwright E2E tests pass first.
 
 ## Runtime Settings
 
