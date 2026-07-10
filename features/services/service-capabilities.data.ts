@@ -50,22 +50,10 @@ export const serviceCapabilityGroups: ServiceCapabilityGroup[] = [
     items: ["Payment links", "Invoice workflow support", "Provider setup support", "Operational handoffs"],
   },
   {
-    title: "Reputation Management",
-    summary:
-      "Customer feedback and review request workflows that remain conservative, voluntary, and trackable.",
-    items: ["Review request timing", "Exclusion rules", "Feedback routing", "Activity visibility"],
-  },
-  {
     title: "Reporting & Analytics",
     summary:
       "Operational reporting views for leads, appointments, communication, and workflow activity.",
     items: ["Lead reporting", "Appointment visibility", "Workflow activity", "Follow-up status"],
-  },
-  {
-    title: "Memberships & Courses",
-    summary:
-      "Structured content and access workflows can be configured for businesses that need client education or gated resources.",
-    items: ["Access structure", "Content organization", "Member communication", "Basic onboarding flows"],
   },
   {
     title: "Social Planner",
@@ -78,11 +66,5 @@ export const serviceCapabilityGroups: ServiceCapabilityGroup[] = [
     summary:
       "AI-assisted drafting, notes, routing, and workflow planning can support operations with human review.",
     items: ["Drafting support", "Internal notes", "Routing assistance", "Workflow planning"],
-  },
-  {
-    title: "Team, Settings & White-Label Controls",
-    summary:
-      "Team permissions, settings, branded access, and administrative controls configured around actual operating needs.",
-    items: ["User roles", "Team settings", "White-label access", "Administrative controls"],
   },
 ];
