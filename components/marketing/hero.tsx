@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
-import { WorkflowMockup } from "@/components/marketing/workflow-mockup";
+import { GlassCard } from "@/components/marketing/glass-card";
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site-config";
 
@@ -37,14 +37,12 @@ export function Hero() {
               {siteConfig.cta.secondary}
             </Link>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
-            No obligation. No pressure. You stay in control of the process.
-          </p>
         </div>
 
-        <div className="w-full min-w-0 md:max-w-3xl xl:max-w-none">
-          <WorkflowMockup compact />
-        </div>
+        <GlassCard
+          aria-hidden="true"
+          className="hidden h-[34rem] w-full min-w-0 overflow-hidden xl:block"
+        />
       </div>
     </section>
   );
