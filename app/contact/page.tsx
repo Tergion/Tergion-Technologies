@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { GlassCard } from "@/components/marketing/glass-card";
@@ -10,12 +9,6 @@ export const metadata: Metadata = {
   description:
     "Start a request with Tergion Technologies for CRM implementation, automation, lead follow-up, and business systems work.",
 };
-
-const expectations = [
-  "Share the basic contact details and preferred follow-up method.",
-  "Add business context only if it helps explain the workflow.",
-  "Tergion will follow up based on the preferred contact method you choose.",
-];
 
 export default function ContactPage() {
   return (
@@ -46,32 +39,6 @@ export default function ContactPage() {
           <p className="mt-4 text-sm text-muted-foreground">
             No obligation. No pressure. Submitting a request does not confirm an
             appointment.
-          </p>
-
-          <GlassCard className="mt-8 p-6">
-            <h2 className="text-lg font-semibold text-foreground">
-              What happens next
-            </h2>
-            <ul className="mt-5 space-y-4 text-sm leading-6 text-muted-foreground">
-              {expectations.map((item) => (
-                <li key={item} className="border-l border-primary/40 pl-4">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </GlassCard>
-
-          <p className="mt-6 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Submitting this form does not confirm an appointment or create an
-            obligation. Review the{" "}
-            <Link href="/privacy" className="text-primary hover:text-foreground">
-              Privacy
-            </Link>{" "}
-            and{" "}
-            <Link href="/terms" className="text-primary hover:text-foreground">
-              Terms
-            </Link>{" "}
-            pages for current site policies.
           </p>
         </div>
 
