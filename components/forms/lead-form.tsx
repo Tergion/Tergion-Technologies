@@ -224,7 +224,7 @@ export function LeadForm() {
 
   if (submitted) {
     return (
-      <div className="m-5 rounded-lg border border-success/30 bg-[var(--surface-soft-green)] p-5">
+      <div className="m-5 rounded-lg border border-success/30 bg-[var(--success-panel-bg)] p-5">
         <h3 className="text-lg font-semibold text-foreground">
           Request received
         </h3>

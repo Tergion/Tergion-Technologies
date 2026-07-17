@@ -7,7 +7,7 @@ import type {
 
 const statusClass: Record<LegalStatus, string> = {
   Active:
-    "border-success/30 bg-[var(--surface-soft-green)] text-success",
+    "border-success/30 bg-[var(--success-panel-bg)] text-success",
   Configured:
     "border-primary/30 bg-[var(--island-active-bg)] text-primary",
   Planned: "border-warning/30 bg-[var(--warning-panel-bg)] text-warning",
