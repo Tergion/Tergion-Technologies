@@ -49,7 +49,7 @@ This site includes the public marketing foundation, implementation-aligned legal
 
 ## Integration Status
 
-GoHighLevel contact sync is implemented when a Private Integration token and location ID are configured. Cloudflare Turnstile token handling is implemented when keys are configured. Production rate limiting and duplicate suppression use Upstash Redis when configured and fall back to in-memory development storage otherwise. Transactional customer confirmation email supports Resend and Postmark when the selected provider and matching provider token are configured. The fixed sender and reply-to identity use `no-reply@tergion.com`, and the message directs corrections to `contact@tergion.com`. Confirmation delivery failures do not overturn an otherwise accepted lead. Google Sheets, internal lead notification email, and analytics remain stubbed or deferred.
+GoHighLevel contact sync is implemented when a Private Integration token and location ID are configured. Cloudflare Turnstile token handling is implemented when keys are configured. Production rate limiting and duplicate suppression use Upstash Redis when configured and fall back to in-memory development storage otherwise. Transactional customer confirmation email supports Resend and Postmark when the selected provider and matching provider token are configured. The fixed sender and reply-to identity use `noreply@tergion.com`, and the message directs corrections to `contact@tergion.com`. Confirmation delivery failures do not overturn an otherwise accepted lead. Google Sheets, internal lead notification email, and analytics remain stubbed or deferred.
 
 ## Security And Legal Notes
 
