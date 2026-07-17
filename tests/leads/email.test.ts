@@ -74,7 +74,7 @@ describe("sendLeadConfirmationEmail", () => {
       "Idempotency-Key": "lead-confirmation-lead-123",
     });
     expect(body).toMatchObject({
-      from: "Tergion Technologies <noreply@tergion.com>",
+      from: "Tergion Technologies <notifications@tergion.com>",
       to: ["test@example.com"],
       subject: "We received your Tergion request",
       reply_to: "noreply@tergion.com",
@@ -117,7 +117,7 @@ describe("sendLeadConfirmationEmail", () => {
       "Content-Type": "application/json",
     });
     expect(body).toMatchObject({
-      From: "Tergion Technologies <noreply@tergion.com>",
+      From: "Tergion Technologies <notifications@tergion.com>",
       To: "test@example.com",
       Subject: "We received your Tergion request",
       ReplyTo: "noreply@tergion.com",

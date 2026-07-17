@@ -13,7 +13,7 @@ export const siteConfig = {
   supportEmail: "contact@tergion.com",
   emailLogoPath: "/logos/tergion_logo_blue_text.png",
   transactionalEmail: {
-    from: "Tergion Technologies <noreply@tergion.com>",
+    from: "Tergion Technologies <notifications@tergion.com>",
     replyTo: "noreply@tergion.com",
   },
   jurisdiction: "Washington, United States",
