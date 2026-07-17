@@ -129,7 +129,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
           },
           {
             label: "Lead handling",
-            text: "Google Sheets and email provider boundaries exist in the codebase, but live Sheets append and email sending are currently deferred in the inspected implementation.",
+            text: "Google Sheets support remains deferred in the inspected implementation. When transactional confirmation email is configured, the selected email provider receives the recipient address and confirmation content needed to confirm a website request.",
           },
           {
             label: "CRM and automation tools",

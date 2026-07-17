@@ -34,7 +34,7 @@ Use `npm run cf:upload` when you want to upload a Worker version without immedia
 2. Use GitHub Actions as the production deployment path from `main`.
 3. Configure GitHub repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
 4. Configure GitHub repository variables `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SITE_NAME`, and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` for production builds.
-5. Keep server-only runtime secrets, including `TURNSTILE_SECRET_KEY`, `GHL_PRIVATE_INTEGRATION_TOKEN`, and `GHL_LOCATION_ID`, in Cloudflare Worker secrets.
+5. Keep server-only runtime secrets, including `TURNSTILE_SECRET_KEY`, `GHL_PRIVATE_INTEGRATION_TOKEN`, `GHL_LOCATION_ID`, and the selected email provider token, in Cloudflare Worker secrets.
 6. Protect `main` in GitHub and require the `Verify` status check before merging.
 7. Keep the Worker name aligned with `wrangler.jsonc`: `tergion`.
 8. Keep `tergion.com` and `www.tergion.com` source-controlled as custom domain routes in `wrangler.jsonc`.
@@ -63,16 +63,32 @@ Set production values in Cloudflare before enabling live lead capture:
 - `NEXT_PUBLIC_SITE_NAME`
 - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
 - `TURNSTILE_SECRET_KEY`
-- `LEAD_NOTIFICATION_EMAIL`
-- `LEAD_FROM_EMAIL`
+- `LEAD_NOTIFICATION_EMAIL` (optional; internal notification remains deferred)
+- `EMAIL_PROVIDER`
+- `RESEND_API_KEY` or `POSTMARK_SERVER_TOKEN`
 - `GHL_PRIVATE_INTEGRATION_TOKEN`
 - `GHL_LOCATION_ID`
-- Email provider credentials when email sending is enabled
 - Google Sheets credentials when Sheets append is enabled
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 
-Keep server-only values as Cloudflare secrets.
+Keep provider tokens and other credentials as Cloudflare secrets. The non-sensitive provider selection can be stored as a server-side runtime variable; the stable sender and reply-to identities are source-controlled in `lib/site-config.ts`.
+
+## Transactional Confirmation Email
+
+Resend is the initial production provider. Postmark is implemented as a deployment-time fallback using the same server-side email module.
+
+1. Create the provider account and verify `tergion.com` before enabling email in the Worker.
+2. Add the provider-supplied SPF and DKIM records without overwriting unrelated mail records or creating a second conflicting SPF record.
+3. Configure and monitor DMARC after SPF and DKIM pass. Start conservatively and tighten the policy only after every legitimate sender for the domain has been verified.
+4. Authorize `Tergion Technologies <no-reply@tergion.com>` as the sender. The sender and reply-to identity are fixed in `lib/site-config.ts`; the no-reply mailbox is automated and unmonitored.
+5. Confirm `contact@tergion.com` is monitored because the message directs recipients there when they need to correct a request.
+6. Configure the Worker runtime variable `EMAIL_PROVIDER=resend`.
+7. Store the selected token as a Worker secret. For example, use `wrangler secret put RESEND_API_KEY`; use `wrangler secret put POSTMARK_SERVER_TOKEN` only when Postmark is selected.
+8. Keep open and click tracking disabled for this transactional message.
+9. Deploy `public/logos/tergion_logo_blue_text.png` and confirm `https://tergion.com/logos/tergion_logo_blue_text.png` returns HTTP 200 before enabling live sends.
+
+If email configuration is absent in local development, the confirmation sender returns a disabled result without making a network call. If a configured provider times out or rejects the message, the route logs only safe operational metadata and still returns success for an otherwise accepted lead. Internal founder notification email remains deferred.
 
 ## Lead Form Abuse Protection
 
@@ -104,5 +120,12 @@ After deployment:
 2. Open `https://tergion.com/api/health` and confirm `ok: true`.
 3. Open `https://www.tergion.com/api/health` and confirm `ok: true`.
 4. Submit a test lead using non-production contact details.
-5. Confirm the response does not expose provider errors.
-6. Check Cloudflare logs for Worker exceptions.
+5. Confirm the GoHighLevel contact still creates or updates when configured.
+6. Confirm one transactional email arrives in Gmail desktop and mobile and that the full Tergion logo loads.
+7. Confirm Privacy Policy, Terms of Use, Data Notice, website, and email links work.
+8. Confirm the message identifies itself as automated, warns that replies are not monitored, and directs corrections to `contact@tergion.com`.
+9. Inspect message headers for SPF, DKIM, and DMARC results and check inbox, spam, and promotions placement.
+10. Confirm the message does not imply that an appointment is confirmed.
+11. Submit a duplicate request and confirm another confirmation is not sent.
+12. Confirm the response does not expose provider errors.
+13. Check Cloudflare and provider logs for delivery errors without full lead payloads.
