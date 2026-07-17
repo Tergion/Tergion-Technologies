@@ -12,9 +12,6 @@ export const env = {
   resendApiKey: process.env.RESEND_API_KEY || "",
   postmarkServerToken: process.env.POSTMARK_SERVER_TOKEN || "",
   leadNotificationEmail: process.env.LEAD_NOTIFICATION_EMAIL || "",
-  leadFromEmail:
-    process.env.LEAD_FROM_EMAIL ||
-    "Tergion Technologies <contact@tergion.com>",
   goHighLevelToken:
     process.env.GHL_PRIVATE_INTEGRATION_TOKEN ||
     process.env.GHL_API_KEY ||
@@ -36,20 +33,32 @@ export function hasGoogleSheetsConfig() {
   );
 }
 
-export function hasEmailConfig() {
-  if (!env.emailProvider || !env.leadNotificationEmail) {
-    return false;
+export type EmailProvider = "resend" | "postmark";
+
+export function getEmailProvider(): EmailProvider | undefined {
+  const provider = env.emailProvider.trim().toLowerCase();
+
+  if (provider === "resend" || provider === "postmark") {
+    return provider;
   }
 
-  if (env.emailProvider === "resend") {
-    return Boolean(env.resendApiKey);
-  }
+  return undefined;
+}
 
-  if (env.emailProvider === "postmark") {
-    return Boolean(env.postmarkServerToken);
-  }
+export function hasConfirmationEmailConfig() {
+  const provider = getEmailProvider();
+  const hasProviderToken =
+    provider === "resend"
+      ? Boolean(env.resendApiKey)
+      : provider === "postmark"
+        ? Boolean(env.postmarkServerToken)
+        : false;
 
-  return false;
+  return Boolean(provider && hasProviderToken);
+}
+
+export function hasInternalEmailConfig() {
+  return Boolean(hasConfirmationEmailConfig() && env.leadNotificationEmail);
 }
 
 export function hasGoHighLevelConfig() {

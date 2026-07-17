@@ -3,6 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { leadDuplicateMessage } from "@/features/leads/lead.constants";
 import { makeLeadSubmission } from "@/tests/fixtures/leads";
 
+const emailMocks = vi.hoisted(() => ({
+  sendInternalLeadNotification: vi.fn(),
+  sendLeadConfirmationEmail: vi.fn(),
+}));
+
+vi.mock("@/features/leads/email", () => emailMocks);
+
 function clearIntegrationEnv() {
   delete process.env.GHL_PRIVATE_INTEGRATION_TOKEN;
   delete process.env.GHL_API_KEY;
@@ -10,6 +17,9 @@ function clearIntegrationEnv() {
   delete process.env.TURNSTILE_SECRET_KEY;
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  delete process.env.EMAIL_PROVIDER;
+  delete process.env.RESEND_API_KEY;
+  delete process.env.POSTMARK_SERVER_TOKEN;
 }
 
 function setGoHighLevelEnv() {
@@ -71,6 +81,20 @@ describe("/api/leads", () => {
   beforeEach(() => {
     vi.resetModules();
     clearIntegrationEnv();
+    emailMocks.sendInternalLeadNotification.mockReset();
+    emailMocks.sendInternalLeadNotification.mockResolvedValue({
+      ok: true,
+      configured: false,
+      provider: "email",
+      message: "Internal notification stubbed.",
+    });
+    emailMocks.sendLeadConfirmationEmail.mockReset();
+    emailMocks.sendLeadConfirmationEmail.mockResolvedValue({
+      ok: true,
+      configured: true,
+      provider: "resend",
+      message: "Lead confirmation email sent.",
+    });
   });
 
   afterEach(() => {
@@ -88,6 +112,36 @@ describe("/api/leads", () => {
 
     await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("silently accepts too-fast submissions without sending confirmation", async () => {
+    const POST = await importRoute();
+    const response = await POST(
+      makePostRequest(
+        makeLeadSubmission({
+          completionStartedAt: Date.now(),
+        }),
+      ),
+    );
+
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("sends one confirmation for an accepted lead", async () => {
+    const POST = await importRoute();
+    const response = await POST(makePostRequest(makeLeadSubmission()));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "test@example.com",
+        businessName: "Example Business",
+      }),
+    );
   });
 
   it("returns a calm duplicate message for repeated email submissions before calling GoHighLevel again", async () => {
@@ -110,6 +164,7 @@ describe("/api/leads", () => {
       message: leadDuplicateMessage,
     });
     expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
   });
 
   it("returns a calm duplicate message for repeated phone submissions before calling GoHighLevel again", async () => {
@@ -139,6 +194,7 @@ describe("/api/leads", () => {
       message: leadDuplicateMessage,
     });
     expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
   });
 
   it("allows repeated contact submissions after the duplicate cooldown", async () => {
@@ -155,6 +211,7 @@ describe("/api/leads", () => {
     await expect(first.json()).resolves.toMatchObject({ ok: true });
     await expect(second.json()).resolves.toMatchObject({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(6);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(2);
   });
 
   it("blocks the fourth request from the same client signal in an hour", async () => {
@@ -180,6 +237,7 @@ describe("/api/leads", () => {
 
     expect(blocked.status).toBe(429);
     await expect(blocked.json()).resolves.toMatchObject({ ok: false });
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(3);
   });
 
   it("accepts a valid Turnstile token when Turnstile is configured", async () => {
@@ -206,6 +264,7 @@ describe("/api/leads", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
   });
 
   it("returns a generic verification error when Turnstile verification fails", async () => {
@@ -235,6 +294,7 @@ describe("/api/leads", () => {
       message: "We could not verify the request. Please try again.",
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
   });
 
   it("returns a generic server error when GoHighLevel fails", async () => {
@@ -251,5 +311,43 @@ describe("/api/leads", () => {
       ok: false,
       message: "We could not process the request right now. Please try again later.",
     });
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("keeps an accepted lead successful when confirmation delivery throws", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    emailMocks.sendLeadConfirmationEmail.mockRejectedValueOnce(
+      new Error("private provider response"),
+    );
+    const POST = await importRoute();
+    const response = await POST(makePostRequest(makeLeadSubmission()));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true });
+    expect(JSON.stringify(body)).not.toContain("private provider response");
+    expect(warning).toHaveBeenCalledWith(
+      "Lead confirmation email delivery failed",
+      expect.objectContaining({
+        provider: "email",
+        stage: "route",
+      }),
+    );
+  });
+
+  it("keeps provider failure details out of an accepted lead response", async () => {
+    emailMocks.sendLeadConfirmationEmail.mockResolvedValueOnce({
+      ok: false,
+      configured: true,
+      provider: "resend",
+      message: "private provider rejection",
+    });
+    const POST = await importRoute();
+    const response = await POST(makePostRequest(makeLeadSubmission()));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true });
+    expect(JSON.stringify(body)).not.toContain("private provider rejection");
   });
 });

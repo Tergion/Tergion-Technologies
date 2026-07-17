@@ -120,13 +120,6 @@ export async function POST(request: Request) {
     await sendLeadToGoHighLevel(lead);
     await appendLeadToGoogleSheet(lead);
     await sendInternalLeadNotification(lead);
-    await sendLeadConfirmationEmail(lead);
-
-    return Response.json({
-      ok: true,
-      message: leadSuccessMessage,
-      leadId: lead.leadId,
-    });
   } catch {
     return Response.json(
       {
@@ -137,4 +130,20 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  try {
+    await sendLeadConfirmationEmail(lead);
+  } catch {
+    console.warn("Lead confirmation email delivery failed", {
+      provider: "email",
+      stage: "route",
+      leadId: lead.leadId,
+    });
+  }
+
+  return Response.json({
+    ok: true,
+    message: leadSuccessMessage,
+    leadId: lead.leadId,
+  });
 }

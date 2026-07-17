@@ -32,6 +32,9 @@ export default defineConfig({
       GHL_LOCATION_ID: "",
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: "",
       TURNSTILE_SECRET_KEY: "",
+      EMAIL_PROVIDER: "",
+      RESEND_API_KEY: "",
+      POSTMARK_SERVER_TOKEN: "",
     },
   },
 });
