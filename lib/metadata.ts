@@ -5,8 +5,8 @@ import { getSiteUrl, siteConfig } from "@/lib/site-config";
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: `${siteConfig.name} | Business Systems and Automation`,
-    template: `%s | ${siteConfig.name}`,
+    default: siteConfig.name,
+    template: siteConfig.name,
   },
   description: siteConfig.description,
   alternates: {
