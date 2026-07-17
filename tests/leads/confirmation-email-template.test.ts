@@ -32,7 +32,7 @@ describe("confirmation email template", () => {
     expect(text).toContain("Preferred contact method: Email");
     expect(text).toContain("Privacy Policy: https://tergion.com/privacy");
     expect(text).toContain(
-      "Replies to no-reply@tergion.com are not monitored.",
+      "Replies to noreply@tergion.com are not monitored.",
     );
     expect(html).toContain("Replies to this mailbox are not monitored.");
   });
