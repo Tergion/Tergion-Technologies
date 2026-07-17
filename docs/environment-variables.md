@@ -48,6 +48,6 @@ Customer confirmation email is disabled when `EMAIL_PROVIDER` is empty. When ena
 
 Do not configure both provider tokens unless both are operationally needed. The provider named by `EMAIL_PROVIDER` is the only one called. Keep provider tokens server-only and never place them in a `NEXT_PUBLIC_*` variable.
 
-The transactional sender identity is fixed in `lib/site-config.ts` as `Tergion Technologies <noreply@tergion.com>`, with `noreply@tergion.com` as the reply-to address. Email logo and legal links also use the coded production domain. These stable, non-secret brand values do not require Cloudflare variables. The automated mailbox is treated as unmonitored; recipients are directed to `contact@tergion.com` when they need to correct a request.
+The transactional sender identity is fixed in `lib/site-config.ts` as `Tergion Technologies <notifications@tergion.com>`, with `noreply@tergion.com` as the reply-to address. Email logo and legal links also use the coded production domain. These stable, non-secret brand values do not require Cloudflare variables. The reply-to mailbox is treated as unmonitored; recipients are directed to `contact@tergion.com` when they need to correct a request.
 
 The confirmation is transactional and contains no marketing or unsubscribe link. It is attempted only after the lead passes validation and abuse checks and primary lead processing succeeds. A confirmation provider error is logged without the recipient address, provider response body, or rendered message and does not turn an accepted lead into a failed form submission.

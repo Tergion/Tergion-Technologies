@@ -81,7 +81,7 @@ Resend is the initial production provider. Postmark is implemented as a deployme
 1. Create the provider account and verify `tergion.com` before enabling email in the Worker.
 2. Add the provider-supplied SPF and DKIM records without overwriting unrelated mail records or creating a second conflicting SPF record.
 3. Configure and monitor DMARC after SPF and DKIM pass. Start conservatively and tighten the policy only after every legitimate sender for the domain has been verified.
-4. Authorize `Tergion Technologies <noreply@tergion.com>` as the sender. The sender and reply-to identity are fixed in `lib/site-config.ts`; the automated mailbox is unmonitored.
+4. Authorize `Tergion Technologies <notifications@tergion.com>` as the sender. The sender and `noreply@tergion.com` reply-to identity are fixed in `lib/site-config.ts`; the reply-to mailbox is unmonitored.
 5. Confirm `contact@tergion.com` is monitored because the message directs recipients there when they need to correct a request.
 6. Configure the Worker runtime variable `EMAIL_PROVIDER=resend`.
 7. Store the selected token as a Worker secret. For example, use `wrangler secret put RESEND_API_KEY`; use `wrangler secret put POSTMARK_SERVER_TOKEN` only when Postmark is selected.
