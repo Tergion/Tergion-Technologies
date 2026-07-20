@@ -1,5 +1,6 @@
 "use client";
 
+import type { ChangeEvent } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import {
@@ -35,14 +36,57 @@ const inputClass =
 
 export function LeadFormStepContact({ form }: LeadFormStepProps) {
   const {
+    clearErrors,
+    getFieldState,
     register,
     setValue,
+    trigger,
     watch,
     formState: { errors },
   } = form;
   const preferredContactMethod = watch("preferredContactMethod");
   const phoneIsRequired =
     preferredContactMethod === "phone" || preferredContactMethod === "text";
+
+  function registerWithLiveValidation(
+    name:
+      | "firstName"
+      | "businessName"
+      | "email"
+      | "schedulingPreference"
+      | "phone",
+  ) {
+    const registration = register(name);
+
+    return {
+      ...registration,
+      onChange: async (event: ChangeEvent<HTMLInputElement>) => {
+        await registration.onChange(event);
+
+        if (getFieldState(name).error) {
+          await trigger(name);
+        }
+      },
+    };
+  }
+
+  async function selectContactMethod(
+    method: (typeof preferredContactMethods)[number]["value"],
+  ) {
+    setValue("preferredContactMethod", method, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    if (method === "email" || method === "no-preference") {
+      clearErrors("phone");
+      return;
+    }
+
+    if (getFieldState("phone").error) {
+      await trigger("phone");
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -59,7 +103,7 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
             className={inputClass}
             aria-invalid={Boolean(errors.firstName)}
             aria-describedby="firstName-error"
-            {...register("firstName")}
+            {...registerWithLiveValidation("firstName")}
           />
           <FieldError id="firstName-error" message={errors.firstName?.message} />
         </div>
@@ -72,7 +116,7 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
             className={inputClass}
             aria-invalid={Boolean(errors.businessName)}
             aria-describedby="businessName-error"
-            {...register("businessName")}
+            {...registerWithLiveValidation("businessName")}
           />
           <FieldError
             id="businessName-error"
@@ -90,7 +134,7 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
           className={inputClass}
           aria-invalid={Boolean(errors.email)}
           aria-describedby="email-error"
-          {...register("email")}
+          {...registerWithLiveValidation("email")}
         />
         <FieldError id="email-error" message={errors.email?.message} />
       </div>
@@ -103,7 +147,7 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
           className={inputClass}
           aria-invalid={Boolean(errors.schedulingPreference)}
           aria-describedby="schedulingPreference-error"
-          {...register("schedulingPreference")}
+          {...registerWithLiveValidation("schedulingPreference")}
         />
         <FieldError
           id="schedulingPreference-error"
@@ -130,12 +174,7 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
                     : "border-[color:var(--field-border)] bg-[var(--field-bg-muted)] text-muted-foreground hover:border-[color:var(--button-border-hover)] hover:bg-[var(--button-muted-hover)] hover:text-foreground",
                 )}
                 aria-pressed={selected}
-                onClick={() =>
-                  setValue("preferredContactMethod", method.value, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  })
-                }
+                onClick={() => void selectContactMethod(method.value)}
               >
                 {method.label}
               </button>
@@ -154,7 +193,7 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
             className={inputClass}
             aria-invalid={Boolean(errors.phone)}
             aria-describedby={cn("phone-helper", errors.phone && "phone-error")}
-            {...register("phone")}
+            {...registerWithLiveValidation("phone")}
           />
           <p
             id="phone-helper"

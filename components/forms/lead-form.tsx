@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   FieldErrors,
@@ -15,6 +15,8 @@ import { FormProgress } from "@/components/forms/form-progress";
 import { LeadFormStepContact } from "@/components/forms/lead-form-step-contact";
 import { LeadFormStepContext } from "@/components/forms/lead-form-step-context";
 import { LeadFormStepReview } from "@/components/forms/lead-form-step-review";
+import { LeadSubmissionStatus } from "@/components/forms/lead-submission-status";
+import type { TurnstileStatus } from "@/components/forms/turnstile-widget";
 import { Button } from "@/components/ui/button";
 import { leadSuccessMessage } from "@/features/leads/lead.constants";
 import {
@@ -67,8 +69,11 @@ export function LeadForm() {
   const [step, setStep] = useState(0);
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState(leadSuccessMessage);
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [submissionState, setSubmissionState] = useState<
+    "idle" | "submitting" | "success"
+  >("idle");
+  const [turnstileStatus, setTurnstileStatus] =
+    useState<TurnstileStatus>("loading");
 
   const form = useForm<LeadSubmissionInput, undefined, LeadSubmission>({
     resolver: zodResolver(leadSubmissionSchema),
@@ -110,6 +115,17 @@ export function LeadForm() {
     name: ["contactConsent", "privacyTermsConsent"],
   });
   const requiredConsentsAccepted = contactConsent && privacyTermsConsent;
+  const turnstileReady =
+    turnstileStatus === "ready" ||
+    turnstileStatus === "development-bypass";
+  const canSubmit = requiredConsentsAccepted && turnstileReady;
+
+  const handleTurnstileStatusChange = useCallback(
+    (status: TurnstileStatus) => {
+      setTurnstileStatus(status);
+    },
+    [],
+  );
 
   useEffect(() => {
     form.setValue(
@@ -209,29 +225,29 @@ export function LeadForm() {
     }
 
     try {
-      setSubmitting(true);
+      setSubmissionState("submitting");
       const result = await submitLead(parsed.data);
       setSuccessMessage(result.message || leadSuccessMessage);
-      setSubmitted(true);
+      setSubmissionState("success");
     } catch {
       setFormError(
         "We could not submit the request right now. Please try again later.",
       );
-    } finally {
-      setSubmitting(false);
+      form.setValue("turnstileToken", "", {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+      setTurnstileStatus("loading");
+      setSubmissionState("idle");
     }
   }
 
-  if (submitted) {
+  if (submissionState !== "idle") {
     return (
-      <div className="m-5 rounded-lg border border-success/30 bg-[var(--success-panel-bg)] p-5">
-        <h3 className="text-lg font-semibold text-foreground">
-          Request received
-        </h3>
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {successMessage}
-        </p>
-      </div>
+      <LeadSubmissionStatus
+        status={submissionState}
+        message={successMessage}
+      />
     );
   }
 
@@ -248,7 +264,12 @@ export function LeadForm() {
 
         {step === 0 ? <LeadFormStepContact form={form} /> : null}
         {step === 1 ? <LeadFormStepContext form={form} /> : null}
-        {step === 2 ? <LeadFormStepReview form={form} /> : null}
+        {step === 2 ? (
+          <LeadFormStepReview
+            form={form}
+            onTurnstileStatusChange={handleTurnstileStatusChange}
+          />
+        ) : null}
 
         {formError ? (
           <p className="rounded-md border border-destructive/30 bg-[#fbeeea] px-3 py-2 text-sm text-destructive">
@@ -263,7 +284,7 @@ export function LeadForm() {
           variant="outline"
           className="h-11 border-[color:var(--field-border)] bg-[var(--field-bg)]"
           onClick={goBack}
-          disabled={step === 0 || submitting}
+          disabled={step === 0}
         >
           Back
         </Button>
@@ -276,9 +297,9 @@ export function LeadForm() {
           <Button
             type="submit"
             className="h-11 px-5"
-            disabled={submitting || !requiredConsentsAccepted}
+            disabled={!canSubmit}
           >
-            {submitting ? "Submitting..." : "Start the request"}
+            Start the request
           </Button>
         )}
       </div>

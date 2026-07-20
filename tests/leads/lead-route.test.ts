@@ -20,6 +20,7 @@ function clearIntegrationEnv() {
   delete process.env.EMAIL_PROVIDER;
   delete process.env.RESEND_API_KEY;
   delete process.env.POSTMARK_SERVER_TOKEN;
+  delete process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 }
 
 function setGoHighLevelEnv() {
@@ -99,10 +100,11 @@ describe("/api/leads", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllEnvs();
     clearIntegrationEnv();
   });
 
-  it("silently accepts honeypot spam without calling providers", async () => {
+  it("rejects honeypot spam without calling providers", async () => {
     setGoHighLevelEnv();
     const fetchMock = mockSuccessfulGoHighLevelFetch();
     const POST = await importRoute();
@@ -110,12 +112,13 @@ describe("/api/leads", () => {
       makePostRequest(makeLeadSubmission({ honeypot: "filled" })),
     );
 
-    await expect(response.json()).resolves.toMatchObject({ ok: true });
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ ok: false });
     expect(fetchMock).not.toHaveBeenCalled();
     expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
   });
 
-  it("silently accepts too-fast submissions without sending confirmation", async () => {
+  it("rejects too-fast submissions without sending confirmation", async () => {
     const POST = await importRoute();
     const response = await POST(
       makePostRequest(
@@ -125,7 +128,8 @@ describe("/api/leads", () => {
       ),
     );
 
-    await expect(response.json()).resolves.toMatchObject({ ok: true });
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ ok: false });
     expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
   });
 
@@ -273,7 +277,10 @@ describe("/api/leads", () => {
       const url = String(input);
 
       if (url.includes("challenges.cloudflare.com/turnstile")) {
-        return Response.json({ success: false });
+        return Response.json({
+          success: false,
+          "error-codes": ["timeout-or-duplicate"],
+        });
       }
 
       throw new Error(`Unexpected URL: ${url}`);
@@ -292,6 +299,76 @@ describe("/api/leads", () => {
     await expect(response.json()).resolves.toEqual({
       ok: false,
       message: "We could not verify the request. Please try again.",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("rejects a missing token when Turnstile is configured", async () => {
+    process.env.TURNSTILE_SECRET_KEY = "test-secret";
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const POST = await importRoute();
+    const response = await POST(makePostRequest(makeLeadSubmission()));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      message: "We could not verify the request. Please try again.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when production Turnstile configuration is missing", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const POST = await importRoute();
+    const response = await POST(
+      makePostRequest(
+        makeLeadSubmission({
+          turnstileToken: "unverified-production-token",
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      message: "We could not verify the request. Please try again.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when production GoHighLevel delivery is unconfigured", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    process.env.TURNSTILE_SECRET_KEY = "test-secret";
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes("challenges.cloudflare.com/turnstile")) {
+        return Response.json({ success: true });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const POST = await importRoute();
+    const response = await POST(
+      makePostRequest(
+        makeLeadSubmission({
+          turnstileToken: "XXXX.DUMMY.TOKEN.XXXX",
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      message:
+        "We could not process the request right now. Please try again later.",
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();

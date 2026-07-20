@@ -37,7 +37,7 @@
 
 ## Current Requirement Status
 
-Most variables are optional in local development. Production should configure these values as Cloudflare Worker variables or secrets before public launch, especially Turnstile, GoHighLevel lead sync, email sending, and Upstash-backed distributed rate limiting and duplicate suppression. Without Upstash, the app falls back to in-memory checks that are useful locally but not durable across Cloudflare Worker isolates.
+Most variables are optional in local development. Production lead submission fails closed unless both Turnstile verification and GoHighLevel delivery are operational, so `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `GHL_PRIVATE_INTEGRATION_TOKEN`, and `GHL_LOCATION_ID` must be configured before public launch. Email sending and Upstash-backed distributed rate limiting and duplicate suppression should also be configured before launch. Without Upstash, the app falls back to in-memory checks that are useful locally but not durable across Cloudflare Worker isolates.
 
 ## Transactional Confirmation Email
 

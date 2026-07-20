@@ -13,10 +13,14 @@ import type {
   LeadSubmissionInput,
 } from "@/features/leads/lead.types";
 import { Label } from "@/components/ui/label";
-import { TurnstileWidget } from "@/components/forms/turnstile-widget";
+import {
+  TurnstileWidget,
+  type TurnstileStatus,
+} from "@/components/forms/turnstile-widget";
 
 type LeadFormStepProps = {
   form: UseFormReturn<LeadSubmissionInput, undefined, LeadSubmission>;
+  onTurnstileStatusChange: (status: TurnstileStatus) => void;
 };
 
 function FieldError({ message, id }: { message?: string; id: string }) {
@@ -31,7 +35,10 @@ function FieldError({ message, id }: { message?: string; id: string }) {
   );
 }
 
-export function LeadFormStepReview({ form }: LeadFormStepProps) {
+export function LeadFormStepReview({
+  form,
+  onTurnstileStatusChange,
+}: LeadFormStepProps) {
   const {
     register,
     setValue,
@@ -209,7 +216,10 @@ export function LeadFormStepReview({ form }: LeadFormStepProps) {
         </div>
       </div>
 
-      <TurnstileWidget onToken={handleTurnstileToken} />
+      <TurnstileWidget
+        onToken={handleTurnstileToken}
+        onStatusChange={onTurnstileStatusChange}
+      />
 
       <input
         type="text"

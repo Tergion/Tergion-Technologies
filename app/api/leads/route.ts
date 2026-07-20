@@ -14,6 +14,7 @@ import { sendLeadToGoHighLevel } from "@/features/leads/gohighlevel";
 import { checkLeadSpamSignals } from "@/features/leads/spam-check";
 import { verifyTurnstileToken } from "@/features/leads/turnstile";
 import type { LeadRecord } from "@/features/leads/lead.types";
+import { env } from "@/lib/env";
 
 function getRemoteIp(request: Request) {
   const connectingIp = request.headers.get("cf-connecting-ip") ?? "";
@@ -69,10 +70,13 @@ export async function POST(request: Request) {
   const spam = checkLeadSpamSignals(payload);
 
   if (!spam.passed) {
-    return Response.json({
-      ok: true,
-      message: leadSuccessMessage,
-    });
+    return Response.json(
+      {
+        ok: false,
+        message: "We could not accept the request right now. Please try again later.",
+      },
+      { status: 400 },
+    );
   }
 
   const turnstile = await verifyTurnstileToken(
@@ -80,7 +84,7 @@ export async function POST(request: Request) {
     getRemoteIp(request),
   );
 
-  if (turnstile.configured && !turnstile.success) {
+  if (!turnstile.success) {
     return Response.json(
       {
         ok: false,
@@ -117,7 +121,15 @@ export async function POST(request: Request) {
   };
 
   try {
-    await sendLeadToGoHighLevel(lead);
+    const goHighLevel = await sendLeadToGoHighLevel(lead);
+
+    if (
+      env.nodeEnv === "production" &&
+      (!goHighLevel.configured || !goHighLevel.ok)
+    ) {
+      throw new Error("gohighlevel-production-delivery-unavailable");
+    }
+
     await appendLeadToGoogleSheet(lead);
     await sendInternalLeadNotification(lead);
   } catch {

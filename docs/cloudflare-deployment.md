@@ -74,6 +74,8 @@ Set production values in Cloudflare before enabling live lead capture:
 
 Keep provider tokens and other credentials as Cloudflare secrets. The non-sensitive provider selection can be stored as a server-side runtime variable; the stable sender and reply-to identities are source-controlled in `lib/site-config.ts`.
 
+The production lead route fails closed when the Turnstile secret or GoHighLevel credentials are missing. The deployed form also keeps submission disabled when the public Turnstile widget cannot issue a token. Configure and verify both systems before directing visitors to the form.
+
 ## Transactional Confirmation Email
 
 Resend is the initial production provider. Postmark is implemented as a deployment-time fallback using the same server-side email module.
@@ -120,7 +122,7 @@ After deployment:
 2. Open `https://tergion.com/api/health` and confirm `ok: true`.
 3. Open `https://www.tergion.com/api/health` and confirm `ok: true`.
 4. Submit a test lead using non-production contact details.
-5. Confirm the GoHighLevel contact still creates or updates when configured.
+5. Confirm Turnstile records a successful server-side validation and the GoHighLevel contact creates or updates before treating the form as operational.
 6. Confirm one transactional email arrives in Gmail desktop and mobile and that the full Tergion logo loads.
 7. Confirm Privacy Policy, Terms of Use, Data Notice, website, and email links work.
 8. Confirm the message identifies itself as automated, warns that replies are not monitored, and directs corrections to `contact@tergion.com`.
