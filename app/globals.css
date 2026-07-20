@@ -247,6 +247,39 @@
     will-change: opacity, transform;
   }
 
+  .lead-submit-progress {
+    transform: scaleX(0.04);
+    transform-origin: left center;
+    will-change: transform;
+  }
+
+  .lead-submit-progress-active {
+    animation: lead-submit-progress-active 4s cubic-bezier(0.2, 0.75, 0.25, 1) forwards;
+  }
+
+  .lead-submit-progress-complete {
+    transform: scaleX(1);
+    transition: transform 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  @keyframes lead-submit-progress-active {
+    0% {
+      transform: scaleX(0.04);
+    }
+
+    35% {
+      transform: scaleX(0.48);
+    }
+
+    70% {
+      transform: scaleX(0.74);
+    }
+
+    to {
+      transform: scaleX(0.9);
+    }
+  }
+
   @keyframes page-body-pop-in {
     from {
       opacity: 0;
@@ -263,6 +296,18 @@
     .page-body-transition {
       animation: none;
       transform: none;
+      will-change: auto;
+    }
+
+    .lead-submit-progress-active {
+      animation: none;
+      transform: scaleX(0.8);
+      will-change: auto;
+    }
+
+    .lead-submit-progress-complete {
+      transform: scaleX(1);
+      transition: none;
       will-change: auto;
     }
   }
