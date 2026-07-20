@@ -5,10 +5,14 @@ export async function verifyTurnstileToken(
   remoteIp?: string,
 ): Promise<{ success: boolean; configured: boolean; reason?: string }> {
   if (!env.turnstileSecretKey) {
+    const allowDevelopmentBypass = env.nodeEnv !== "production";
+
     return {
-      success: true,
+      success: allowDevelopmentBypass,
       configured: false,
-      reason: "turnstile-secret-missing-development-stub",
+      reason: allowDevelopmentBypass
+        ? "turnstile-secret-missing-development-stub"
+        : "turnstile-secret-missing-production",
     };
   }
 
