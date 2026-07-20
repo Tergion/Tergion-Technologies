@@ -19,6 +19,7 @@ describe("confirmation email template", () => {
       "We’ll review your request and follow up based on your preferred contact method.",
     );
     expect(html).toContain("Request received");
+    expect(html).toContain("July 10, 2026");
     expect(html).toContain("Example Business");
     expect(html).toContain("Weekdays after 5 PM");
     expect(html).toContain(
@@ -35,6 +36,16 @@ describe("confirmation email template", () => {
       "Replies to noreply@tergion.com are not monitored.",
     );
     expect(html).toContain("Replies to this mailbox are not monitored.");
+  });
+
+  it("keeps the date separate from the centered logo and outlines each step number", () => {
+    const html = renderConfirmationEmailHtml(makeLeadRecord());
+
+    expect(html).toContain('align="right" height="18"');
+    expect(html).toContain('align="center">\n                      <img');
+    expect(html.match(/border: 1px solid #054CB3; border-radius: 50%/g)).toHaveLength(
+      3,
+    );
   });
 
   it("uses the Tergion blue and white palette without legacy colors", () => {
