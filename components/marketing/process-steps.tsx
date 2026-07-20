@@ -23,23 +23,28 @@ const processSteps = [
 
 export function ProcessSteps() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <ol
+      aria-label="Tergion implementation process"
+      className="relative grid gap-8 before:absolute before:bottom-6 before:left-6 before:top-6 before:w-px before:bg-primary/30 before:content-[''] lg:grid-cols-4 lg:gap-6 lg:before:bottom-auto lg:before:left-[12.5%] lg:before:right-[12.5%] lg:before:top-6 lg:before:h-px lg:before:w-auto"
+    >
       {processSteps.map((step, index) => (
-        <div
+        <li
           key={step.title}
-          className="rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-5 md:p-6"
+          className="relative grid grid-cols-[3rem_1fr] gap-4 lg:block"
         >
-          <span className="text-sm font-semibold text-primary">
+          <span className="relative z-10 grid size-12 place-items-center rounded-full bg-[var(--surface-navy)] text-sm font-semibold text-white lg:mx-auto">
             {String(index + 1).padStart(2, "0")}
           </span>
-          <h3 className="mt-5 text-lg font-semibold text-foreground">
-            {step.title}
-          </h3>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {step.description}
-          </p>
-        </div>
+          <div className="pt-1 lg:mt-5 lg:pt-0 lg:text-center">
+            <h3 className="text-lg font-semibold text-foreground">
+              {step.title}
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              {step.description}
+            </p>
+          </div>
+        </li>
       ))}
-    </div>
+    </ol>
   );
 }

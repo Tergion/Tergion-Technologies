@@ -7,7 +7,7 @@ import { siteConfig } from "@/lib/site-config";
 
 export function ExampleCard({ example }: { example: AutomationExample }) {
   return (
-    <GlassCard className="flex h-full flex-col p-6">
+    <GlassCard className="solid-panel flex h-full flex-col p-6">
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
         {example.shortTitle}
       </p>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { GlassCard } from "@/components/marketing/glass-card";
+import { MarketingPageHeader } from "@/components/marketing/marketing-page-header";
 
 export const metadata: Metadata = {
   title: "About",
@@ -11,25 +12,15 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <section className="pb-8 pt-28 md:pt-36">
-        <div className="site-container">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-strong">
-            About
-          </p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
-            Tergion Technologies builds practical systems for growing companies.
-          </h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
-            The company focuses on CRM implementation, workflow automation,
-            AI-assisted operations planning, and business infrastructure that
-            helps teams follow up faster and work with better visibility.
-          </p>
-        </div>
-      </section>
+      <MarketingPageHeader
+        eyebrow="About"
+        title="Tergion Technologies builds practical systems for growing companies."
+        description="The company focuses on CRM implementation, workflow automation, AI-assisted operations planning, and business infrastructure that helps teams follow up faster and work with better visibility."
+      />
 
       <section className="py-12 md:py-16">
-        <div className="site-container grid gap-4 lg:grid-cols-[1fr_0.8fr]">
-          <GlassCard className="p-6 md:p-8">
+        <div className="site-container">
+          <GlassCard className="solid-panel max-w-4xl p-6 md:p-8">
             <h2 className="text-2xl font-semibold text-foreground">
               Company overview
             </h2>
@@ -44,7 +35,12 @@ export default function AboutPage() {
               people responsible for sales and customer operations.
             </p>
           </GlassCard>
-          <GlassCard className="p-6 md:p-8">
+        </div>
+      </section>
+
+      <section className="bg-[var(--surface-blue-soft)] py-12 md:py-16">
+        <div className="site-container">
+          <GlassCard className="solid-panel max-w-4xl p-6 md:p-8">
             <h2 className="text-2xl font-semibold text-foreground">
               Operating principles
             </h2>

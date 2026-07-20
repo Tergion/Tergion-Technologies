@@ -104,7 +104,7 @@ export default async function ExampleDetailPage({ params }: ExamplePageProps) {
               title="What would be customized"
               items={example.customizationOptions}
             />
-            <GlassCard className="border-border-strong bg-surface-soft-green p-6">
+            <GlassCard className="border-border-strong bg-surface-blue-soft p-6">
               <h2 className="text-xl font-semibold text-foreground">
                 Next step
               </h2>

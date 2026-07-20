@@ -9,6 +9,7 @@ type SectionShellProps = {
   children: ReactNode;
   id?: string;
   className?: string;
+  tone?: "default" | "soft-blue" | "navy";
 };
 
 export function SectionShell({
@@ -18,22 +19,52 @@ export function SectionShell({
   children,
   id,
   className,
+  tone = "default",
 }: SectionShellProps) {
+  const isNavy = tone === "navy";
+
   return (
-    <section id={id} className={cn("py-16 md:py-24", className)}>
+    <section
+      id={id}
+      className={cn(
+        "py-16 md:py-24",
+        tone === "soft-blue" && "bg-[var(--surface-blue-soft)]",
+        isNavy && "bg-[var(--surface-navy)] text-[color:var(--text-on-navy)]",
+        className,
+      )}
+    >
       <div className="site-container">
         {title ? (
           <div className="mb-8 max-w-3xl md:mb-10">
             {eyebrow ? (
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-strong">
+              <p
+                className={cn(
+                  "text-sm font-semibold uppercase tracking-[0.18em]",
+                  isNavy
+                    ? "text-[color:var(--text-on-navy-muted)]"
+                    : "text-accent-strong",
+                )}
+              >
                 {eyebrow}
               </p>
             ) : null}
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight text-foreground md:text-4xl xl:text-5xl">
+            <h2
+              className={cn(
+                "mt-4 text-3xl font-semibold tracking-tight md:text-4xl xl:text-5xl",
+                isNavy ? "text-[color:var(--text-on-navy)]" : "text-foreground",
+              )}
+            >
               {title}
             </h2>
             {description ? (
-              <p className="mt-5 text-base leading-7 text-muted-foreground md:text-lg">
+              <p
+                className={cn(
+                  "mt-5 text-base leading-7 md:text-lg",
+                  isNavy
+                    ? "text-[color:var(--text-on-navy-muted)]"
+                    : "text-muted-foreground",
+                )}
+              >
                 {description}
               </p>
             ) : null}

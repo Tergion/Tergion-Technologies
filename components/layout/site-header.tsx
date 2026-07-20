@@ -49,8 +49,7 @@ export function SiteHeader() {
             );
           })}
           <RequestModalTrigger
-            variant="outline"
-            className="ml-2 h-9 border-[color:var(--field-border)] bg-[var(--field-bg)] px-3 text-sm text-foreground shadow-none hover:bg-[var(--island-hover-bg)] hover:[transform:none] hover:shadow-none"
+            className="ml-2 h-9 px-3 text-sm shadow-none hover:[transform:none] hover:shadow-none"
           >
             {siteConfig.cta.nav}
           </RequestModalTrigger>

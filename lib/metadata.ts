@@ -37,7 +37,7 @@ export const defaultMetadata: Metadata = {
     },
   },
   icons: {
-    icon: "/favicon.png",
+    icon: "/logos/tergion_logo_blue.png",
   },
 };
 

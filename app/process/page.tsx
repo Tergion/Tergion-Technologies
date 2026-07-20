@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { GlassCard } from "@/components/marketing/glass-card";
+import { MarketingPageHeader } from "@/components/marketing/marketing-page-header";
 import { ProcessSteps } from "@/components/marketing/process-steps";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -40,41 +41,32 @@ const outputs = [
 export default function ProcessPage() {
   return (
     <>
-      <section className="pb-8 pt-28 md:pt-36">
-        <div className="site-container">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-            Process
-          </p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
-            A practical build process with control built in.
-          </h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
-            Tergion reviews how work moves today, maps what should be
-            automated, builds the system, and keeps review points visible so the
-            business stays in control.
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <RequestModalTrigger
-              variant="outline"
-              className="h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground"
-            >
-              Talk through options
-            </RequestModalTrigger>
-            <Link
-              href="/examples"
-              className={buttonVariants({
-                variant: "outline",
-                className:
-                  "h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground",
-              })}
-            >
-              See examples
-            </Link>
-          </div>
+      <MarketingPageHeader
+        eyebrow="Process"
+        title="A practical build process with control built in."
+        description="Tergion reviews how work moves today, maps what should be automated, builds the system, and keeps review points visible so the business stays in control."
+      >
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <RequestModalTrigger
+            variant="outline"
+            className="h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground"
+          >
+            Talk through options
+          </RequestModalTrigger>
+          <Link
+            href="/examples"
+            className={buttonVariants({
+              variant: "outline",
+              className:
+                "h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground",
+            })}
+          >
+            See examples
+          </Link>
         </div>
-      </section>
+      </MarketingPageHeader>
 
-      <section className="py-12 md:py-16">
+      <section className="bg-[var(--surface-blue-soft)] py-12 md:py-16">
         <div className="site-container">
           <ProcessSteps />
         </div>

@@ -5,7 +5,6 @@ import { useId, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
-import { GlassCard } from "@/components/marketing/glass-card";
 import { WorkflowShowcaseTabs } from "@/components/marketing/workflow-showcase-tabs";
 import { WorkflowShowcaseVisual } from "@/components/marketing/workflow-showcase-visual";
 import { WorkflowStepList } from "@/components/marketing/workflow-step-list";
@@ -42,7 +41,7 @@ export function WorkflowShowcase({ workflows }: WorkflowShowcaseProps) {
   }
 
   return (
-    <GlassCard className="overflow-visible p-4 sm:p-5 lg:p-6">
+    <div className="overflow-visible rounded-lg border border-[color:var(--field-border)] bg-white p-4 shadow-[0_18px_44px_rgba(19,42,70,0.1)] sm:p-5 lg:p-6">
       <WorkflowShowcaseTabs
         workflows={workflows}
         activeIndex={activeIndex}
@@ -107,6 +106,6 @@ export function WorkflowShowcase({ workflows }: WorkflowShowcaseProps) {
           />
         </div>
       </div>
-    </GlassCard>
+    </div>
   );
 }

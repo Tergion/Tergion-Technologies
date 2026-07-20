@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { CapabilityGroup } from "@/components/marketing/capability-group";
 import { GlassCard } from "@/components/marketing/glass-card";
+import { MarketingPageHeader } from "@/components/marketing/marketing-page-header";
 import { SectionShell } from "@/components/marketing/section-shell";
 import { serviceCapabilityGroups } from "@/features/services/service-capabilities.data";
 
@@ -47,26 +48,16 @@ const services = [
 export default function ServicesPage() {
   return (
     <>
-      <section className="pb-8 pt-28 md:pt-36">
-        <div className="site-container">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-strong">
-            Services
-          </p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-semibold tracking-tight text-foreground md:text-6xl">
-            Business systems and automation infrastructure for SMB operations.
-          </h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
-            Tergion Technologies helps companies connect lead capture,
-            follow-up, customer communication, CRM workflows, and operational
-            visibility.
-          </p>
-        </div>
-      </section>
+      <MarketingPageHeader
+        eyebrow="Services"
+        title="Business systems and automation infrastructure for SMB operations."
+        description="Tergion Technologies helps companies connect lead capture, follow-up, customer communication, CRM workflows, and operational visibility."
+      />
 
       <section className="py-12 md:py-16">
         <div className="site-container grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {services.map((service) => (
-            <GlassCard key={service.title} className="p-6">
+            <GlassCard key={service.title} className="solid-panel p-6">
               <h2 className="text-lg font-semibold text-foreground">
                 {service.title}
               </h2>
@@ -83,10 +74,17 @@ export default function ServicesPage() {
         title="Systems Tergion can configure without making the platform the whole identity."
         description="These are common capability areas Tergion can support when they fit the business process. The work starts with the operating need, then uses the right platform features to support it."
         className="pt-8 md:pt-12"
+        tone="soft-blue"
       >
         <div className="grid gap-4 lg:grid-cols-2">
-          {serviceCapabilityGroups.map((group) => (
-            <CapabilityGroup key={group.title} group={group} />
+          {serviceCapabilityGroups.map((group, index) => (
+            <CapabilityGroup
+              key={group.title}
+              group={group}
+              opensUpOnDesktop={
+                index >= serviceCapabilityGroups.length - 2
+              }
+            />
           ))}
         </div>
       </SectionShell>

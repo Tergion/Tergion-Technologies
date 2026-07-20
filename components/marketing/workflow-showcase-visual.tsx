@@ -36,7 +36,7 @@ export function WorkflowShowcaseVisual({
     <div
       role="img"
       aria-label={workflow.imageAlt}
-      className="relative min-w-0 overflow-hidden rounded-lg border border-[color:var(--field-border)] bg-[linear-gradient(135deg,var(--surface-soft-green),var(--surface)_48%,var(--surface-muted))] p-4 shadow-inner shadow-accent-strong/10 sm:p-5"
+      className="relative min-w-0 overflow-hidden rounded-lg border border-[color:var(--field-border)] bg-[linear-gradient(135deg,var(--surface-blue-soft),var(--surface)_48%,var(--surface-muted))] p-4 shadow-inner shadow-accent-strong/10 sm:p-5"
     >
       <div aria-hidden="true" className="relative z-10">
         <div className="flex min-w-0 items-start justify-between gap-4 border-b border-[color:var(--field-border)] pb-4">

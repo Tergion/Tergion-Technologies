@@ -45,7 +45,7 @@ export default function Home() {
           {focusAreas.map((area) => (
             <div
               key={area.title}
-              className="rounded-lg border border-border bg-surface p-5 shadow-sm shadow-accent-strong/5"
+              className="rounded-lg border border-border border-t-[3px] border-t-primary bg-white p-5 shadow-[0_14px_35px_rgba(19,42,70,0.08)]"
             >
               <h2 className="text-base font-semibold text-foreground">
                 {area.title}
@@ -62,6 +62,7 @@ export default function Home() {
         eyebrow="WORKFLOW EXAMPLES"
         title="Choose a workflow. See how the system works."
         description="Every business has a few steps where leads, follow-ups, or customer communication fall through the cracks. These examples show how Tergion turns those steps into trackable systems with clear control points."
+        tone="soft-blue"
       >
         <WorkflowShowcase workflows={workflows} />
       </SectionShell>

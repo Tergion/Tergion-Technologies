@@ -1,13 +1,13 @@
 import Link from "next/link";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
-import { GlassCard } from "@/components/marketing/glass-card";
+import { HeroWorkflowVisual } from "@/components/marketing/hero-workflow-visual";
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site-config";
 
 export function Hero() {
   return (
-    <section className="relative z-10 overflow-visible pb-12 pt-28 md:pb-16 md:pt-32 xl:pb-20 xl:pt-36">
+    <section className="marketing-page-header relative z-10 overflow-visible pb-12 pt-28 md:pb-16 md:pt-32 xl:pb-20 xl:pt-36">
       <div className="site-container grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.08fr)_minmax(24rem,0.72fr)] xl:items-center xl:gap-12">
         <div className="w-full min-w-0 md:max-w-4xl xl:max-w-none">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-accent-strong">
@@ -39,10 +39,7 @@ export function Hero() {
           </div>
         </div>
 
-        <GlassCard
-          aria-hidden="true"
-          className="hidden h-[34rem] w-full min-w-0 overflow-hidden xl:block"
-        />
+        <HeroWorkflowVisual />
       </div>
     </section>
   );
