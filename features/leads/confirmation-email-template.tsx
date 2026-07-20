@@ -115,6 +115,21 @@ function getEmailUrls() {
   };
 }
 
+function formatSubmissionDate(createdAt: string) {
+  const submissionDate = new Date(createdAt);
+
+  if (Number.isNaN(submissionDate.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(submissionDate);
+}
+
 function renderDetailRows(details: ConfirmationDetail[]) {
   return details
     .map(
@@ -131,7 +146,7 @@ function renderNextStep(number: string, title: string, description: string) {
   return `
     <tr>
       <td style="padding: 0 0 16px 0; vertical-align: top; width: 40px;">
-        <div style="width: 28px; height: 28px; border-radius: 14px; background-color: #F5F8FD; color: #054CB3; font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 700; line-height: 28px; text-align: center;">${number}</div>
+        <div style="box-sizing: border-box; width: 28px; height: 28px; border: 1px solid #054CB3; border-radius: 50%; background-color: #FFFFFF; color: #054CB3; font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 700; line-height: 26px; text-align: center;">${number}</div>
       </td>
       <td style="padding: 0 0 16px 0; vertical-align: top;">
         <p style="margin: 0; color: #132A46; font-family: Arial, Helvetica, sans-serif; font-size: 14px; font-weight: 700; line-height: 21px;">${title}</p>
@@ -144,6 +159,7 @@ export function renderConfirmationEmailHtml(lead: LeadRecord) {
   const details = getConfirmationDetails(lead);
   const urls = getEmailUrls();
   const contactEmail = siteConfig.contactEmail;
+  const submissionDate = formatSubmissionDate(lead.createdAt);
 
   return `<!doctype html>
 <html lang="en">
@@ -163,8 +179,17 @@ export function renderConfirmationEmailHtml(lead: LeadRecord) {
               <td style="height: 6px; background-color: #054CB3; font-size: 0; line-height: 0;">&nbsp;</td>
             </tr>
             <tr>
-              <td align="center" style="padding: 28px 24px 20px; background-color: #FFFFFF;">
-                <img src="${escapeHtml(urls.logoUrl)}" width="240" alt="Tergion Technologies" style="display: block; width: 100%; max-width: 240px; height: auto; border: 0; outline: none; text-decoration: none;">
+              <td style="padding: 10px 24px 20px; background-color: #FFFFFF;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td align="right" height="18" style="height: 18px; color: #667085; font-family: Arial, Helvetica, sans-serif; font-size: 12px; line-height: 18px; white-space: nowrap;">${escapeHtml(submissionDate)}</td>
+                  </tr>
+                  <tr>
+                    <td align="center">
+                      <img src="${escapeHtml(urls.logoUrl)}" width="240" alt="Tergion Technologies" style="display: block; width: 100%; max-width: 240px; height: auto; border: 0; outline: none; text-decoration: none;">
+                    </td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
