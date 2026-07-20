@@ -21,7 +21,7 @@ export function CTASection() {
             <div className="mt-8">
               <RequestModalTrigger
                 variant="outline"
-                className="h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground hover:bg-[var(--island-hover-bg)]"
+                className="h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground"
               >
                 {siteConfig.cta.final}
               </RequestModalTrigger>

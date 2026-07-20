@@ -67,7 +67,7 @@ export function MobileActionBar() {
       <RequestModalTrigger
         variant="outline"
         aria-label="Contact Tergion"
-        className="flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border-[color:var(--field-border)] bg-[var(--field-bg)] px-2 text-[0.68rem] font-semibold text-foreground shadow-none hover:bg-[var(--island-hover-bg)]"
+        className="flex h-11 min-w-0 basis-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md border-[color:var(--field-border)] bg-[var(--field-bg)] px-2 text-[0.68rem] font-semibold text-foreground shadow-none hover:bg-[var(--island-hover-bg)] hover:[transform:none] hover:shadow-none"
         style={{ flex: "1 1 0%", minWidth: 0 }}
       >
         <Mail className="size-4" aria-hidden="true" />

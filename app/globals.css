@@ -76,6 +76,14 @@
   --primary: #054CB3;
   --primary-foreground: #FFFFFF;
   --primary-hover: #0645A6;
+  --button-surface-hover: color-mix(in srgb, var(--surface) 93%, #0F172A 7%);
+  --button-muted-hover: color-mix(in srgb, var(--field-bg-muted) 93%, #0F172A 7%);
+  --button-secondary-hover: color-mix(in srgb, var(--secondary) 92%, #0F172A 8%);
+  --button-active-hover: color-mix(in srgb, var(--island-active-bg) 92%, #0F172A 8%);
+  --button-danger-hover: color-mix(in srgb, var(--danger-panel-bg) 92%, #0F172A 8%);
+  --button-border-hover: color-mix(in srgb, var(--border) 72%, #0F172A 28%);
+  --button-shadow-rest: 0 2px 5px rgba(0, 0, 0, 0.22);
+  --button-shadow-hover: 0 6px 14px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0, 0, 0, 0.24);
   --secondary: color-mix(in srgb, #fffdf8 92%, #054CB3 8%);
   --secondary-foreground: #132A46;
   --muted: #f4f1e8;
@@ -233,6 +241,29 @@
   .field-panel {
     border: 1px solid var(--field-border);
     background: var(--field-bg);
+  }
+
+  .action-button {
+    box-shadow: var(--button-shadow-rest);
+  }
+
+  @media (hover: hover) {
+    .action-button:not(:disabled):not([aria-disabled="true"]):hover {
+      box-shadow: var(--button-shadow-hover);
+      transform: translateY(-1px);
+    }
+  }
+
+  .action-button:disabled,
+  .action-button[aria-disabled="true"] {
+    box-shadow: none;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .action-button:not(:disabled):not([aria-disabled="true"]):hover {
+      transform: none;
+    }
   }
 
   .workflow-panel {

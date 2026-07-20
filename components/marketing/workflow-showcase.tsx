@@ -86,7 +86,7 @@ export function WorkflowShowcase({ workflows }: WorkflowShowcaseProps) {
                 </Link>
                 <RequestModalTrigger
                   variant="outline"
-                  className="h-auto min-h-11 w-full border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 py-2.5 text-foreground hover:bg-[var(--island-hover-bg)] sm:w-auto"
+                  className="h-auto min-h-11 w-full border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 py-2.5 text-foreground sm:w-auto"
                 >
                   {siteConfig.cta.workflow}
                 </RequestModalTrigger>

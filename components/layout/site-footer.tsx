@@ -35,7 +35,7 @@ export function SiteFooter() {
                 className={buttonVariants({
                   variant: "outline",
                   className:
-                    "h-10 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 text-foreground hover:bg-[var(--island-hover-bg)]",
+                    "h-10 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 text-foreground",
                 })}
               >
                 {siteConfig.cta.footer}

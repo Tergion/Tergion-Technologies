@@ -56,7 +56,7 @@ export default function ProcessPage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <RequestModalTrigger
               variant="outline"
-              className="h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground hover:bg-[var(--island-hover-bg)]"
+              className="h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground"
             >
               Talk through options
             </RequestModalTrigger>
@@ -65,7 +65,7 @@ export default function ProcessPage() {
               className={buttonVariants({
                 variant: "outline",
                 className:
-                  "h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground hover:bg-[var(--island-hover-bg)]",
+                  "h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground",
               })}
             >
               See examples

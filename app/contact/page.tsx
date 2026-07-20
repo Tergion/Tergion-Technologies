@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { GlassCard } from "@/components/marketing/glass-card";
+import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
@@ -31,7 +32,11 @@ export default function ContactPage() {
             </RequestModalTrigger>
             <a
               href={`mailto:${siteConfig.contactEmail}`}
-              className="inline-flex h-12 items-center justify-center rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-sm font-medium text-foreground transition hover:bg-[var(--island-hover-bg)] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--island-focus-ring)]"
+              className={buttonVariants({
+                variant: "outline",
+                className:
+                  "h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground",
+              })}
             >
               {siteConfig.contactEmail}
             </a>
@@ -73,9 +78,9 @@ export default function ContactPage() {
             </ul>
           </div>
           <div className="mt-6">
-            <RequestModalTrigger
-              variant="outline"
-              className="h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 text-foreground hover:bg-[var(--island-hover-bg)]"
+              <RequestModalTrigger
+                variant="outline"
+                className="h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 text-foreground"
             >
               {siteConfig.cta.footerRequest}
             </RequestModalTrigger>

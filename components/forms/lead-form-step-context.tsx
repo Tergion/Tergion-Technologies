@@ -77,10 +77,10 @@ export function LeadFormStepContext({ form }: LeadFormStepProps) {
                 key={option.value}
                 type="button"
                 className={cn(
-                  "h-10 rounded-lg border px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--island-focus-ring)]",
+                  "action-button h-10 rounded-lg border px-3 text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-200 active:translate-y-px focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--island-focus-ring)] motion-reduce:hover:translate-y-0",
                   selected
-                    ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] text-foreground"
-                    : "border-[color:var(--field-border)] bg-[var(--field-bg-muted)] text-muted-foreground hover:bg-[var(--island-hover-bg)] hover:text-foreground",
+                    ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] text-foreground hover:bg-[var(--button-active-hover)]"
+                    : "border-[color:var(--field-border)] bg-[var(--field-bg-muted)] text-muted-foreground hover:border-[color:var(--button-border-hover)] hover:bg-[var(--button-muted-hover)] hover:text-foreground",
                 )}
                 aria-pressed={selected}
                 onClick={() =>
@@ -124,7 +124,8 @@ export function LeadFormStepContext({ form }: LeadFormStepProps) {
                 variant={selected ? "default" : "outline"}
                 className={cn(
                   "h-9 border-[color:var(--field-border)] px-3",
-                  !selected && "bg-[var(--field-bg-muted)] text-muted-foreground",
+                  !selected &&
+                    "bg-[var(--field-bg-muted)] text-muted-foreground hover:bg-[var(--button-muted-hover)]",
                 )}
                 aria-pressed={selected}
                 onClick={() => selectPriority(priority)}
@@ -151,7 +152,8 @@ export function LeadFormStepContext({ form }: LeadFormStepProps) {
                 variant={selected ? "default" : "outline"}
                 className={cn(
                   "h-auto min-h-9 whitespace-normal border-[color:var(--field-border)] px-3 py-1.5",
-                  !selected && "bg-[var(--field-bg-muted)] text-muted-foreground",
+                  !selected &&
+                    "bg-[var(--field-bg-muted)] text-muted-foreground hover:bg-[var(--button-muted-hover)]",
                 )}
                 aria-pressed={selected}
                 onClick={() => toggleInterest(interest)}

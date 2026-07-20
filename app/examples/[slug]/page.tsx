@@ -114,7 +114,7 @@ export default async function ExampleDetailPage({ params }: ExamplePageProps) {
               <div className="mt-5">
                 <RequestModalTrigger
                   variant="outline"
-                  className="h-auto min-h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 py-2.5 text-foreground hover:bg-[var(--island-hover-bg)]"
+                  className="h-auto min-h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 py-2.5 text-foreground"
                 >
                   {siteConfig.cta.workflow}
                 </RequestModalTrigger>

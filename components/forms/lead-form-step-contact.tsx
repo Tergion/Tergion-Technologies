@@ -124,10 +124,10 @@ export function LeadFormStepContact({ form }: LeadFormStepProps) {
                 key={method.value}
                 type="button"
                 className={cn(
-                  "h-10 rounded-lg border px-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--island-focus-ring)]",
+                  "action-button h-10 rounded-lg border px-3 text-sm font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-200 active:translate-y-px focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[var(--island-focus-ring)] motion-reduce:hover:translate-y-0",
                   selected
-                    ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] text-foreground"
-                    : "border-[color:var(--field-border)] bg-[var(--field-bg-muted)] text-muted-foreground hover:bg-[var(--island-hover-bg)] hover:text-foreground",
+                    ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] text-foreground hover:bg-[var(--button-active-hover)]"
+                    : "border-[color:var(--field-border)] bg-[var(--field-bg-muted)] text-muted-foreground hover:border-[color:var(--button-border-hover)] hover:bg-[var(--button-muted-hover)] hover:text-foreground",
                 )}
                 aria-pressed={selected}
                 onClick={() =>

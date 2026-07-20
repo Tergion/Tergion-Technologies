@@ -31,7 +31,7 @@ export function Hero() {
               className={buttonVariants({
                 variant: "outline",
                 className:
-                  "h-12 w-full border-border bg-surface px-5 text-base text-foreground hover:border-border-strong hover:bg-accent sm:w-auto",
+                  "h-12 w-full border-border bg-surface px-5 text-base text-foreground sm:w-auto",
               })}
             >
               {siteConfig.cta.secondary}
