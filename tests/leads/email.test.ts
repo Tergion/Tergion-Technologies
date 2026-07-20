@@ -76,7 +76,7 @@ describe("sendLeadConfirmationEmail", () => {
     expect(body).toMatchObject({
       from: "Tergion Technologies <notifications@tergion.com>",
       to: ["test@example.com"],
-      subject: "We received your Tergion request",
+      subject: "We received your request!",
       reply_to: "noreply@tergion.com",
     });
     expect(body.html).toContain("Request received");
@@ -119,7 +119,7 @@ describe("sendLeadConfirmationEmail", () => {
     expect(body).toMatchObject({
       From: "Tergion Technologies <notifications@tergion.com>",
       To: "test@example.com",
-      Subject: "We received your Tergion request",
+      Subject: "We received your request!",
       ReplyTo: "noreply@tergion.com",
       MessageStream: "outbound",
       TrackOpens: false,

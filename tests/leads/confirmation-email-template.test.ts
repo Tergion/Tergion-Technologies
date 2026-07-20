@@ -14,7 +14,7 @@ describe("confirmation email template", () => {
     const html = renderConfirmationEmailHtml(lead);
     const text = renderConfirmationEmailText(lead);
 
-    expect(confirmationEmailSubject).toBe("We received your Tergion request");
+    expect(confirmationEmailSubject).toBe("We received your request!");
     expect(confirmationEmailPreheader).toBe(
       "We’ll review your request and follow up based on your preferred contact method.",
     );
@@ -35,6 +35,41 @@ describe("confirmation email template", () => {
       "Replies to noreply@tergion.com are not monitored.",
     );
     expect(html).toContain("Replies to this mailbox are not monitored.");
+  });
+
+  it("uses the Tergion blue and white palette without legacy colors", () => {
+    const html = renderConfirmationEmailHtml(makeLeadRecord());
+
+    for (const color of [
+      "#FFFFFF",
+      "#F8FAFD",
+      "#F5F8FD",
+      "#054CB3",
+      "#132A46",
+      "#0C327E",
+      "#D8E3F2",
+    ]) {
+      expect(html).toContain(color);
+    }
+
+    const normalizedHtml = html.toLowerCase();
+
+    for (const legacyColor of [
+      "#789657",
+      "#4f6f35",
+      "#f4f7ef",
+      "#dce5d2",
+      "#f8faf5",
+      "#e8efe0",
+      "#405b2b",
+      "#f6f1e7",
+      "#fffdf8",
+      "#e5dfd3",
+      "#e8e1d6",
+      "#f5f1e9",
+    ]) {
+      expect(normalizedHtml).not.toContain(legacyColor.toLowerCase());
+    }
   });
 
   it("omits empty optional details", () => {
