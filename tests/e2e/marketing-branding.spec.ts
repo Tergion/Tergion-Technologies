@@ -33,6 +33,14 @@ test("renders the branded homepage structure and accessible hero workflow", asyn
   await expect(
     page.getByRole("link", { name: "Tergion Technologies home" }),
   ).toBeVisible();
+  await expect(
+    page
+      .locator("#main-content")
+      .getByRole("button", { name: "Contact Tergion" }),
+  ).toHaveCSS("font-size", "16px");
+  await expect(
+    page.getByRole("link", { name: "See example automations" }),
+  ).toHaveCSS("font-size", "16px");
 
   const heroWorkflow = page.getByRole("img", {
     name: /Example workflow from lead capture through CRM creation/,
@@ -57,7 +65,7 @@ test("renders the branded homepage structure and accessible hero workflow", asyn
   ).toBeVisible();
   await expect(footer.getByRole("link", { name: "Privacy" })).toBeVisible();
   await expect(
-    footer.getByRole("button", { name: "Request an automation review" }),
+    footer.getByRole("button", { name: "Send a quick request" }),
   ).toBeVisible();
 
   await expect(page.locator('link[rel="icon"]')).toHaveAttribute(
@@ -118,7 +126,7 @@ test("uses a neutral footer CTA shadow without boxing text links", async ({
 
   const interactiveTextControls = [
     footer.getByRole("link", { name: "Privacy" }),
-    footer.getByRole("button", { name: "Request an automation review" }),
+    footer.getByRole("button", { name: "Send a quick request" }),
   ];
 
   for (const control of interactiveTextControls) {

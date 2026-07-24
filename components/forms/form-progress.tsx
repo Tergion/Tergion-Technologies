@@ -1,28 +1,38 @@
-import { cn } from "@/lib/utils";
+export function FormProgress({
+  step,
+  totalSteps,
+  label,
+}: {
+  step: number;
+  totalSteps: number;
+  label: string;
+}) {
+  const percentage = (step / totalSteps) * 100;
 
-const steps = ["Basics", "Context", "Review"];
-
-export function FormProgress({ currentStep }: { currentStep: number }) {
   return (
-    <ol className="grid grid-cols-3 gap-2" aria-label="Request progress">
-      {steps.map((step, index) => (
-        <li key={step}>
-          <div
-            className={cn(
-              "h-1.5 rounded-full bg-[var(--field-bg-muted)]",
-              index <= currentStep && "bg-primary",
-            )}
-          />
-          <p
-            className={cn(
-              "mt-2 text-xs font-medium text-muted-foreground",
-              index === currentStep && "text-foreground",
-            )}
-          >
-            {step}
-          </p>
-        </li>
-      ))}
-    </ol>
+    <div className="space-y-2" aria-live="polite">
+      <div className="flex items-center justify-between gap-4 text-xs font-semibold text-muted-foreground">
+        <span>
+          Step {step} of {totalSteps}
+        </span>
+        <span>{Math.round(percentage)}%</span>
+      </div>
+      <div
+        className="h-2 overflow-hidden rounded-full bg-[var(--field-bg-muted)]"
+        role="progressbar"
+        aria-label={`${label}: step ${step} of ${totalSteps}`}
+        aria-valuemin={1}
+        aria-valuemax={totalSteps}
+        aria-valuenow={step}
+      >
+        <div
+          className="h-full rounded-full bg-primary transition-transform duration-200 motion-reduce:transition-none"
+          style={{
+            transform: `translateX(-${100 - percentage}%)`,
+            transformOrigin: "left",
+          }}
+        />
+      </div>
+    </div>
   );
 }

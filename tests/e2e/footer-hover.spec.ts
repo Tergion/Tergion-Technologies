@@ -48,7 +48,7 @@ test("uses a neutral footer CTA shadow without boxing text links", async ({
 
   const interactiveTextControls = [
     footer.getByRole("link", { name: "Privacy" }),
-    footer.getByRole("button", { name: "Request an automation review" }),
+    footer.getByRole("button", { name: "Send a quick request" }),
   ];
 
   for (const control of interactiveTextControls) {

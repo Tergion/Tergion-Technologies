@@ -2,7 +2,7 @@ import {
   preferredContactMethods,
   usesCrmOptions,
 } from "@/features/leads/lead.constants";
-import type { LeadRecord } from "@/features/leads/lead.types";
+import type { QuickRequestRecord } from "@/features/leads/lead.types";
 import { siteConfig } from "@/lib/site-config";
 
 export const confirmationEmailSubject = "We received your request!";
@@ -33,7 +33,7 @@ function renderMultilineHtml(value: string) {
   return escapeHtml(value).replace(/\r\n|\r|\n/g, "<br>");
 }
 
-function getPreferredContactLabel(lead: LeadRecord) {
+function getPreferredContactLabel(lead: QuickRequestRecord) {
   return (
     preferredContactMethods.find(
       (method) => method.value === lead.preferredContactMethod,
@@ -41,14 +41,14 @@ function getPreferredContactLabel(lead: LeadRecord) {
   );
 }
 
-function getUsesCrmLabel(lead: LeadRecord) {
+function getUsesCrmLabel(lead: QuickRequestRecord) {
   return (
     usesCrmOptions.find((option) => option.value === lead.usesCrm)?.label ??
     lead.usesCrm
   );
 }
 
-function getConfirmationDetails(lead: LeadRecord): ConfirmationDetail[] {
+function getConfirmationDetails(lead: QuickRequestRecord): ConfirmationDetail[] {
   const lastName = cleanOptionalValue(lead.lastName);
   const phone = cleanOptionalValue(lead.phone);
   const website = cleanOptionalValue(lead.website);
@@ -155,7 +155,7 @@ function renderNextStep(number: string, title: string, description: string) {
     </tr>`;
 }
 
-export function renderConfirmationEmailHtml(lead: LeadRecord) {
+export function renderConfirmationEmailHtml(lead: QuickRequestRecord) {
   const details = getConfirmationDetails(lead);
   const urls = getEmailUrls();
   const contactEmail = siteConfig.contactEmail;
@@ -256,7 +256,7 @@ export function renderConfirmationEmailHtml(lead: LeadRecord) {
 </html>`;
 }
 
-export function renderConfirmationEmailText(lead: LeadRecord) {
+export function renderConfirmationEmailText(lead: QuickRequestRecord) {
   const details = getConfirmationDetails(lead)
     .map((detail) => `${detail.label}: ${detail.value}`)
     .join("\n");

@@ -32,12 +32,26 @@
 - `LEAD_NOTIFICATION_EMAIL`: future internal lead notification recipient. Internal notification sending remains deferred and this value does not gate customer confirmation.
 - `GHL_SOURCE`: GoHighLevel contact source, defaults to `Tergion website lead form`.
 - `GHL_LEAD_TAGS`: comma-separated GoHighLevel tags to add after contact upsert, defaults to `website-lead`.
+- `GHL_ASSESSMENT_OBJECT_SCHEMA_KEY`: server-only Automation Assessment Custom Object key, expected to be `custom_objects.automation_assessment`.
+- `GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY`: server-only Contact association key, expected to be `automation_assessments_submitted_by`.
 - `ANALYTICS_PROVIDER`: analytics provider flag if enabled after review.
 - `NODE_ENV`: environment mode.
 
 ## Current Requirement Status
 
 Most variables are optional in local development. Production lead submission fails closed unless both Turnstile verification and GoHighLevel delivery are operational, so `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `GHL_PRIVATE_INTEGRATION_TOKEN`, and `GHL_LOCATION_ID` must be configured before public launch. Email sending and Upstash-backed distributed rate limiting and duplicate suppression should also be configured before launch. Without Upstash, the app falls back to in-memory checks that are useful locally but not durable across Cloudflare Worker isolates.
+
+### Turnstile Build And Runtime Behavior
+
+Next.js embeds `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in the client bundle at build time, so the production value must be present during both the Next.js and Cloudflare builds. Changing only the start-time process environment does not replace a site key already compiled into the browser code.
+
+On `localhost`, `127.0.0.1`, and `::1`, the form uses the documented local-testing fallback and does not load the external Turnstile script. On public hostnames, a configured public site key loads the real widget; a missing public key displays an unavailable status and keeps submission disabled. The server independently requires `TURNSTILE_SECRET_KEY` and verifies the submitted token in production, so the client fallback does not weaken deployed verification.
+
+Automation Assessment submissions require `GHL_ASSESSMENT_OBJECT_SCHEMA_KEY` and `GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY`. The example values are the expected identifiers, not proof of the live GoHighLevel configuration. Verify both against the location's read-only object-schema and association metadata before enabling assessment submissions, and use the verified values in Cloudflare. These identifiers are not credentials, but they are server-only configuration and must not use a `NEXT_PUBLIC_*` name.
+
+Reuse `GHL_PRIVATE_INTEGRATION_TOKEN`; do not create a second token. The same Private Integration must have `contacts.readonly` for explicit Contact resolution and retry-safe note lookup, plus `associations/relation.readonly` to inspect an existing relation after a retry or ambiguous timeout. Keep the existing `contacts.write` and `associations/relation.write` scopes. If `contacts.readonly` is not already enabled, Nicolas must add **View Contacts - contacts.readonly** to the existing token before deployment.
+
+The Worker validates the configured schema and association through read-only HighLevel endpoints and caches only the non-secret metadata for 15 minutes in the current Worker isolate. It does not fetch schema metadata for every form submission and does not cache the token, authorization headers, Contact data, or assessment answers. A missing or changed schema or an association orientation mismatch must fail closed with a generic user-facing error. See `docs/gohighlevel-automation-assessment.md` for the complete mapping and recovery contract.
 
 ## Transactional Confirmation Email
 

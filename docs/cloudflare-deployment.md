@@ -68,11 +68,17 @@ Set production values in Cloudflare before enabling live lead capture:
 - `RESEND_API_KEY` or `POSTMARK_SERVER_TOKEN`
 - `GHL_PRIVATE_INTEGRATION_TOKEN`
 - `GHL_LOCATION_ID`
+- `GHL_ASSESSMENT_OBJECT_SCHEMA_KEY`
+- `GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY`
 - Google Sheets credentials when Sheets append is enabled
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 
-Keep provider tokens and other credentials as Cloudflare secrets. The non-sensitive provider selection can be stored as a server-side runtime variable; the stable sender and reply-to identities are source-controlled in `lib/site-config.ts`.
+Keep provider tokens and other credentials as Cloudflare secrets. `GHL_ASSESSMENT_OBJECT_SCHEMA_KEY` and `GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY` are non-secret but server-only Worker variables; never expose them through `NEXT_PUBLIC_*`. Their expected values are `custom_objects.automation_assessment` and `automation_assessments_submitted_by`, respectively. Confirm both through read-only live discovery before enabling assessment submissions and override them if the verified keys differ. The non-sensitive provider selection can also be stored as a server-side runtime variable; the stable sender and reply-to identities are source-controlled in `lib/site-config.ts`.
+
+Reuse the existing `GHL_PRIVATE_INTEGRATION_TOKEN`; do not create or rotate a second token. Add **View Contacts - contacts.readonly** and `associations/relation.readonly` to that same Private Integration when absent, while preserving existing scopes such as `contacts.write` and `associations/relation.write`. Contact read access is required for explicit identity resolution and retry-safe note creation. Relation read access is required to recover the Contact-to-assessment relation after a retry or ambiguous provider timeout.
+
+At runtime, the Worker uses read-only schema and association endpoints to validate the configured object and relation orientation, then caches only non-secret metadata for 15 minutes in the current isolate. This avoids a discovery request for every submission. Validation must fail closed if the schema, field mapping, association, or orientation changes; credentials, authorization headers, Contact records, and assessment answers must never enter this cache. The complete endpoint, mapping, recovery, and smoke-test contract is in `docs/gohighlevel-automation-assessment.md`.
 
 The production lead route fails closed when the Turnstile secret or GoHighLevel credentials are missing. The deployed form also keeps submission disabled when the public Turnstile widget cannot issue a token. Configure and verify both systems before directing visitors to the form.
 
@@ -100,9 +106,12 @@ duplicate suppression survive across Cloudflare Worker isolates and regions.
 
 Configured production rules:
 
-- Same email: 1 request per 15 minutes and 3 requests per 24 hours.
-- Same phone: 1 request per 15 minutes and 3 requests per 24 hours.
+- Same email and same form type: 1 accepted request per 15 minutes and 3 accepted requests per 24 hours.
+- Same phone and same form type: 1 accepted request per 15 minutes and 3 accepted requests per 24 hours.
+- Quick Request and Automation Assessment use separate identity cooldowns, so either form may follow the other.
 - Same client signal: 3 requests per hour and 10 requests per 24 hours.
+
+Before production smoke testing, confirm **Settings > Business Profile > Contact Deduplication Preferences** has **Allow Duplicate Contact** off, **Email** as the primary field, and **Phone** as the secondary field. The Worker also resolves both identifiers independently and fails closed on split or ambiguous matches; it does not rely on this dashboard setting alone.
 
 Recommended Cloudflare dashboard hardening:
 
@@ -131,3 +140,5 @@ After deployment:
 11. Submit a duplicate request and confirm another confirmation is not sent.
 12. Confirm the response does not expose provider errors.
 13. Check Cloudflare and provider logs for delivery errors without full lead payloads.
+
+For the Contact and Automation Assessment production smoke test, use controlled Tergion aliases and entirely fictional business, phone, and assessment details; never use customer data. Submit a Quick Request, then an Assessment with the same identity, and confirm one Contact, two distinct notes, one Automation Assessment record with a `TA-` reference, and one relation to that Contact. Retry the identical Assessment and confirm the Contact, assessment record, relation, note, and confirmation email are not duplicated. Repeat in reverse order with a second fictional identity. Confirm Quick Request never creates an Automation Assessment record. Do not delete or modify the existing `TA-MANUAL-TEST-001` record.

@@ -1,9 +1,15 @@
 import type { z } from "zod";
 
-import type { leadSubmissionSchema } from "@/features/leads/lead.schema";
+import type { AutomationAssessment } from "@/features/assessments/assessment.types";
+import type {
+  leadSubmissionUnionSchema,
+  quickRequestSchema,
+} from "@/features/leads/lead.schema";
 
-export type LeadSubmissionInput = z.input<typeof leadSubmissionSchema>;
-export type LeadSubmission = z.output<typeof leadSubmissionSchema>;
+export type QuickRequestInput = z.input<typeof quickRequestSchema>;
+export type QuickRequest = z.output<typeof quickRequestSchema>;
+export type LeadSubmissionInput = z.input<typeof leadSubmissionUnionSchema>;
+export type LeadSubmission = z.output<typeof leadSubmissionUnionSchema>;
 
 export type LeadSecuritySummary = {
   turnstileVerified: boolean;
@@ -15,12 +21,17 @@ export type LeadSecuritySummary = {
   duplicateReason?: string;
 };
 
-export type LeadRecord = LeadSubmission & {
+type LeadRecordMetadata = {
   leadId: string;
   createdAt: string;
   status: "new";
   security: LeadSecuritySummary;
 };
+
+export type QuickRequestRecord = QuickRequest & LeadRecordMetadata;
+export type AutomationAssessmentRecord = AutomationAssessment &
+  LeadRecordMetadata;
+export type LeadRecord = QuickRequestRecord | AutomationAssessmentRecord;
 
 export type ProviderResult = {
   ok: boolean;

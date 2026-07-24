@@ -50,12 +50,22 @@ export function checkLeadSpamSignals(
     reasons.push("completion-too-fast");
   }
 
-  if (countUrls(payload.notes) > 2) {
+  const contentValues =
+    payload.submissionType === "automation_assessment"
+      ? [
+          payload.additionalNotes,
+          payload.incomingCallOwnerOther,
+          payload.biggestChallengeOther,
+        ]
+      : [payload.notes];
+  const combinedContent = contentValues.filter(Boolean).join("\n");
+
+  if (countUrls(combinedContent) > 2) {
     score += 25;
     reasons.push("too-many-note-urls");
   }
 
-  if (hasRepeatedText(payload.notes)) {
+  if (hasRepeatedText(combinedContent)) {
     score += 20;
     reasons.push("repeated-note-text");
   }

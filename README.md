@@ -45,7 +45,16 @@ Copy `.env.example` to a local `.env.local` when credentials are available. Do n
 
 ## Current Site Scope
 
-This site includes the public marketing foundation, implementation-aligned legal pages, examples scaffold, a 3-step lead form, `/api/leads`, `/api/health`, SEO basics, security headers, and provider boundaries.
+This site includes the public marketing foundation, implementation-aligned legal pages, examples scaffold, a 4-step Quick Request, an 8-step Business Automation Assessment, `/api/leads`, `/api/health`, SEO basics, security headers, and provider boundaries.
+
+## Request Modal Links
+
+Canonical request modal links are centralized in `siteConfig.requestForms`:
+
+- Quick Request: `https://tergion.com/contact?form=quick-request`
+- Automation Assessment: `https://tergion.com/contact?form=automation-assessment`
+
+Supported `form` values are `quick-request` and `automation-assessment`. Invalid values are ignored without showing an error. Only the form mode belongs in these URLs; never add PII such as names, email addresses, phone numbers, notes, or assessment answers. Closing the modal removes only the `form` parameter and preserves other query parameters, including UTM values.
 
 ## Integration Status
 

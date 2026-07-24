@@ -1,19 +1,36 @@
+import {
+  automationAssessmentDuplicateMessage,
+  getAutomationAssessmentSuccessMessage,
+} from "@/features/assessments/assessment.constants";
+import {
+  commitGoHighLevelSubmission,
+  isGoHighLevelSubmissionCompleted,
+  markLeadSubmissionCompleted,
+  releaseLeadSubmission,
+  reserveLeadSubmission,
+} from "@/features/leads/duplicate-check";
+import {
+  sendInternalLeadNotification,
+  sendLeadConfirmationEmail,
+} from "@/features/leads/email";
 import { appendLeadToGoogleSheet } from "@/features/leads/google-sheets";
-import { checkDuplicateLead } from "@/features/leads/duplicate-check";
-import { checkLeadRateLimit } from "@/features/leads/rate-limit";
+import { sendLeadToGoHighLevel } from "@/features/leads/gohighlevel";
+import { isContactResolutionError } from "@/features/leads/gohighlevel-contact";
+import { isAmbiguousGoHighLevelFailure } from "@/features/leads/gohighlevel-client";
 import {
   leadDuplicateMessage,
   leadSuccessMessage,
 } from "@/features/leads/lead.constants";
 import { leadSubmissionSchema } from "@/features/leads/lead.schema";
+import type { LeadRecord, LeadSubmission } from "@/features/leads/lead.types";
+import { checkLeadRateLimit } from "@/features/leads/rate-limit";
 import {
-  sendInternalLeadNotification,
-  sendLeadConfirmationEmail,
-} from "@/features/leads/email";
-import { sendLeadToGoHighLevel } from "@/features/leads/gohighlevel";
+  readLeadJsonBody,
+  validateLeadRequestHeaders,
+} from "@/features/leads/request-guards";
 import { checkLeadSpamSignals } from "@/features/leads/spam-check";
+import { deriveSubmissionLeadId } from "@/features/leads/submission-id";
 import { verifyTurnstileToken } from "@/features/leads/turnstile";
-import type { LeadRecord } from "@/features/leads/lead.types";
 import { env } from "@/lib/env";
 
 function getRemoteIp(request: Request) {
@@ -39,19 +56,75 @@ function validationErrorResponse() {
   );
 }
 
-export async function POST(request: Request) {
-  let rawPayload: unknown;
+function processingErrorResponse(status = 500) {
+  return Response.json(
+    {
+      ok: false,
+      message:
+        "We couldn't process this request automatically. Please verify your contact information or email contact@tergion.com.",
+    },
+    { status },
+  );
+}
 
-  try {
-    rawPayload = await request.json();
-  } catch {
-    return validationErrorResponse();
+function getSubmissionSuccessMessage(payload: LeadSubmission) {
+  return payload.submissionType === "automation_assessment"
+    ? getAutomationAssessmentSuccessMessage(
+        payload.assessmentFollowUpPreference,
+      )
+    : leadSuccessMessage;
+}
+
+function getSubmissionDuplicateMessage(payload: LeadSubmission) {
+  return payload.submissionType === "automation_assessment"
+    ? automationAssessmentDuplicateMessage
+    : leadDuplicateMessage;
+}
+
+export async function POST(request: Request) {
+  const headerValidation = validateLeadRequestHeaders(request);
+
+  if (!headerValidation.ok) {
+    return Response.json(
+      { ok: false, message: headerValidation.message },
+      { status: headerValidation.status },
+    );
   }
 
-  const parsed = leadSubmissionSchema.safeParse(rawPayload);
+  const body = await readLeadJsonBody(request);
+
+  if (!body.ok) {
+    return Response.json(
+      { ok: false, message: body.message },
+      { status: body.status },
+    );
+  }
+
+  const parsed = leadSubmissionSchema.safeParse(body.value);
 
   if (!parsed.success) {
     return validationErrorResponse();
+  }
+
+  const payload = parsed.data;
+  const spam = checkLeadSpamSignals(payload);
+
+  if (spam.reasons.includes("honeypot-filled")) {
+    return Response.json({
+      ok: true,
+      message: getSubmissionSuccessMessage(payload),
+    });
+  }
+
+  if (!spam.passed) {
+    return Response.json(
+      {
+        ok: false,
+        message:
+          "We could not accept the request right now. Please try again later.",
+      },
+      { status: 400 },
+    );
   }
 
   const rateLimit = await checkLeadRateLimit(request);
@@ -60,22 +133,10 @@ export async function POST(request: Request) {
     return Response.json(
       {
         ok: false,
-        message: "We could not accept the request right now. Please try again later.",
+        message:
+          "We could not accept the request right now. Please try again later.",
       },
       { status: 429 },
-    );
-  }
-
-  const payload = parsed.data;
-  const spam = checkLeadSpamSignals(payload);
-
-  if (!spam.passed) {
-    return Response.json(
-      {
-        ok: false,
-        message: "We could not accept the request right now. Please try again later.",
-      },
-      { status: 400 },
     );
   }
 
@@ -94,68 +155,118 @@ export async function POST(request: Request) {
     );
   }
 
-  const duplicate = await checkDuplicateLead(payload.email, payload.phone);
+  const leadId = await deriveSubmissionLeadId(
+    payload.submissionType,
+    payload.submissionId,
+  );
+  const reservationResult = await reserveLeadSubmission(
+    payload.submissionType,
+    leadId,
+    payload.email,
+    payload.phone,
+  );
 
-  if (duplicate.duplicateLikely) {
+  if (
+    reservationResult.status === "completed" ||
+    reservationResult.status === "duplicate"
+  ) {
     return Response.json({
       ok: true,
-      message: leadDuplicateMessage,
+      message: getSubmissionDuplicateMessage(payload),
     });
   }
 
-  const createdAt = new Date().toISOString();
-  const lead: LeadRecord = {
-    ...payload,
-    leadId: crypto.randomUUID(),
-    createdAt,
-    status: "new",
-    security: {
-      turnstileVerified: turnstile.success,
-      turnstileConfigured: turnstile.configured,
-      spamScore: spam.score,
-      spamReasons: spam.reasons,
-      rateLimitReason: rateLimit.reason,
-      duplicateLikely: duplicate.duplicateLikely,
-      duplicateReason: duplicate.reason,
-    },
-  };
+  if (reservationResult.status === "unavailable") {
+    return processingErrorResponse(503);
+  }
+
+  if (reservationResult.status === "busy") {
+    return processingErrorResponse(409);
+  }
+
+  if (reservationResult.status !== "reserved") {
+    return processingErrorResponse(503);
+  }
+
+  const reservation = reservationResult.reservation;
+  let goHighLevelDurable = false;
 
   try {
-    const goHighLevel = await sendLeadToGoHighLevel(lead);
+    const lead: LeadRecord = {
+      ...payload,
+      leadId,
+      createdAt: new Date().toISOString(),
+      status: "new",
+      security: {
+        turnstileVerified: turnstile.success,
+        turnstileConfigured: turnstile.configured,
+        spamScore: spam.score,
+        spamReasons: spam.reasons,
+        rateLimitReason: rateLimit.reason,
+        duplicateLikely: false,
+      },
+    };
+    try {
+      const goHighLevelAlreadyCompleted =
+        await isGoHighLevelSubmissionCompleted(
+          payload.submissionType,
+          leadId,
+        );
 
-    if (
-      env.nodeEnv === "production" &&
-      (!goHighLevel.configured || !goHighLevel.ok)
-    ) {
-      throw new Error("gohighlevel-production-delivery-unavailable");
+      if (!goHighLevelAlreadyCompleted) {
+        const goHighLevel = await sendLeadToGoHighLevel(lead);
+
+        if (
+          env.nodeEnv === "production" &&
+          (!goHighLevel.configured || !goHighLevel.ok)
+        ) {
+          throw new Error("gohighlevel-production-delivery-unavailable");
+        }
+
+      }
+
+      await commitGoHighLevelSubmission(reservation);
+      goHighLevelDurable = true;
+      await appendLeadToGoogleSheet(lead);
+      await sendInternalLeadNotification(lead);
+    } catch (error) {
+      if (isContactResolutionError(error)) {
+        return processingErrorResponse(
+          error.category === "provider_unavailable" ? 503 : 409,
+        );
+      }
+
+      if (isAmbiguousGoHighLevelFailure(error)) {
+        goHighLevelDurable = true;
+      }
+
+      return processingErrorResponse();
     }
 
-    await appendLeadToGoogleSheet(lead);
-    await sendInternalLeadNotification(lead);
-  } catch {
-    return Response.json(
-      {
-        ok: false,
-        message:
-          "We could not process the request right now. Please try again later.",
-      },
-      { status: 500 },
-    );
-  }
+    try {
+      await markLeadSubmissionCompleted(payload.submissionType, leadId);
+    } catch {
+      return processingErrorResponse(503);
+    }
 
-  try {
-    await sendLeadConfirmationEmail(lead);
-  } catch {
-    console.warn("Lead confirmation email delivery failed", {
-      provider: "email",
-      stage: "route",
+    try {
+      await sendLeadConfirmationEmail(lead);
+    } catch {
+      console.warn("Lead confirmation email delivery failed", {
+        provider: "email",
+        stage: "route",
+        leadId: lead.leadId,
+      });
+    }
+
+    return Response.json({
+      ok: true,
+      message: getSubmissionSuccessMessage(payload),
       leadId: lead.leadId,
     });
+  } finally {
+    await releaseLeadSubmission(reservation, {
+      releaseIdentityReservation: !goHighLevelDurable,
+    });
   }
-
-  return Response.json({
-    ok: true,
-    message: leadSuccessMessage,
-    leadId: lead.leadId,
-  });
 }

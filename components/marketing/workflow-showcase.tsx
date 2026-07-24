@@ -95,6 +95,7 @@ export function WorkflowShowcase({ workflows }: WorkflowShowcaseProps) {
             <WorkflowShowcaseVisual
               workflow={activeWorkflow}
               activeStepIndex={activeStepIndex}
+              onStepChange={setActiveStepIndex}
             />
           </div>
 

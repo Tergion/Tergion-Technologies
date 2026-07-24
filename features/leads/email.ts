@@ -10,6 +10,11 @@ import {
   renderConfirmationEmailHtml,
   renderConfirmationEmailText,
 } from "@/features/leads/confirmation-email-template";
+import {
+  assessmentConfirmationEmailSubject,
+  renderAssessmentConfirmationEmailHtml,
+  renderAssessmentConfirmationEmailText,
+} from "@/features/assessments/assessment-confirmation-email-template";
 import { renderInternalLeadText } from "@/features/leads/lead-email-template";
 import type { LeadRecord, ProviderResult } from "@/features/leads/lead.types";
 import { siteConfig } from "@/lib/site-config";
@@ -50,6 +55,7 @@ async function fetchWithTimeout(url: string, init: RequestInit) {
 
 async function sendWithResend(
   lead: LeadRecord,
+  subject: string,
   html: string,
   text: string,
 ) {
@@ -63,7 +69,7 @@ async function sendWithResend(
     body: JSON.stringify({
       from: siteConfig.transactionalEmail.from,
       to: [lead.email],
-      subject: confirmationEmailSubject,
+      subject,
       html,
       text,
       reply_to: siteConfig.transactionalEmail.replyTo,
@@ -73,6 +79,7 @@ async function sendWithResend(
 
 async function sendWithPostmark(
   lead: LeadRecord,
+  subject: string,
   html: string,
   text: string,
 ) {
@@ -86,7 +93,7 @@ async function sendWithPostmark(
     body: JSON.stringify({
       From: siteConfig.transactionalEmail.from,
       To: lead.email,
-      Subject: confirmationEmailSubject,
+      Subject: subject,
       HtmlBody: html,
       TextBody: text,
       ReplyTo: siteConfig.transactionalEmail.replyTo,
@@ -100,14 +107,15 @@ async function sendWithPostmark(
 async function sendWithProvider(
   provider: EmailProvider,
   lead: LeadRecord,
+  subject: string,
   html: string,
   text: string,
 ) {
   if (provider === "resend") {
-    return sendWithResend(lead, html, text);
+    return sendWithResend(lead, subject, html, text);
   }
 
-  return sendWithPostmark(lead, html, text);
+  return sendWithPostmark(lead, subject, html, text);
 }
 
 export async function sendInternalLeadNotification(
@@ -164,11 +172,25 @@ export async function sendLeadConfirmationEmail(
     };
   }
 
-  const html = renderConfirmationEmailHtml(lead);
-  const text = renderConfirmationEmailText(lead);
+  const isAssessment = lead.submissionType === "automation_assessment";
+  const subject = isAssessment
+    ? assessmentConfirmationEmailSubject
+    : confirmationEmailSubject;
+  const html = isAssessment
+    ? renderAssessmentConfirmationEmailHtml(lead)
+    : renderConfirmationEmailHtml(lead);
+  const text = isAssessment
+    ? renderAssessmentConfirmationEmailText(lead)
+    : renderConfirmationEmailText(lead);
 
   try {
-    const response = await sendWithProvider(provider, lead, html, text);
+    const response = await sendWithProvider(
+      provider,
+      lead,
+      subject,
+      html,
+      text,
+    );
 
     if (!response.ok) {
       logConfirmationEmailFailure(lead, provider, "response", response.status);
