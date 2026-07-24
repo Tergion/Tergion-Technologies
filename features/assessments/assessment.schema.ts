@@ -38,6 +38,7 @@ export const assessmentPreferredContactMethodSchema = z.enum(
 export const automationAssessmentBaseSchema = z.object({
   submissionType: z.literal("automation_assessment"),
   formVersion: z.literal(automationAssessmentFormVersion),
+  submissionNonce: z.uuid(),
   firstName: requiredText("First name", 80),
   lastName: optionalText(80),
   businessName: requiredText("Business name", 140),

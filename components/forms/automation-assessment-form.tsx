@@ -122,6 +122,7 @@ export function AutomationAssessmentForm({
   triggerSource: string;
 }) {
   const [startedAt] = useState(() => Date.now());
+  const [submissionNonce] = useState(() => crypto.randomUUID());
   const [introVisible, setIntroVisible] = useState(true);
   const [step, setStep] = useState(0);
   const [formError, setFormError] =
@@ -144,6 +145,7 @@ export function AutomationAssessmentForm({
     defaultValues: {
       submissionType: "automation_assessment",
       formVersion: automationAssessmentFormVersion,
+      submissionNonce,
       firstName: "",
       lastName: "",
       businessName: "",

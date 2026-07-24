@@ -20,6 +20,10 @@ export const env = {
   goHighLevelSource:
     process.env.GHL_SOURCE || "Tergion website lead form",
   goHighLevelLeadTags: process.env.GHL_LEAD_TAGS || "website-lead",
+  goHighLevelAssessmentObjectSchemaKey:
+    process.env.GHL_ASSESSMENT_OBJECT_SCHEMA_KEY || "",
+  goHighLevelAssessmentContactAssociationKey:
+    process.env.GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY || "",
   upstashRedisRestUrl: process.env.UPSTASH_REDIS_REST_URL || "",
   upstashRedisRestToken: process.env.UPSTASH_REDIS_REST_TOKEN || "",
   nodeEnv: process.env.NODE_ENV || "development",

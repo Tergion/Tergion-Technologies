@@ -2,7 +2,15 @@ import {
   automationAssessmentDuplicateMessage,
   getAutomationAssessmentSuccessMessage,
 } from "@/features/assessments/assessment.constants";
-import { checkDuplicateLead } from "@/features/leads/duplicate-check";
+import {
+  acquireAssessmentSubmissionLease,
+  checkDuplicateLead,
+  isAssessmentGoHighLevelCompleted,
+  isAssessmentSubmissionCompleted,
+  markAssessmentGoHighLevelCompleted,
+  markAssessmentSubmissionCompleted,
+  releaseAssessmentSubmissionLease,
+} from "@/features/leads/duplicate-check";
 import {
   sendInternalLeadNotification,
   sendLeadConfirmationEmail,
@@ -14,16 +22,14 @@ import {
   leadSuccessMessage,
 } from "@/features/leads/lead.constants";
 import { leadSubmissionSchema } from "@/features/leads/lead.schema";
-import type {
-  LeadRecord,
-  LeadSubmission,
-} from "@/features/leads/lead.types";
+import type { LeadRecord, LeadSubmission } from "@/features/leads/lead.types";
 import { checkLeadRateLimit } from "@/features/leads/rate-limit";
 import {
   readLeadJsonBody,
   validateLeadRequestHeaders,
 } from "@/features/leads/request-guards";
 import { checkLeadSpamSignals } from "@/features/leads/spam-check";
+import { deriveAssessmentLeadId } from "@/features/leads/submission-id";
 import { verifyTurnstileToken } from "@/features/leads/turnstile";
 import { env } from "@/lib/env";
 
@@ -138,10 +144,37 @@ export async function POST(request: Request) {
     );
   }
 
+  const assessmentLeadId =
+    payload.submissionType === "automation_assessment"
+      ? await deriveAssessmentLeadId(payload.submissionNonce)
+      : undefined;
+
+  if (assessmentLeadId) {
+    try {
+      if (await isAssessmentSubmissionCompleted(assessmentLeadId)) {
+        return Response.json({
+          ok: true,
+          message: getSubmissionDuplicateMessage(payload),
+        });
+      }
+    } catch {
+      return Response.json(
+        {
+          ok: false,
+          message:
+            "We could not process the request right now. Please try again later.",
+        },
+        { status: 503 },
+      );
+    }
+  }
+
   const duplicate = await checkDuplicateLead(
     payload.submissionType,
     payload.email,
     payload.phone,
+    Date.now(),
+    assessmentLeadId,
   );
 
   if (duplicate.duplicateLikely) {
@@ -151,58 +184,103 @@ export async function POST(request: Request) {
     });
   }
 
-  const lead: LeadRecord = {
-    ...payload,
-    leadId: crypto.randomUUID(),
-    createdAt: new Date().toISOString(),
-    status: "new",
-    security: {
-      turnstileVerified: turnstile.success,
-      turnstileConfigured: turnstile.configured,
-      spamScore: spam.score,
-      spamReasons: spam.reasons,
-      rateLimitReason: rateLimit.reason,
-      duplicateLikely: duplicate.duplicateLikely,
-      duplicateReason: duplicate.reason,
-    },
-  };
+  const assessmentLease = assessmentLeadId
+    ? await acquireAssessmentSubmissionLease(assessmentLeadId)
+    : undefined;
 
-  try {
-    const goHighLevel = await sendLeadToGoHighLevel(lead);
-
-    if (
-      env.nodeEnv === "production" &&
-      (!goHighLevel.configured || !goHighLevel.ok)
-    ) {
-      throw new Error("gohighlevel-production-delivery-unavailable");
-    }
-
-    await appendLeadToGoogleSheet(lead);
-    await sendInternalLeadNotification(lead);
-  } catch {
+  if (assessmentLeadId && !assessmentLease) {
     return Response.json(
       {
         ok: false,
         message:
           "We could not process the request right now. Please try again later.",
       },
-      { status: 500 },
+      { status: 409 },
     );
   }
 
   try {
-    await sendLeadConfirmationEmail(lead);
-  } catch {
-    console.warn("Lead confirmation email delivery failed", {
-      provider: "email",
-      stage: "route",
+    const lead: LeadRecord = {
+      ...payload,
+      leadId: assessmentLeadId ?? crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      status: "new",
+      security: {
+        turnstileVerified: turnstile.success,
+        turnstileConfigured: turnstile.configured,
+        spamScore: spam.score,
+        spamReasons: spam.reasons,
+        rateLimitReason: rateLimit.reason,
+        duplicateLikely: duplicate.duplicateLikely,
+        duplicateReason: duplicate.reason,
+      },
+    };
+    try {
+      const goHighLevelAlreadyCompleted = assessmentLeadId
+        ? await isAssessmentGoHighLevelCompleted(assessmentLeadId)
+        : false;
+
+      if (!goHighLevelAlreadyCompleted) {
+        const goHighLevel = await sendLeadToGoHighLevel(lead);
+
+        if (
+          env.nodeEnv === "production" &&
+          (!goHighLevel.configured || !goHighLevel.ok)
+        ) {
+          throw new Error("gohighlevel-production-delivery-unavailable");
+        }
+
+        if (assessmentLeadId) {
+          await markAssessmentGoHighLevelCompleted(assessmentLeadId);
+        }
+      }
+
+      await appendLeadToGoogleSheet(lead);
+      await sendInternalLeadNotification(lead);
+    } catch {
+      return Response.json(
+        {
+          ok: false,
+          message:
+            "We could not process the request right now. Please try again later.",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (assessmentLeadId) {
+      try {
+        await markAssessmentSubmissionCompleted(assessmentLeadId);
+      } catch {
+        return Response.json(
+          {
+            ok: false,
+            message:
+              "We could not process the request right now. Please try again later.",
+          },
+          { status: 503 },
+        );
+      }
+    }
+
+    try {
+      await sendLeadConfirmationEmail(lead);
+    } catch {
+      console.warn("Lead confirmation email delivery failed", {
+        provider: "email",
+        stage: "route",
+        leadId: lead.leadId,
+      });
+    }
+
+    return Response.json({
+      ok: true,
+      message: getSubmissionSuccessMessage(payload),
       leadId: lead.leadId,
     });
+  } finally {
+    if (assessmentLease) {
+      await releaseAssessmentSubmissionLease(assessmentLease);
+    }
   }
-
-  return Response.json({
-    ok: true,
-    message: getSubmissionSuccessMessage(payload),
-    leadId: lead.leadId,
-  });
 }
