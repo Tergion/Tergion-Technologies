@@ -20,21 +20,50 @@ export default function ContactPage() {
         title="Start a request without a heavy intake process."
         description="Share the basics when you are ready. Optional business context can help, but it is not required to start the conversation."
       >
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <RequestModalTrigger className="h-12 px-5">
-            {siteConfig.cta.contactPage}
-          </RequestModalTrigger>
-          <a
-            href={`mailto:${siteConfig.contactEmail}`}
-            className={buttonVariants({
-              variant: "outline",
-              className:
-                "h-12 border-[color:var(--field-border)] bg-[var(--field-bg)] px-5 text-foreground",
-            })}
-          >
-            {siteConfig.contactEmail}
-          </a>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-4">
+            <h2 className="text-base font-semibold text-foreground">
+              Quick Request
+            </h2>
+            <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">
+              Share the basics and we&apos;ll follow up.
+            </p>
+            <RequestModalTrigger
+              href={siteConfig.requestForms.quickRequest.href}
+              triggerSource="contact-quick-request"
+              className="mt-4 min-h-11 w-full px-5"
+            >
+              {siteConfig.cta.contactPage}
+            </RequestModalTrigger>
+          </div>
+          <div className="rounded-xl border border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] p-4">
+            <h2 className="text-base font-semibold text-foreground">
+              Automation Assessment
+            </h2>
+            <p className="mt-2 min-h-12 text-sm leading-6 text-muted-foreground">
+              Answer a few questions so we can identify likely automation
+              opportunities.
+            </p>
+            <RequestModalTrigger
+              href={siteConfig.requestForms.automationAssessment.href}
+              mode="automation_assessment"
+              triggerSource="contact-automation-assessment"
+              variant="outline"
+              className="mt-4 min-h-11 w-full border-[color:var(--island-active-border)] bg-[var(--field-bg)] px-5 text-foreground"
+            >
+              Take the free assessment
+            </RequestModalTrigger>
+          </div>
         </div>
+        <a
+          href={`mailto:${siteConfig.contactEmail}`}
+          className={buttonVariants({
+            variant: "ghost",
+            className: "mt-3 h-11 px-2 text-foreground",
+          })}
+        >
+          Or email {siteConfig.contactEmail}
+        </a>
         <p className="mt-4 text-sm text-muted-foreground">
           No obligation. No pressure. Submitting a request does not confirm an
           appointment.
@@ -75,6 +104,7 @@ export default function ContactPage() {
             </div>
             <div className="mt-6">
               <RequestModalTrigger
+                triggerSource="contact-page-lower-quick-request"
                 variant="outline"
                 className="h-11 border-[color:var(--field-border)] bg-[var(--field-bg)] px-4 text-foreground"
               >

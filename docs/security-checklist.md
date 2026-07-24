@@ -19,9 +19,18 @@
 - Check honeypot fields.
 - Check minimum completion timing.
 - Use rate limiting.
-- Use duplicate checks.
+- Use stable per-form-session submission IDs for provider idempotency.
+- Keep same-form identity cooldowns separate from shared client rate limits.
+- Hash normalized email, phone, and client signals before using them in Redis keys.
+- Reserve atomically before provider writes, commit only after durable CRM
+  persistence, and release identity reservations after definite failures.
 - Verify bot-protection tokens server-side when configured.
 - Do not rely only on a bot-protection widget.
+- Resolve email and phone independently before Contact writes.
+- Fail closed when identifiers resolve to different Contacts or multiple
+  Contacts, and never expose match existence in the public response.
+- Never replace a different nonempty Contact email or phone from a public form.
+- Never clear Contact fields because a submitted optional value is blank.
 
 ## API Responses And Logging
 
@@ -29,6 +38,7 @@
 - Do not return stack traces.
 - Do not leak provider errors to users.
 - Log safely and avoid unnecessary sensitive payload logging.
+- Mask identity diagnostics and omit provider Contact data and response bodies.
 - Do not store full IP addresses unless explicitly justified and documented.
 - Do not render user-submitted content as HTML.
 

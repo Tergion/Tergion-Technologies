@@ -5,6 +5,14 @@ export const preferredContactMethods = [
   { value: "no-preference", label: "No preference" },
 ] as const;
 
+export const quickRequestPreferredContactMethods = [
+  { value: "email", label: "Email" },
+  { value: "phone", label: "Phone" },
+  { value: "no-preference", label: "No preference" },
+] as const;
+
+export const quickRequestFormVersion = "quick_request_v1";
+
 export const automationInterestOptions = [
   "CRM setup",
   "Lead follow-up",
@@ -40,4 +48,4 @@ export const leadDuplicateMessage =
   "We already received a recent request with this contact information. If you need to add something, email contact@tergion.com.";
 
 export const leadFormHelperCopy =
-  "Start with the basics. The business details are optional.";
+  "Start with the core contact details. We'll ask how and when to reach you next.";

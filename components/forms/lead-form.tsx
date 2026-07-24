@@ -14,20 +14,30 @@ import type { ZodError } from "zod";
 import { FormProgress } from "@/components/forms/form-progress";
 import { LeadFormStepContact } from "@/components/forms/lead-form-step-contact";
 import { LeadFormStepContext } from "@/components/forms/lead-form-step-context";
+import { LeadFormStepPreferences } from "@/components/forms/lead-form-step-preferences";
 import { LeadFormStepReview } from "@/components/forms/lead-form-step-review";
 import { LeadSubmissionStatus } from "@/components/forms/lead-submission-status";
+import {
+  FormErrorAlert,
+  formValidationAlertMessage,
+  type FormErrorNotification,
+} from "@/components/forms/shared/form-error-summary";
 import type { TurnstileStatus } from "@/components/forms/turnstile-widget";
 import { Button } from "@/components/ui/button";
-import { leadSuccessMessage } from "@/features/leads/lead.constants";
 import {
-  leadContactStepSchema,
+  leadSuccessMessage,
+  quickRequestFormVersion,
+} from "@/features/leads/lead.constants";
+import {
+  leadContactBasicsStepSchema,
+  leadContactPreferencesStepSchema,
   leadReviewStepSchema,
-  leadSubmissionSchema,
+  quickRequestSchema,
 } from "@/features/leads/lead.schema";
 import { submitLead } from "@/features/leads/lead-submit";
 import type {
-  LeadSubmission,
-  LeadSubmissionInput,
+  QuickRequest,
+  QuickRequestInput,
 } from "@/features/leads/lead.types";
 
 function applyZodErrors<T extends FieldValues>(
@@ -55,19 +65,35 @@ function applyZodErrors<T extends FieldValues>(
 
 const leadFieldOrder = [
   "firstName",
+  "lastName",
   "businessName",
   "email",
-  "preferredContactMethod",
   "phone",
+  "preferredContactMethod",
   "schedulingPreference",
   "contactConsent",
   "privacyTermsConsent",
-] satisfies Array<Path<LeadSubmissionInput>>;
+] satisfies Array<Path<QuickRequestInput>>;
 
-export function LeadForm() {
+const stepHeadings = [
+  "Contact",
+  "Contact Preferences",
+  "Business Context",
+  "Review and Consent",
+] as const;
+
+export function LeadForm({
+  active,
+  triggerSource,
+}: {
+  active: boolean;
+  triggerSource: string;
+}) {
   const [startedAt] = useState(() => Date.now());
+  const [submissionId] = useState(() => crypto.randomUUID());
   const [step, setStep] = useState(0);
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] =
+    useState<FormErrorNotification | null>(null);
   const [successMessage, setSuccessMessage] = useState(leadSuccessMessage);
   const [submissionState, setSubmissionState] = useState<
     "idle" | "submitting" | "success"
@@ -75,9 +101,12 @@ export function LeadForm() {
   const [turnstileStatus, setTurnstileStatus] =
     useState<TurnstileStatus>("loading");
 
-  const form = useForm<LeadSubmissionInput, undefined, LeadSubmission>({
-    resolver: zodResolver(leadSubmissionSchema),
+  const form = useForm<QuickRequestInput, undefined, QuickRequest>({
+    resolver: zodResolver(quickRequestSchema),
     defaultValues: {
+      submissionType: "quick_request",
+      formVersion: quickRequestFormVersion,
+      submissionId,
       firstName: "",
       lastName: "",
       businessName: "",
@@ -108,6 +137,7 @@ export function LeadForm() {
       referrer: "",
       landingPage: "",
       aiDisclosureSeen: true,
+      triggerSource,
     },
   });
   const [contactConsent, privacyTermsConsent] = useWatch({
@@ -126,6 +156,15 @@ export function LeadForm() {
     },
     [],
   );
+  const clearFormError = useCallback(() => setFormError(null), []);
+  const dismissFormError = useCallback((notificationId: string) => {
+    setFormError((current) =>
+      current?.id === notificationId ? null : current,
+    );
+  }, []);
+  const showFormError = useCallback((message: string) => {
+    setFormError({ id: crypto.randomUUID(), message });
+  }, []);
 
   useEffect(() => {
     form.setValue(
@@ -142,7 +181,28 @@ export function LeadForm() {
     form.setValue("utmContent", searchParams.get("utm_content") || "");
   }, [form]);
 
-  function focusField(name?: Path<LeadSubmissionInput>) {
+  useEffect(() => {
+    form.setValue("triggerSource", triggerSource);
+  }, [form, triggerSource]);
+
+  useEffect(() => {
+    if (active) {
+      return;
+    }
+
+    form.setValue("turnstileToken", "", {
+      shouldDirty: false,
+      shouldValidate: false,
+    });
+    const statusTimer = window.setTimeout(() => {
+      clearFormError();
+      setTurnstileStatus("loading");
+    }, 0);
+
+    return () => window.clearTimeout(statusTimer);
+  }, [active, clearFormError, form]);
+
+  function focusField(name?: Path<QuickRequestInput>) {
     if (!name) {
       return;
     }
@@ -150,62 +210,95 @@ export function LeadForm() {
     window.requestAnimationFrame(() => {
       form.setFocus(name);
 
-      const element = document.getElementById(name);
+      const idElement = document.getElementById(name);
+      const radioElement = document.querySelector<HTMLElement>(
+        `[name="${name}"]`,
+      );
+      const element = idElement ?? radioElement;
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+
       element?.scrollIntoView({
-        behavior: "smooth",
+        behavior: reduceMotion ? "auto" : "smooth",
         block: "center",
       });
     });
   }
 
-  function focusFirstFieldError(errors: FieldErrors<LeadSubmissionInput>) {
+  function focusFirstFieldError(errors: FieldErrors<QuickRequestInput>) {
     const fieldNames = Object.keys(errors);
     const firstOrderedField = leadFieldOrder.find((field) =>
       fieldNames.includes(field),
     );
     const firstField =
       firstOrderedField ??
-      (fieldNames[0] as Path<LeadSubmissionInput> | undefined);
+      (fieldNames[0] as Path<QuickRequestInput> | undefined);
 
     focusField(firstField);
   }
 
+  function setStepAndFocus(nextStep: number) {
+    setStep(nextStep);
+    window.requestAnimationFrame(() => {
+      document.getElementById("quick-request-step-heading")?.focus();
+    });
+  }
+
   async function goNext() {
-    setFormError("");
+    clearFormError();
     form.clearErrors();
 
     if (step === 0) {
-      const result = leadContactStepSchema.safeParse(form.getValues());
+      const result = leadContactBasicsStepSchema.safeParse(form.getValues());
 
       if (!result.success) {
         const firstError = applyZodErrors(form.setError, result.error);
+        showFormError(formValidationAlertMessage);
         focusField(firstError);
         return;
       }
     }
 
     if (step === 1) {
-      setStep(2);
-      return;
+      const currentPhone = form.getValues("phone");
+      const result = leadContactPreferencesStepSchema.safeParse(
+        form.getValues(),
+      );
+
+      if (!result.success) {
+        const firstError = applyZodErrors(form.setError, result.error);
+        showFormError(formValidationAlertMessage);
+        focusField(firstError);
+        return;
+      }
+
+      if (result.data.phone !== currentPhone) {
+        form.setValue("phone", result.data.phone ?? "", {
+          shouldDirty: true,
+          shouldValidate: false,
+        });
+      }
     }
 
-    setStep((current) => Math.min(current + 1, 2));
+    setStepAndFocus(Math.min(step + 1, 3));
   }
 
   function goBack() {
-    setFormError("");
+    clearFormError();
     form.clearErrors();
-    setStep((current) => Math.max(current - 1, 0));
+    setStepAndFocus(Math.max(step - 1, 0));
   }
 
-  async function onSubmit(values: LeadSubmission) {
-    setFormError("");
+  async function onSubmit(values: QuickRequest) {
+    clearFormError();
     form.clearErrors();
 
     const reviewResult = leadReviewStepSchema.safeParse(values);
 
     if (!reviewResult.success) {
       const firstError = applyZodErrors(form.setError, reviewResult.error);
+      showFormError(formValidationAlertMessage);
       focusField(firstError);
       return;
     }
@@ -215,11 +308,11 @@ export function LeadForm() {
       completionStartedAt: startedAt,
     };
 
-    const parsed = leadSubmissionSchema.safeParse(finalPayload);
+    const parsed = quickRequestSchema.safeParse(finalPayload);
 
     if (!parsed.success) {
       const firstError = applyZodErrors(form.setError, parsed.error);
-      setFormError("Please review the highlighted fields.");
+      showFormError(formValidationAlertMessage);
       focusField(firstError);
       return;
     }
@@ -230,7 +323,7 @@ export function LeadForm() {
       setSuccessMessage(result.message || leadSuccessMessage);
       setSubmissionState("success");
     } catch {
-      setFormError(
+      showFormError(
         "We could not submit the request right now. Please try again later.",
       );
       form.setValue("turnstileToken", "", {
@@ -253,28 +346,41 @@ export function LeadForm() {
 
   return (
     <form
-      className="flex min-h-0 flex-1 flex-col bg-[var(--modal-bg)]"
+      className="relative flex h-full min-h-0 flex-1 flex-col bg-[var(--modal-bg)]"
       onSubmit={form.handleSubmit(onSubmit, (errors) => {
-        setFormError("Please review the highlighted fields.");
+        showFormError(formValidationAlertMessage);
         focusFirstFieldError(errors);
       })}
     >
+      <FormErrorAlert
+        id="quick-request-form-error"
+        notification={formError}
+        onDismiss={dismissFormError}
+      />
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[var(--modal-bg)] px-5 py-5">
-        <FormProgress currentStep={step} />
+        <FormProgress
+          step={step + 1}
+          totalSteps={4}
+          label="Quick request progress"
+        />
+
+        <h2
+          id="quick-request-step-heading"
+          tabIndex={-1}
+          className="text-lg font-semibold text-foreground outline-none"
+        >
+          {stepHeadings[step]}
+        </h2>
 
         {step === 0 ? <LeadFormStepContact form={form} /> : null}
-        {step === 1 ? <LeadFormStepContext form={form} /> : null}
-        {step === 2 ? (
+        {step === 1 ? <LeadFormStepPreferences form={form} /> : null}
+        {step === 2 ? <LeadFormStepContext form={form} /> : null}
+        {step === 3 ? (
           <LeadFormStepReview
             form={form}
+            active={active}
             onTurnstileStatusChange={handleTurnstileStatusChange}
           />
-        ) : null}
-
-        {formError ? (
-          <p className="rounded-md border border-destructive/30 bg-[#fbeeea] px-3 py-2 text-sm text-destructive">
-            {formError}
-          </p>
         ) : null}
       </div>
 
@@ -282,24 +388,24 @@ export function LeadForm() {
         <Button
           type="button"
           variant="outline"
-          className="h-11 border-[color:var(--field-border)] bg-[var(--field-bg)]"
+          className="min-h-11 border-[color:var(--field-border)] bg-[var(--field-bg)]"
           onClick={goBack}
           disabled={step === 0}
         >
           Back
         </Button>
 
-        {step < 2 ? (
-          <Button type="button" className="h-11 px-5" onClick={goNext}>
+        {step < 3 ? (
+          <Button type="button" className="min-h-11 px-5" onClick={goNext}>
             Continue
           </Button>
         ) : (
           <Button
             type="submit"
-            className="h-11 px-5"
+            className="min-h-11 px-5"
             disabled={!canSubmit}
           >
-            Start the request
+            Send a quick request
           </Button>
         )}
       </div>

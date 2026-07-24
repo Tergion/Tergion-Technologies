@@ -1,45 +1,20 @@
 import { z } from "zod";
 
+import { automationAssessmentSchema } from "@/features/assessments/assessment.schema";
 import {
   automationInterestOptions,
+  quickRequestFormVersion,
   requestPriorityOptions,
   usesCrmValues,
 } from "@/features/leads/lead.constants";
-
-const optionalText = (max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .optional()
-    .or(z.literal("").transform(() => undefined));
-
-const requiredText = (label: string, max: number) =>
-  z.string().trim().min(1, `${label} is required.`).max(max);
-
-const requiredEmail = (max: number) =>
-  z.string().trim().max(max).superRefine((value, ctx) => {
-    if (!value) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Email is required.",
-      });
-      return;
-    }
-
-    if (!z.email().safeParse(value).success) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Enter a valid email address.",
-      });
-    }
-  });
-
-const optionalEnum = <T extends readonly [string, ...string[]]>(values: T) =>
-  z
-    .enum(values)
-    .optional()
-    .or(z.literal("").transform(() => undefined));
+import {
+  optionalEnum,
+  optionalText,
+  requiredEmail,
+  requiredPhone,
+  requiredText,
+  submissionSecurityAndAttributionFields,
+} from "@/features/leads/submission-fields";
 
 export const preferredContactMethodSchema = z.enum([
   "email",
@@ -48,7 +23,9 @@ export const preferredContactMethodSchema = z.enum([
   "no-preference",
 ]);
 
-export const leadBaseSchema = z.object({
+export const quickRequestBaseSchema = z.object({
+  submissionType: z.literal("quick_request"),
+  formVersion: z.literal(quickRequestFormVersion),
   firstName: requiredText("First name", 80),
   lastName: optionalText(80),
   businessName: requiredText("Business name", 140),
@@ -72,40 +49,63 @@ export const leadBaseSchema = z.object({
   contactConsent: z.boolean().default(false),
   privacyTermsConsent: z.boolean().default(false),
   smsConsent: z.boolean().optional().default(false),
-  honeypot: optionalText(120),
-  completionStartedAt: z.number().int().positive().optional(),
-  turnstileToken: optionalText(2000),
-  timezone: optionalText(80),
-  utmSource: optionalText(120),
-  utmMedium: optionalText(120),
-  utmCampaign: optionalText(160),
-  utmContent: optionalText(160),
-  referrer: optionalText(500),
-  landingPage: optionalText(500),
   aiDisclosureSeen: z.boolean().optional().default(true),
+  ...submissionSecurityAndAttributionFields,
 });
 
+type QuickRequestPhoneFields = Pick<
+  z.infer<typeof quickRequestBaseSchema>,
+  "preferredContactMethod" | "phone"
+>;
+
+function phoneIsRequired(data: QuickRequestPhoneFields) {
+  return (
+    data.preferredContactMethod === "phone" ||
+    data.preferredContactMethod === "text"
+  );
+}
+
+function phoneIsValid(phone: string | undefined) {
+  return requiredPhone.safeParse(phone).success;
+}
+
 function addPhoneRequirement(
-  data: Pick<
-    z.infer<typeof leadBaseSchema>,
-    "preferredContactMethod" | "phone"
-  >,
+  data: QuickRequestPhoneFields,
   ctx: z.RefinementCtx,
 ) {
-  if (
-    (data.preferredContactMethod === "phone" ||
-      data.preferredContactMethod === "text") &&
-    !data.phone
-  ) {
+  if (!phoneIsRequired(data)) {
+    return;
+  }
+
+  if (!data.phone) {
     ctx.addIssue({
       code: "custom",
       path: ["phone"],
       message: "Phone is required when phone or text is selected.",
     });
+    return;
+  }
+
+  if (!phoneIsValid(data.phone)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["phone"],
+      message: "Enter a valid phone number.",
+    });
   }
 }
 
-export const leadContactStepSchema = leadBaseSchema
+function discardInvalidOptionalPhone<T extends QuickRequestPhoneFields>(
+  data: T,
+) {
+  if (!phoneIsRequired(data) && data.phone && !phoneIsValid(data.phone)) {
+    return Object.assign({}, data, { phone: undefined });
+  }
+
+  return data;
+}
+
+export const leadContactStepSchema = quickRequestBaseSchema
   .pick({
     firstName: true,
     lastName: true,
@@ -116,9 +116,27 @@ export const leadContactStepSchema = leadBaseSchema
     preferredContactMethod: true,
     schedulingPreference: true,
   })
-  .superRefine(addPhoneRequirement);
+  .superRefine(addPhoneRequirement)
+  .overwrite(discardInvalidOptionalPhone);
 
-export const leadReviewStepSchema = leadBaseSchema
+export const leadContactBasicsStepSchema = quickRequestBaseSchema.pick({
+  firstName: true,
+  lastName: true,
+  businessName: true,
+  email: true,
+  website: true,
+});
+
+export const leadContactPreferencesStepSchema = quickRequestBaseSchema
+  .pick({
+    phone: true,
+    preferredContactMethod: true,
+    schedulingPreference: true,
+  })
+  .superRefine(addPhoneRequirement)
+  .overwrite(discardInvalidOptionalPhone);
+
+export const leadReviewStepSchema = quickRequestBaseSchema
   .pick({
     contactConsent: true,
     privacyTermsConsent: true,
@@ -142,22 +160,52 @@ export const leadReviewStepSchema = leadBaseSchema
     }
   });
 
-export const leadSubmissionSchema = leadBaseSchema.superRefine((data, ctx) => {
-  addPhoneRequirement(data, ctx);
+export const quickRequestSchema = quickRequestBaseSchema.superRefine(
+  (data, ctx) => {
+    addPhoneRequirement(data, ctx);
 
-  if (!data.contactConsent) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["contactConsent"],
-      message: "Contact consent is required.",
-    });
+    if (!data.contactConsent) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["contactConsent"],
+        message: "Contact consent is required.",
+      });
+    }
+
+    if (!data.privacyTermsConsent) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["privacyTermsConsent"],
+        message: "Privacy and terms consent is required.",
+      });
+    }
+  },
+).overwrite(discardInvalidOptionalPhone);
+
+export const leadSubmissionUnionSchema = z.discriminatedUnion(
+  "submissionType",
+  [quickRequestSchema, automationAssessmentSchema],
+);
+
+function preprocessLegacyQuickRequest(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return value;
   }
 
-  if (!data.privacyTermsConsent) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["privacyTermsConsent"],
-      message: "Privacy and terms consent is required.",
-    });
+  const record = value as Record<string, unknown>;
+
+  if (record.submissionType !== undefined) {
+    return value;
   }
-});
+
+  return {
+    ...record,
+    submissionType: "quick_request",
+    formVersion: record.formVersion ?? quickRequestFormVersion,
+  };
+}
+
+export const leadSubmissionSchema = z.preprocess(
+  preprocessLegacyQuickRequest,
+  leadSubmissionUnionSchema,
+);

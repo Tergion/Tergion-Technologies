@@ -6,11 +6,15 @@ import { useEffect, useState } from "react";
 type LeadSubmissionStatusProps = {
   status: "submitting" | "success";
   message: string;
+  successHeading?: string;
+  submittingHeading?: string;
 };
 
 export function LeadSubmissionStatus({
   status,
   message,
+  successHeading = "Request received",
+  submittingHeading = "Submitting your request",
 }: LeadSubmissionStatusProps) {
   const completionRequested = status === "success";
   const [showCompletion, setShowCompletion] = useState(false);
@@ -73,7 +77,7 @@ export function LeadSubmissionStatus({
         {showCompletion ? (
           <div className="mt-5">
             <h3 className="text-lg font-semibold text-foreground">
-              Request received
+              {successHeading}
             </h3>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               {message}
@@ -82,7 +86,7 @@ export function LeadSubmissionStatus({
         ) : (
           <div className="mt-5">
             <h3 className="text-lg font-semibold text-foreground">
-              Submitting your request
+              {submittingHeading}
             </h3>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Please keep this window open while we securely process your

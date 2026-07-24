@@ -4,6 +4,7 @@ import { RequestModalTrigger } from "@/components/forms/request-modal-trigger";
 import { HeroWorkflowVisual } from "@/components/marketing/hero-workflow-visual";
 import { buttonVariants } from "@/components/ui/button";
 import { siteConfig } from "@/lib/site-config";
+import { cn } from "@/lib/utils";
 
 export function Hero() {
   return (
@@ -28,11 +29,10 @@ export function Hero() {
             </RequestModalTrigger>
             <Link
               href="/examples"
-              className={buttonVariants({
-                variant: "outline",
-                className:
-                  "h-12 w-full border-border bg-surface px-5 text-base text-foreground sm:w-auto",
-              })}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-12 w-full border-border bg-surface px-5 text-base text-foreground sm:w-auto",
+              )}
             >
               {siteConfig.cta.secondary}
             </Link>
