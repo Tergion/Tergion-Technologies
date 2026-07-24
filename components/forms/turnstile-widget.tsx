@@ -17,6 +17,12 @@ type TurnstileWidgetProps = {
   onStatusChange: (status: TurnstileStatus) => void;
 };
 
+type TurnstileRuntimeMode =
+  | "detecting"
+  | "configured"
+  | "local-bypass"
+  | "unavailable";
+
 type TurnstileRenderOptions = {
   sitekey: string;
   callback: (token: string) => void;
@@ -49,9 +55,9 @@ export function TurnstileWidget({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
-  const [status, setStatus] = useState<TurnstileStatus>(() =>
-    siteKey ? "loading" : "error",
-  );
+  const [runtimeMode, setRuntimeMode] =
+    useState<TurnstileRuntimeMode>("detecting");
+  const [status, setStatus] = useState<TurnstileStatus>("loading");
 
   const updateStatus = useCallback(
     (nextStatus: TurnstileStatus) => {
@@ -71,24 +77,35 @@ export function TurnstileWidget({
   }, [onToken, updateStatus]);
 
   useEffect(() => {
-    if (siteKey) {
-      return;
-    }
-
     const statusTimer = window.setTimeout(() => {
+      onToken("");
+
       if (localHostnames.has(window.location.hostname)) {
+        setRuntimeMode("local-bypass");
         updateStatus("development-bypass");
         return;
       }
 
-      updateStatus("error");
+      if (!siteKey) {
+        setRuntimeMode("unavailable");
+        updateStatus("error");
+        return;
+      }
+
+      setRuntimeMode("configured");
+      updateStatus("loading");
     }, 0);
 
     return () => window.clearTimeout(statusTimer);
-  }, [siteKey, updateStatus]);
+  }, [onToken, siteKey, updateStatus]);
 
   useEffect(() => {
-    if (!siteKey || !scriptReady || !containerRef.current || !window.turnstile) {
+    if (
+      runtimeMode !== "configured" ||
+      !scriptReady ||
+      !containerRef.current ||
+      !window.turnstile
+    ) {
       return;
     }
 
@@ -121,18 +138,23 @@ export function TurnstileWidget({
         widgetIdRef.current = null;
       }
     };
-  }, [onToken, scriptReady, siteKey, updateStatus]);
+  }, [onToken, runtimeMode, scriptReady, siteKey, updateStatus]);
 
-  if (!siteKey) {
+  if (runtimeMode !== "configured") {
+    const statusMessage =
+      runtimeMode === "local-bypass"
+        ? "Spam protection is disabled for local testing."
+        : runtimeMode === "unavailable"
+          ? "Spam protection is unavailable. Please refresh the page or try again later."
+          : "Checking spam protection...";
+
     return (
       <div
         className="rounded-md border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3 text-xs leading-5 text-muted-foreground"
         role="status"
         aria-live="polite"
       >
-        {status === "development-bypass"
-          ? "Spam protection is disabled for local testing."
-          : "Spam protection is unavailable. Please refresh the page or try again later."}
+        {statusMessage}
       </div>
     );
   }
