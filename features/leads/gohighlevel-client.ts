@@ -8,7 +8,7 @@ const maxResponseBytes = 128 * 1024;
 const maxSafeReadAttempts = 3;
 const maxRetryDelayMs = 2_000;
 
-type GoHighLevelMethod = "GET" | "POST";
+type GoHighLevelMethod = "GET" | "POST" | "PUT";
 
 export type GoHighLevelRequestStage =
   | "discover-assessment-schema"
@@ -17,8 +17,12 @@ export type GoHighLevelRequestStage =
   | "create-assessment-record"
   | "get-assessment-relations"
   | "create-assessment-relation"
+  | "search-contacts"
+  | "get-contact"
+  | "update-contact"
   | "upsert-contact"
   | "add-tags"
+  | "get-contact-notes"
   | "create-note";
 
 type GoHighLevelRequestOptions = {

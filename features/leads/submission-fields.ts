@@ -83,6 +83,7 @@ export const optionalEnum = <T extends readonly [string, ...string[]]>(
     .or(z.literal("").transform(() => undefined));
 
 export const submissionSecurityAndAttributionFields = {
+  submissionId: z.uuid(),
   honeypot: optionalText(120),
   completionStartedAt: z.number().int().positive(),
   turnstileToken: optionalText(2000),

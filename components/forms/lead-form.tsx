@@ -90,6 +90,7 @@ export function LeadForm({
   triggerSource: string;
 }) {
   const [startedAt] = useState(() => Date.now());
+  const [submissionId] = useState(() => crypto.randomUUID());
   const [step, setStep] = useState(0);
   const [formError, setFormError] =
     useState<FormErrorNotification | null>(null);
@@ -105,6 +106,7 @@ export function LeadForm({
     defaultValues: {
       submissionType: "quick_request",
       formVersion: quickRequestFormVersion,
+      submissionId,
       firstName: "",
       lastName: "",
       businessName: "",

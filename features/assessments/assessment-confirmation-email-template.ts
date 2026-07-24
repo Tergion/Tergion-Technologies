@@ -6,7 +6,7 @@ import type { AutomationAssessmentRecord } from "@/features/leads/lead.types";
 import { siteConfig } from "@/lib/site-config";
 
 export const assessmentConfirmationEmailSubject =
-  "We received your Tergion automation assessment";
+  "We received your automation assessment!";
 
 function escapeHtml(value: string) {
   return value

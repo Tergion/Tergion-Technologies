@@ -17,7 +17,7 @@ describe("automation assessment confirmation email", () => {
     const text = renderAssessmentConfirmationEmailText(lead);
 
     expect(assessmentConfirmationEmailSubject).toBe(
-      "We received your Tergion automation assessment",
+      "We received your automation assessment!",
     );
     expect(html).toContain("A person reviews submitted assessments");
     expect(html).toContain("$1,000");

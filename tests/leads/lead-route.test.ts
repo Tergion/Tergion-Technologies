@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { automationAssessmentDuplicateMessage } from "@/features/assessments/assessment.constants";
 import { leadDuplicateMessage } from "@/features/leads/lead.constants";
-import { deriveAssessmentLeadId } from "@/features/leads/submission-id";
+import { deriveSubmissionLeadId } from "@/features/leads/submission-id";
 import {
   makeAssessmentSubmission,
   makeLeadSubmission,
@@ -76,13 +76,50 @@ function makePostRequest(payload: unknown, ip = "203.0.113.10") {
   });
 }
 
+function makeContactMutationResponse(
+  id: string,
+  init: RequestInit | undefined,
+) {
+  const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+
+  return {
+    contact: {
+      id,
+      locationId: testGoHighLevelLocationId,
+      firstName: body.firstName ?? "Test",
+      lastName: body.lastName ?? "Person",
+      email: body.email ?? "test@example.com",
+      phone: body.phone ?? "+15551234567",
+      companyName: body.companyName ?? "Example Business",
+      website: body.website,
+      timezone: body.timezone,
+    },
+  };
+}
+
+function maybeContactReadResponse(url: string, init?: RequestInit) {
+  if (url.endsWith("/contacts/search")) {
+    return Response.json({ contacts: [], total: 0 });
+  }
+
+  if (init?.method === "GET" && url.endsWith("/notes")) {
+    return Response.json({ notes: [] });
+  }
+
+  return undefined;
+}
+
 function mockSuccessfulGoHighLevelFetch() {
   const fetchMock = vi.fn(
-    async (input: RequestInfo | URL) => {
+    async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      const contactRead = maybeContactReadResponse(url, init);
+      if (contactRead) return contactRead;
 
       if (url.endsWith("/contacts/upsert")) {
-        return Response.json({ contact: { id: "contact-123" } });
+        return Response.json(
+          makeContactMutationResponse("contact-123", init),
+        );
       }
 
       if (
@@ -105,6 +142,8 @@ function mockSuccessfulAssessmentGoHighLevelFetch() {
   const fetchMock = vi.fn(
     async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      const contactRead = maybeContactReadResponse(url, init);
+      if (contactRead) return contactRead;
 
       if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
         return Response.json(makeGoHighLevelAssessmentSchemaResponse());
@@ -119,7 +158,9 @@ function mockSuccessfulAssessmentGoHighLevelFetch() {
       }
 
       if (url.endsWith("/contacts/upsert")) {
-        return Response.json({ contact: { id: "contact-123" } });
+        return Response.json(
+          makeContactMutationResponse("contact-123", init),
+        );
       }
 
       if (
@@ -175,6 +216,126 @@ function mockSuccessfulAssessmentGoHighLevelFetch() {
   vi.stubGlobal("fetch", fetchMock);
 
   return fetchMock;
+}
+
+function mockStatefulCrossFormGoHighLevelFetch() {
+  let contact: Record<string, unknown> | undefined;
+  const notes: Array<{ id: string; body: string }> = [];
+  let assessmentRecordCount = 0;
+
+  const fetchMock = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
+        return Response.json(makeGoHighLevelAssessmentSchemaResponse());
+      }
+
+      if (url.includes("/associations/key/")) {
+        return Response.json(makeGoHighLevelAssessmentAssociation());
+      }
+
+      if (url.endsWith("/contacts/search")) {
+        const body = JSON.parse(String(init?.body)) as {
+          filters: Array<{ field: "email" | "phone"; value: string }>;
+        };
+        const filter = body.filters[0];
+        const matches =
+          contact &&
+          (filter.field === "email"
+            ? String(contact.email).trim().toLowerCase() ===
+              filter.value.trim().toLowerCase()
+            : String(contact.phone).replace(/\D/g, "") ===
+              filter.value.replace(/\D/g, ""));
+
+        return Response.json({
+          contacts: matches ? [contact] : [],
+          total: matches ? 1 : 0,
+        });
+      }
+
+      if (url.endsWith("/contacts/upsert")) {
+        contact = makeContactMutationResponse("contact-shared", init).contact;
+        return Response.json({ contact });
+      }
+
+      if (
+        url.endsWith("/contacts/contact-shared") &&
+        init?.method === "PUT"
+      ) {
+        contact = {
+          ...contact,
+          ...(JSON.parse(String(init.body)) as Record<string, unknown>),
+        };
+        return Response.json({ contact });
+      }
+
+      if (
+        url.endsWith("/contacts/contact-shared/notes") &&
+        init?.method === "GET"
+      ) {
+        return Response.json({ notes });
+      }
+
+      if (
+        url.endsWith("/contacts/contact-shared/notes") &&
+        init?.method === "POST"
+      ) {
+        const body = JSON.parse(String(init.body)) as { body: string };
+        const note = { id: `note-${notes.length + 1}`, body: body.body };
+        notes.push(note);
+        return Response.json({ note }, { status: 201 });
+      }
+
+      if (url.endsWith("/contacts/contact-shared/tags")) {
+        return Response.json({}, { status: 201 });
+      }
+
+      if (url.endsWith("/records/search")) {
+        return Response.json({ records: [], total: 0 });
+      }
+
+      if (
+        url.endsWith(`/objects/${testGoHighLevelSchemaKey}/records`)
+      ) {
+        assessmentRecordCount += 1;
+        return Response.json(
+          { record: { id: `assessment-${assessmentRecordCount}` } },
+          { status: 201 },
+        );
+      }
+
+      if (url.includes("/associations/relations/assessment-")) {
+        return Response.json({ relations: [] });
+      }
+
+      if (url.endsWith("/associations/relations")) {
+        const body = JSON.parse(String(init?.body)) as {
+          firstRecordId: string;
+          secondRecordId: string;
+        };
+
+        return Response.json(
+          {
+            id: "relation-1",
+            firstObjectKey: testGoHighLevelSchemaKey,
+            firstRecordId: body.firstRecordId,
+            secondObjectKey: "contact",
+            secondRecordId: body.secondRecordId,
+            associationId: testGoHighLevelAssociationId,
+            locationId: testGoHighLevelLocationId,
+          },
+          { status: 201 },
+        );
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    },
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+
+  return { fetchMock, getContact: () => contact, notes };
 }
 
 describe("/api/leads", () => {
@@ -248,8 +409,9 @@ describe("/api/leads", () => {
       makePostRequest(submission),
     );
     const body = await response.json();
-    const expectedLeadId = await deriveAssessmentLeadId(
-      submission.submissionNonce,
+    const expectedLeadId = await deriveSubmissionLeadId(
+      "automation_assessment",
+      submission.submissionId,
     );
 
     expect(response.status).toBe(200);
@@ -275,7 +437,10 @@ describe("/api/leads", () => {
     expect(first.status).toBe(200);
     expect(firstBody).toMatchObject({
       ok: true,
-      leadId: await deriveAssessmentLeadId(submission.submissionNonce),
+      leadId: await deriveSubmissionLeadId(
+        "automation_assessment",
+        submission.submissionId,
+      ),
     });
     expect(second.status).toBe(200);
     expect(secondBody).toEqual({
@@ -285,6 +450,104 @@ describe("/api/leads", () => {
     expect(emailMocks.sendInternalLeadNotification).toHaveBeenCalledTimes(1);
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
   });
+
+  it("short-circuits a completed Quick Request retry with the same stable lead ID", async () => {
+    setGoHighLevelEnv();
+    const fetchMock = mockSuccessfulGoHighLevelFetch();
+    const submission = makeLeadSubmission();
+    const POST = await importRoute();
+    const first = await POST(makePostRequest(submission));
+    const second = await POST(makePostRequest(submission));
+
+    expect(first.status).toBe(200);
+    await expect(first.json()).resolves.toMatchObject({
+      ok: true,
+      leadId: await deriveSubmissionLeadId(
+        "quick_request",
+        submission.submissionId,
+      ),
+    });
+    expect(second.status).toBe(200);
+    await expect(second.json()).resolves.toEqual({
+      ok: true,
+      message: leadDuplicateMessage,
+    });
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        String(input).endsWith("/contacts/upsert"),
+      ),
+    ).toHaveLength(1);
+    expect(
+      fetchMock.mock.calls.filter(
+        ([input, init]) =>
+          String(input).endsWith("/contacts/contact-123/notes") &&
+          init?.method === "POST",
+      ),
+    ).toHaveLength(1);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ["Quick Request then Assessment", "quick_request"],
+    ["Assessment then Quick Request", "automation_assessment"],
+  ] as const)(
+    "accepts %s with one shared Contact",
+    async (_label, firstSubmissionType) => {
+      setGoHighLevelEnv();
+      const { fetchMock, getContact, notes } =
+        mockStatefulCrossFormGoHighLevelFetch();
+      const sharedIdentity = {
+        email: "shared@example.com",
+        phone: "+1 (555) 123-4567",
+      };
+      const quick = makeLeadSubmission(sharedIdentity);
+      const assessment = makeAssessmentSubmission(sharedIdentity);
+      const ordered =
+        firstSubmissionType === "quick_request"
+          ? [quick, assessment]
+          : [assessment, quick];
+      const POST = await importRoute();
+
+      const first = await POST(makePostRequest(ordered[0]));
+      const second = await POST(
+        makePostRequest(ordered[1], "203.0.113.11"),
+      );
+
+      expect(first.status).toBe(200);
+      expect(second.status).toBe(200);
+      await expect(first.json()).resolves.toMatchObject({ ok: true });
+      await expect(second.json()).resolves.toMatchObject({ ok: true });
+      expect(getContact()).toMatchObject({
+        id: "contact-shared",
+        email: sharedIdentity.email,
+      });
+      expect(
+        fetchMock.mock.calls.filter(([input]) =>
+          String(input).endsWith("/contacts/upsert"),
+        ),
+      ).toHaveLength(1);
+      expect(
+        fetchMock.mock.calls.filter(
+          ([input, init]) =>
+            String(input).endsWith("/contacts/contact-shared/notes") &&
+            init?.method === "POST",
+        ),
+      ).toHaveLength(2);
+      expect(notes).toHaveLength(2);
+      expect(
+        fetchMock.mock.calls.filter(([input]) =>
+          String(input).endsWith("/associations/relations"),
+        ),
+      ).toHaveLength(1);
+      const relationCall = fetchMock.mock.calls.find(([input]) =>
+        String(input).endsWith("/associations/relations"),
+      );
+      expect(JSON.parse(String(relationCall?.[1]?.body))).toMatchObject({
+        secondRecordId: "contact-shared",
+      });
+      expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(2);
+    },
+  );
 
   it("does not process the same assessment concurrently", async () => {
     let releaseNotification: (() => void) | undefined;
@@ -359,6 +622,8 @@ describe("/api/leads", () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+      const contactRead = maybeContactReadResponse(url, init);
+      if (contactRead) return contactRead;
 
       if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
         return Response.json(makeGoHighLevelAssessmentSchemaResponse());
@@ -379,7 +644,9 @@ describe("/api/leads", () => {
           return Response.json({}, { status: 503 });
         }
 
-        return Response.json({ contact: { id: "contact-123" } });
+        return Response.json(
+          makeContactMutationResponse("contact-123", init),
+        );
       }
 
       if (
@@ -441,7 +708,10 @@ describe("/api/leads", () => {
     expect(retry.status).toBe(200);
     await expect(retry.json()).resolves.toMatchObject({
       ok: true,
-      leadId: await deriveAssessmentLeadId(submission.submissionNonce),
+      leadId: await deriveSubmissionLeadId(
+        "automation_assessment",
+        submission.submissionId,
+      ),
     });
     expect(upsertAttempts).toBe(2);
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
@@ -467,8 +737,9 @@ describe("/api/leads", () => {
     expect(retry.status).toBe(200);
     await expect(retry.json()).resolves.toMatchObject({
       ok: true,
-      leadId: await deriveAssessmentLeadId(
-        submission.submissionNonce,
+      leadId: await deriveSubmissionLeadId(
+        "automation_assessment",
+        submission.submissionId,
       ),
     });
     expect(
@@ -489,8 +760,10 @@ describe("/api/leads", () => {
       ),
     ).toHaveLength(1);
     expect(
-      fetchMock.mock.calls.filter(([input]) =>
-        String(input).endsWith("/contacts/contact-123/notes"),
+      fetchMock.mock.calls.filter(
+        ([input, init]) =>
+          String(input).endsWith("/contacts/contact-123/notes") &&
+          init?.method === "POST",
       ),
     ).toHaveLength(1);
     expect(googleSheetsMocks.appendLeadToGoogleSheet).toHaveBeenCalledTimes(
@@ -565,6 +838,7 @@ describe("/api/leads", () => {
     const second = await POST(
       makePostRequest(
         makeLeadSubmission({
+          submissionId: "323e4567-e89b-42d3-a456-426614174000",
           email: " TEST@example.com ",
           phone: "+15550000000",
         }),
@@ -576,7 +850,7 @@ describe("/api/leads", () => {
       ok: true,
       message: leadDuplicateMessage,
     });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
   });
 
@@ -595,6 +869,7 @@ describe("/api/leads", () => {
     const second = await POST(
       makePostRequest(
         makeLeadSubmission({
+          submissionId: "323e4567-e89b-42d3-a456-426614174000",
           email: "two@example.com",
           phone: "+15551234567",
         }),
@@ -606,7 +881,7 @@ describe("/api/leads", () => {
       ok: true,
       message: leadDuplicateMessage,
     });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(6);
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
   });
 
@@ -619,11 +894,17 @@ describe("/api/leads", () => {
     const first = await POST(makePostRequest(makeLeadSubmission()));
 
     vi.setSystemTime(new Date("2026-07-10T12:16:00.000Z"));
-    const second = await POST(makePostRequest(makeLeadSubmission()));
+    const second = await POST(
+      makePostRequest(
+        makeLeadSubmission({
+          submissionId: "323e4567-e89b-42d3-a456-426614174000",
+        }),
+      ),
+    );
 
     await expect(first.json()).resolves.toMatchObject({ ok: true });
     await expect(second.json()).resolves.toMatchObject({ ok: true });
-    expect(fetchMock).toHaveBeenCalledTimes(6);
+    expect(fetchMock).toHaveBeenCalledTimes(10);
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(2);
   });
 
@@ -633,7 +914,10 @@ describe("/api/leads", () => {
     for (let i = 0; i < 3; i += 1) {
       const response = await POST(
         makePostRequest(
-          makeLeadSubmission({ email: `rate-${i}@example.com` }),
+          makeLeadSubmission({
+            submissionId: `${i + 3}23e4567-e89b-42d3-a456-426614174000`,
+            email: `rate-${i}@example.com`,
+          }),
           "203.0.113.20",
         ),
       );
@@ -643,7 +927,10 @@ describe("/api/leads", () => {
 
     const blocked = await POST(
       makePostRequest(
-        makeLeadSubmission({ email: "rate-4@example.com" }),
+        makeLeadSubmission({
+          submissionId: "623e4567-e89b-42d3-a456-426614174000",
+          email: "rate-4@example.com",
+        }),
         "203.0.113.20",
       ),
     );
@@ -777,7 +1064,7 @@ describe("/api/leads", () => {
     await expect(response.json()).resolves.toEqual({
       ok: false,
       message:
-        "We could not process the request right now. Please try again later.",
+        "We couldn't process this request automatically. Please verify your contact information or email contact@tergion.com.",
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
@@ -792,11 +1079,64 @@ describe("/api/leads", () => {
     const POST = await importRoute();
     const response = await POST(makePostRequest(makeLeadSubmission()));
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({
       ok: false,
-      message: "We could not process the request right now. Please try again later.",
+      message:
+        "We couldn't process this request automatically. Please verify your contact information or email contact@tergion.com.",
     });
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("does not reveal whether submitted identifiers exist when resolution conflicts", async () => {
+    setGoHighLevelEnv();
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+
+        if (!url.endsWith("/contacts/search")) {
+          throw new Error(`Unexpected URL: ${url}`);
+        }
+
+        const body = JSON.parse(String(init?.body)) as {
+          filters: Array<{ field: "email" | "phone" }>;
+        };
+        const isEmail = body.filters[0]?.field === "email";
+
+        return Response.json({
+          contacts: [
+            {
+              id: isEmail ? "contact-email" : "contact-phone",
+              locationId: testGoHighLevelLocationId,
+              email: isEmail ? "test@example.com" : "other@example.com",
+              phone: isEmail ? "+15550000000" : "+15551234567",
+            },
+          ],
+          total: 1,
+        });
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const POST = await importRoute();
+    const response = await POST(
+      makePostRequest(
+        makeLeadSubmission({
+          email: "test@example.com",
+          phone: "+15551234567",
+        }),
+      ),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body).toEqual({
+      ok: false,
+      message:
+        "We couldn't process this request automatically. Please verify your contact information or email contact@tergion.com.",
+    });
+    expect(JSON.stringify(body)).not.toContain("contact-email");
+    expect(JSON.stringify(body)).not.toContain("contact-phone");
     expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
   });
 

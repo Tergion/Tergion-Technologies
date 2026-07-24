@@ -11,6 +11,7 @@ export function makeLeadSubmission(
   return {
     submissionType: "quick_request",
     formVersion: "quick_request_v1",
+    submissionId: "223e4567-e89b-42d3-a456-426614174000",
     firstName: "Test",
     businessName: "Example Business",
     email: "test@example.com",
@@ -52,7 +53,7 @@ export function makeAssessmentSubmission(
   return {
     submissionType: "automation_assessment",
     formVersion: "automation_assessment_v1",
-    submissionNonce: "123e4567-e89b-42d3-a456-426614174000",
+    submissionId: "123e4567-e89b-42d3-a456-426614174000",
     firstName: "Assessment",
     businessName: "Assessment Business",
     email: "assessment@example.com",

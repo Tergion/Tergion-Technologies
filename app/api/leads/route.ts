@@ -3,13 +3,11 @@ import {
   getAutomationAssessmentSuccessMessage,
 } from "@/features/assessments/assessment.constants";
 import {
-  acquireAssessmentSubmissionLease,
-  checkDuplicateLead,
-  isAssessmentGoHighLevelCompleted,
-  isAssessmentSubmissionCompleted,
-  markAssessmentGoHighLevelCompleted,
-  markAssessmentSubmissionCompleted,
-  releaseAssessmentSubmissionLease,
+  commitGoHighLevelSubmission,
+  isGoHighLevelSubmissionCompleted,
+  markLeadSubmissionCompleted,
+  releaseLeadSubmission,
+  reserveLeadSubmission,
 } from "@/features/leads/duplicate-check";
 import {
   sendInternalLeadNotification,
@@ -17,6 +15,8 @@ import {
 } from "@/features/leads/email";
 import { appendLeadToGoogleSheet } from "@/features/leads/google-sheets";
 import { sendLeadToGoHighLevel } from "@/features/leads/gohighlevel";
+import { isContactResolutionError } from "@/features/leads/gohighlevel-contact";
+import { isAmbiguousGoHighLevelFailure } from "@/features/leads/gohighlevel-client";
 import {
   leadDuplicateMessage,
   leadSuccessMessage,
@@ -29,7 +29,7 @@ import {
   validateLeadRequestHeaders,
 } from "@/features/leads/request-guards";
 import { checkLeadSpamSignals } from "@/features/leads/spam-check";
-import { deriveAssessmentLeadId } from "@/features/leads/submission-id";
+import { deriveSubmissionLeadId } from "@/features/leads/submission-id";
 import { verifyTurnstileToken } from "@/features/leads/turnstile";
 import { env } from "@/lib/env";
 
@@ -53,6 +53,17 @@ function validationErrorResponse() {
       message: "Please review the required fields and try again.",
     },
     { status: 400 },
+  );
+}
+
+function processingErrorResponse(status = 500) {
+  return Response.json(
+    {
+      ok: false,
+      message:
+        "We couldn't process this request automatically. Please verify your contact information or email contact@tergion.com.",
+    },
+    { status },
   );
 }
 
@@ -144,65 +155,46 @@ export async function POST(request: Request) {
     );
   }
 
-  const assessmentLeadId =
-    payload.submissionType === "automation_assessment"
-      ? await deriveAssessmentLeadId(payload.submissionNonce)
-      : undefined;
-
-  if (assessmentLeadId) {
-    try {
-      if (await isAssessmentSubmissionCompleted(assessmentLeadId)) {
-        return Response.json({
-          ok: true,
-          message: getSubmissionDuplicateMessage(payload),
-        });
-      }
-    } catch {
-      return Response.json(
-        {
-          ok: false,
-          message:
-            "We could not process the request right now. Please try again later.",
-        },
-        { status: 503 },
-      );
-    }
-  }
-
-  const duplicate = await checkDuplicateLead(
+  const leadId = await deriveSubmissionLeadId(
     payload.submissionType,
+    payload.submissionId,
+  );
+  const reservationResult = await reserveLeadSubmission(
+    payload.submissionType,
+    leadId,
     payload.email,
     payload.phone,
-    Date.now(),
-    assessmentLeadId,
   );
 
-  if (duplicate.duplicateLikely) {
+  if (
+    reservationResult.status === "completed" ||
+    reservationResult.status === "duplicate"
+  ) {
     return Response.json({
       ok: true,
       message: getSubmissionDuplicateMessage(payload),
     });
   }
 
-  const assessmentLease = assessmentLeadId
-    ? await acquireAssessmentSubmissionLease(assessmentLeadId)
-    : undefined;
-
-  if (assessmentLeadId && !assessmentLease) {
-    return Response.json(
-      {
-        ok: false,
-        message:
-          "We could not process the request right now. Please try again later.",
-      },
-      { status: 409 },
-    );
+  if (reservationResult.status === "unavailable") {
+    return processingErrorResponse(503);
   }
+
+  if (reservationResult.status === "busy") {
+    return processingErrorResponse(409);
+  }
+
+  if (reservationResult.status !== "reserved") {
+    return processingErrorResponse(503);
+  }
+
+  const reservation = reservationResult.reservation;
+  let goHighLevelDurable = false;
 
   try {
     const lead: LeadRecord = {
       ...payload,
-      leadId: assessmentLeadId ?? crypto.randomUUID(),
+      leadId,
       createdAt: new Date().toISOString(),
       status: "new",
       security: {
@@ -211,14 +203,15 @@ export async function POST(request: Request) {
         spamScore: spam.score,
         spamReasons: spam.reasons,
         rateLimitReason: rateLimit.reason,
-        duplicateLikely: duplicate.duplicateLikely,
-        duplicateReason: duplicate.reason,
+        duplicateLikely: false,
       },
     };
     try {
-      const goHighLevelAlreadyCompleted = assessmentLeadId
-        ? await isAssessmentGoHighLevelCompleted(assessmentLeadId)
-        : false;
+      const goHighLevelAlreadyCompleted =
+        await isGoHighLevelSubmissionCompleted(
+          payload.submissionType,
+          leadId,
+        );
 
       if (!goHighLevelAlreadyCompleted) {
         const goHighLevel = await sendLeadToGoHighLevel(lead);
@@ -230,37 +223,30 @@ export async function POST(request: Request) {
           throw new Error("gohighlevel-production-delivery-unavailable");
         }
 
-        if (assessmentLeadId) {
-          await markAssessmentGoHighLevelCompleted(assessmentLeadId);
-        }
       }
 
+      await commitGoHighLevelSubmission(reservation);
+      goHighLevelDurable = true;
       await appendLeadToGoogleSheet(lead);
       await sendInternalLeadNotification(lead);
-    } catch {
-      return Response.json(
-        {
-          ok: false,
-          message:
-            "We could not process the request right now. Please try again later.",
-        },
-        { status: 500 },
-      );
-    }
-
-    if (assessmentLeadId) {
-      try {
-        await markAssessmentSubmissionCompleted(assessmentLeadId);
-      } catch {
-        return Response.json(
-          {
-            ok: false,
-            message:
-              "We could not process the request right now. Please try again later.",
-          },
-          { status: 503 },
+    } catch (error) {
+      if (isContactResolutionError(error)) {
+        return processingErrorResponse(
+          error.category === "provider_unavailable" ? 503 : 409,
         );
       }
+
+      if (isAmbiguousGoHighLevelFailure(error)) {
+        goHighLevelDurable = true;
+      }
+
+      return processingErrorResponse();
+    }
+
+    try {
+      await markLeadSubmissionCompleted(payload.submissionType, leadId);
+    } catch {
+      return processingErrorResponse(503);
     }
 
     try {
@@ -279,8 +265,8 @@ export async function POST(request: Request) {
       leadId: lead.leadId,
     });
   } finally {
-    if (assessmentLease) {
-      await releaseAssessmentSubmissionLease(assessmentLease);
-    }
+    await releaseLeadSubmission(reservation, {
+      releaseIdentityReservation: !goHighLevelDurable,
+    });
   }
 }

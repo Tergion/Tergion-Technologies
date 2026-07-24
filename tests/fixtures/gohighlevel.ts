@@ -10,6 +10,33 @@ export const testGoHighLevelAssociationKey =
 export const testGoHighLevelAssociationId = "association-synthetic";
 export const testGoHighLevelLocationId = "location-123";
 
+export function makeGoHighLevelContact(
+  overrides: Partial<{
+    id: string;
+    locationId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    companyName: string;
+    website: string;
+    timezone: string;
+  }> = {},
+) {
+  return {
+    id: "contact-123",
+    locationId: testGoHighLevelLocationId,
+    firstName: "Test",
+    lastName: "Person",
+    email: "test@example.com",
+    phone: "+15551234567",
+    companyName: "Example Business",
+    website: "https://example.com",
+    timezone: "America/Los_Angeles",
+    ...overrides,
+  };
+}
+
 export const testAssessmentPropertyKeys = {
   assessmentReference: "assessment_reference",
   preferredContactMethod: "preferred_contact_method",

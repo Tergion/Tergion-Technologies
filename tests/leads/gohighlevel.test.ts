@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   getTestGoHighLevelOptionValue,
+  makeGoHighLevelContact,
   makeGoHighLevelAssessmentAssociation,
   makeGoHighLevelAssessmentSchemaResponse,
   testAssessmentPropertyKeys,
@@ -59,6 +60,39 @@ function requestBody(init: RequestInit | undefined) {
   return JSON.parse(String(init?.body)) as Record<string, unknown>;
 }
 
+function makeContactMutationResponse(
+  id: string,
+  init: RequestInit | undefined,
+) {
+  const body = requestBody(init);
+
+  return {
+    contact: {
+      id,
+      locationId: testGoHighLevelLocationId,
+      firstName: body.firstName ?? "Test",
+      lastName: body.lastName ?? "Person",
+      email: body.email ?? "test@example.com",
+      phone: body.phone ?? "+15551234567",
+      companyName: body.companyName ?? "Example Business",
+      website: body.website,
+      timezone: body.timezone,
+    },
+  };
+}
+
+function maybeContactReadResponse(url: string, init?: RequestInit) {
+  if (url.endsWith("/contacts/search")) {
+    return jsonResponse({ contacts: [], total: 0 });
+  }
+
+  if (init?.method === "GET" && url.endsWith("/notes")) {
+    return jsonResponse({ notes: [] });
+  }
+
+  return undefined;
+}
+
 function callsFor(fetchMock: ReturnType<typeof vi.fn>, path: string) {
   return fetchMock.mock.calls.filter(([input]) =>
     String(input).includes(path),
@@ -103,14 +137,17 @@ describe("sendLeadToGoHighLevel", () => {
     clearGoHighLevelEnv();
   });
 
-  it("keeps Quick Request on the existing contact, tag, and note path", async () => {
+  it("keeps Quick Request on the contact, tag, and note path", async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, _init?: RequestInit) => {
-        void _init;
         const url = String(input);
+        const contactRead = maybeContactReadResponse(url, _init);
+        if (contactRead) return contactRead;
 
         if (url.endsWith("/contacts/upsert")) {
-          return jsonResponse({ contact: { id: "contact-123" } });
+          return jsonResponse(
+            makeContactMutationResponse("contact-123", _init),
+          );
         }
 
         if (
@@ -145,7 +182,7 @@ describe("sendLeadToGoHighLevel", () => {
       configured: true,
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(6);
     expect(
       fetchMock.mock.calls.some(([input]) =>
         String(input).includes("/objects/"),
@@ -157,7 +194,7 @@ describe("sendLeadToGoHighLevel", () => {
       ),
     ).toBe(false);
 
-    const [, upsertInit] = fetchMock.mock.calls[0];
+    const [, upsertInit] = callsFor(fetchMock, "/contacts/upsert")[0];
     expect(upsertInit?.headers).toMatchObject({
       Authorization: "Bearer test-token",
       Version: "v3",
@@ -180,10 +217,73 @@ describe("sendLeadToGoHighLevel", () => {
     expect(requestBody(upsertInit)).not.toHaveProperty("turnstileToken");
   });
 
+  it("recovers a Quick Request note when the create response is lost", async () => {
+    const contact = makeGoHighLevelContact();
+    const notes: Array<{ id: string; body: string }> = [];
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+
+        if (url.endsWith("/contacts/search")) {
+          return jsonResponse({ contacts: [contact], total: 1 });
+        }
+
+        if (url.endsWith(`/contacts/${contact.id}/tags`)) {
+          return jsonResponse({}, 201);
+        }
+
+        if (
+          url.endsWith(`/contacts/${contact.id}/notes`) &&
+          init?.method === "GET"
+        ) {
+          return jsonResponse({ notes });
+        }
+
+        if (
+          url.endsWith(`/contacts/${contact.id}/notes`) &&
+          init?.method === "POST"
+        ) {
+          const body = requestBody(init);
+          notes.push({ id: "note-one", body: String(body.body) });
+          return unreadableJsonResponse(201);
+        }
+
+        throw new Error(`Unexpected URL: ${url}`);
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { sendLeadToGoHighLevel } = await import(
+      "@/features/leads/gohighlevel"
+    );
+
+    await expect(
+      sendLeadToGoHighLevel(
+        makeLeadRecord({
+          lastName: "Person",
+          phone: contact.phone,
+          website: contact.website,
+          timezone: contact.timezone,
+        }),
+      ),
+    ).resolves.toMatchObject({ ok: true });
+
+    expect(
+      fetchMock.mock.calls.filter(
+        ([input, init]) =>
+          String(input).endsWith(`/contacts/${contact.id}/notes`) &&
+          init?.method === "POST",
+      ),
+    ).toHaveLength(1);
+    expect(notes[0].body).toContain("Lead ID: lead-123");
+  });
+
   it("creates and associates one fully mapped Automation Assessment", async () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+        const contactRead = maybeContactReadResponse(url, init);
+        if (contactRead) return contactRead;
 
         if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
           return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
@@ -204,7 +304,9 @@ describe("sendLeadToGoHighLevel", () => {
         }
 
         if (url.endsWith("/contacts/upsert")) {
-          return jsonResponse({ contact: { id: "contact-assessment" } });
+          return jsonResponse(
+            makeContactMutationResponse("contact-assessment", init),
+          );
         }
 
         if (
@@ -344,7 +446,7 @@ describe("sendLeadToGoHighLevel", () => {
       lastName: "Person",
       companyName: "Assessment Business",
       email: "assessment@example.com",
-      phone: "+1 555 123 4567",
+      phone: "+15551234567",
       timezone: "America/Los_Angeles",
     });
     expect(requestBody(upsertCall[1])).not.toHaveProperty("website");
@@ -372,7 +474,9 @@ describe("sendLeadToGoHighLevel", () => {
     ]);
 
     const noteBody = requestBody(
-      callsFor(fetchMock, "/contacts/contact-assessment/notes")[0][1],
+      callsFor(fetchMock, "/contacts/contact-assessment/notes").find(
+        ([, init]) => init?.method === "POST",
+      )?.[1],
     ) as { body: string; title: string };
     expect(noteBody.title).toBe(
       "Free Business Automation Assessment",
@@ -401,6 +505,8 @@ describe("sendLeadToGoHighLevel", () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+        const contactRead = maybeContactReadResponse(url, init);
+        if (contactRead) return contactRead;
 
         if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
           return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
@@ -425,7 +531,9 @@ describe("sendLeadToGoHighLevel", () => {
         }
 
         if (url.endsWith("/contacts/upsert")) {
-          return jsonResponse({ contact: { id: "contact-assessment" } });
+          return jsonResponse(
+            makeContactMutationResponse("contact-assessment", init),
+          );
         }
 
         if (
@@ -524,6 +632,8 @@ describe("sendLeadToGoHighLevel", () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+        const contactRead = maybeContactReadResponse(url, init);
+        if (contactRead) return contactRead;
 
         if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
           return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
@@ -548,7 +658,9 @@ describe("sendLeadToGoHighLevel", () => {
         }
 
         if (url.endsWith("/contacts/upsert")) {
-          return jsonResponse({ contact: { id: "contact-assessment" } });
+          return jsonResponse(
+            makeContactMutationResponse("contact-assessment", init),
+          );
         }
 
         if (
@@ -619,6 +731,8 @@ describe("sendLeadToGoHighLevel", () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+        const contactRead = maybeContactReadResponse(url, init);
+        if (contactRead) return contactRead;
 
         if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
           return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
@@ -643,7 +757,9 @@ describe("sendLeadToGoHighLevel", () => {
         }
 
         if (url.endsWith("/contacts/upsert")) {
-          return jsonResponse({ contact: { id: "contact-assessment" } });
+          return jsonResponse(
+            makeContactMutationResponse("contact-assessment", init),
+          );
         }
 
         if (
@@ -727,6 +843,8 @@ describe("sendLeadToGoHighLevel", () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+        const contactRead = maybeContactReadResponse(url, init);
+        if (contactRead) return contactRead;
 
         if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
           return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
@@ -751,7 +869,9 @@ describe("sendLeadToGoHighLevel", () => {
         }
 
         if (url.endsWith("/contacts/upsert")) {
-          return jsonResponse({ contact: { id: "contact-assessment" } });
+          return jsonResponse(
+            makeContactMutationResponse("contact-assessment", init),
+          );
         }
 
         if (
@@ -830,6 +950,8 @@ describe("sendLeadToGoHighLevel", () => {
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+        const contactRead = maybeContactReadResponse(url, init);
+        if (contactRead) return contactRead;
 
         if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
           return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
@@ -844,7 +966,9 @@ describe("sendLeadToGoHighLevel", () => {
         }
 
         if (url.endsWith("/contacts/upsert")) {
-          return jsonResponse({ contact: { id: "same-contact" } });
+          return jsonResponse(
+            makeContactMutationResponse("same-contact", init),
+          );
         }
 
         if (
@@ -919,8 +1043,10 @@ describe("sendLeadToGoHighLevel", () => {
 
   it("fails closed when an assessment is already related to another Contact", async () => {
     const fetchMock = vi.fn(
-      async (input: RequestInfo | URL) => {
+      async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+        const contactRead = maybeContactReadResponse(url, init);
+        if (contactRead) return contactRead;
 
         if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
           return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
@@ -935,7 +1061,9 @@ describe("sendLeadToGoHighLevel", () => {
         }
 
         if (url.endsWith("/contacts/upsert")) {
-          return jsonResponse({ contact: { id: "contact-assessment" } });
+          return jsonResponse(
+            makeContactMutationResponse("contact-assessment", init),
+          );
         }
 
         if (

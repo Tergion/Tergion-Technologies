@@ -13,12 +13,23 @@ async function openLeadForm(page: import("@playwright/test").Page) {
 
 async function completeContactBasics(
   dialog: import("@playwright/test").Locator,
+  identity: {
+    email?: string;
+    firstName?: string;
+    businessName?: string;
+  } = {},
 ) {
   const panel = dialog.getByRole("tabpanel", { name: "Quick Request" });
 
-  await panel.getByLabel("First name *").fill("Playwright");
-  await panel.getByLabel("Business name *").fill("Example Business");
-  await panel.getByLabel("Email *").fill("playwright@example.com");
+  await panel
+    .getByLabel("First name *")
+    .fill(identity.firstName ?? "Playwright");
+  await panel
+    .getByLabel("Business name *")
+    .fill(identity.businessName ?? "Example Business");
+  await panel
+    .getByLabel("Email *")
+    .fill(identity.email ?? "playwright@example.com");
 }
 
 async function completeContactPreferences(
@@ -81,12 +92,16 @@ async function expectErrorAboveAndRightAligned(
 
 async function advanceQuickRequestToReview(
   dialog: import("@playwright/test").Locator,
+  identity: {
+    email?: string;
+    phone?: string;
+  } = {},
 ) {
   const panel = dialog.getByRole("tabpanel", { name: "Quick Request" });
 
-  await completeContactBasics(dialog);
+  await completeContactBasics(dialog, identity);
   await panel.getByRole("button", { name: "Continue" }).click();
-  await completeContactPreferences(dialog);
+  await completeContactPreferences(dialog, { phone: identity.phone });
   await panel.getByRole("button", { name: "Continue" }).click();
   await panel.getByRole("button", { name: "Continue" }).click();
 }
@@ -135,6 +150,10 @@ async function expectUrlFormMode(
 
 async function advanceAssessmentToStepSeven(
   dialog: import("@playwright/test").Locator,
+  identity: {
+    email?: string;
+    phone?: string;
+  } = {},
 ) {
   const panel = dialog.getByRole("tabpanel", {
     name: "Automation Assessment",
@@ -142,10 +161,14 @@ async function advanceAssessmentToStepSeven(
 
   await panel.getByLabel("First name *", { exact: true }).fill("Assessment");
   await panel.getByLabel("Business name *", { exact: true }).fill("Assessment Business");
-  await panel.getByLabel("Email *", { exact: true }).fill("assessment@example.com");
+  await panel
+    .getByLabel("Email *", { exact: true })
+    .fill(identity.email ?? "assessment@example.com");
   await panel.getByRole("button", { name: "Continue" }).click();
 
-  await panel.getByLabel("Phone *", { exact: true }).fill("+1 555 123 4567");
+  await panel
+    .getByLabel("Phone *", { exact: true })
+    .fill(identity.phone ?? "+1 555 123 4567");
   await panel.getByRole("radio", { name: "Email" }).check();
   await panel.getByRole("button", { name: "Continue" }).click();
 
@@ -995,6 +1018,71 @@ test("only the active form mounts Turnstile on review", async ({ page }) => {
   ).toHaveCount(1);
 });
 
+test("submits both form types with one shared identity and separate submission IDs", async ({
+  page,
+}) => {
+  const payloads: Array<Record<string, unknown>> = [];
+  await page.route("**/api/leads", async (route) => {
+    payloads.push(
+      route.request().postDataJSON() as Record<string, unknown>,
+    );
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        message: "Request received.",
+        leadId: `playwright-${payloads.length}`,
+      }),
+    });
+  });
+  const identity = {
+    email: "shared-playwright@example.com",
+    phone: "+1 555 123 4567",
+  };
+  let dialog = await openLeadForm(page);
+
+  await advanceQuickRequestToReview(dialog, identity);
+  await dialog.getByLabel(/I agree to be contacted/).check();
+  await dialog.getByLabel(/I agree to the/).check();
+  await dialog.getByRole("button", { name: "Send a quick request" }).click();
+  await expect(
+    dialog.getByRole("heading", { name: "Request received" }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Close" }).click();
+
+  dialog = await openAssessment(page);
+  const assessmentPanel = dialog.getByRole("tabpanel", {
+    name: "Automation Assessment",
+  });
+  await advanceAssessmentToStepSeven(dialog, identity);
+  await assessmentPanel
+    .getByRole("radio", {
+      name: "Review my responses and contact me with recommendations",
+    })
+    .check();
+  await assessmentPanel.getByRole("button", { name: "Continue" }).click();
+  await assessmentPanel
+    .getByLabel(/may use the information I submitted/)
+    .check();
+  await assessmentPanel.getByLabel(/I agree to the/).check();
+  await assessmentPanel
+    .getByRole("button", { name: "Submit assessment" })
+    .click();
+  await expect(assessmentPanel.getByText("Assessment received")).toBeVisible();
+
+  expect(payloads).toHaveLength(2);
+  expect(payloads.map((payload) => payload.submissionType)).toEqual([
+    "quick_request",
+    "automation_assessment",
+  ]);
+  expect(payloads).toEqual([
+    expect.objectContaining(identity),
+    expect.objectContaining(identity),
+  ]);
+  expect(payloads[0]?.submissionId).not.toBe(payloads[1]?.submissionId);
+});
+
 test("submits an explicit confirmation-only assessment", async ({ page }) => {
   let capturedPayload: Record<string, unknown> | undefined;
   await page.route("**/api/leads", async (route) => {
@@ -1037,7 +1125,7 @@ test("submits an explicit confirmation-only assessment", async ({ page }) => {
     triggerSource: "contact-automation-assessment",
     schedulingPreference: "",
   });
-  expect(capturedPayload?.submissionNonce).toEqual(
+  expect(capturedPayload?.submissionId).toEqual(
     expect.stringMatching(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
     ),

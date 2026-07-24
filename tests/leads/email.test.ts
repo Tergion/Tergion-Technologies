@@ -112,7 +112,7 @@ describe("sendLeadConfirmationEmail", () => {
     const body = JSON.parse(String(init?.body)) as Record<string, string>;
 
     expect(body.subject).toBe(
-      "We received your Tergion automation assessment",
+      "We received your automation assessment!",
     );
     expect(body.html).toContain("Your preference is recorded");
     expect(body.text).toContain(

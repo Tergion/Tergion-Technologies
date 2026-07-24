@@ -15,6 +15,8 @@ import {
   isAmbiguousGoHighLevelFailure,
   requestGoHighLevel,
 } from "@/features/leads/gohighlevel-client";
+import { resolveOrCreateContact } from "@/features/leads/gohighlevel-contact";
+import { maskEmail, maskPhone } from "@/features/leads/contact-identity";
 import {
   preferredContactMethods,
   usesCrmOptions,
@@ -22,13 +24,16 @@ import {
 import type { LeadRecord, ProviderResult } from "@/features/leads/lead.types";
 import { env, hasGoHighLevelConfig } from "@/lib/env";
 
-const goHighLevelUpsertResponseSchema = z
+const goHighLevelNotesResponseSchema = z
   .object({
-    contact: z
-      .object({
-        id: z.string().min(1),
-      })
-      .passthrough(),
+    notes: z.array(
+      z
+        .object({
+          id: z.string().min(1),
+          body: z.string(),
+        })
+        .passthrough(),
+    ),
   })
   .passthrough();
 
@@ -47,14 +52,6 @@ function getLeadTags(lead: LeadRecord) {
   }
 
   return [...new Set(tags)];
-}
-
-function compactRecord<T extends Record<string, unknown>>(record: T) {
-  return Object.fromEntries(
-    Object.entries(record).filter(
-      ([, value]) => value !== undefined && value !== null && value !== "",
-    ),
-  );
 }
 
 function formatBoolean(value: boolean) {
@@ -99,7 +96,31 @@ function getOptionLabel(
   return options.find((option) => option.value === value)?.label ?? value;
 }
 
-function buildQuickRequestNote(lead: Extract<LeadRecord, { submissionType: "quick_request" }>) {
+function getIdentityReviewLines(
+  lead: LeadRecord,
+  reviewFlags: readonly string[],
+) {
+  const lines: string[] = [];
+
+  if (reviewFlags.includes("submitted-phone-conflicts-with-existing")) {
+    lines.push(
+      `Identity review: Submitted phone ${maskPhone(lead.phone)} differs from the existing Contact phone and was not applied.`,
+    );
+  }
+
+  if (reviewFlags.includes("submitted-email-conflicts-with-existing")) {
+    lines.push(
+      `Identity review: Submitted email ${maskEmail(lead.email)} differs from the existing Contact email and was not applied.`,
+    );
+  }
+
+  return lines;
+}
+
+function buildQuickRequestNote(
+  lead: Extract<LeadRecord, { submissionType: "quick_request" }>,
+  reviewFlags: readonly string[],
+) {
   return [
     "Website lead request",
     "",
@@ -126,6 +147,7 @@ function buildQuickRequestNote(lead: Extract<LeadRecord, { submissionType: "quic
     `Privacy and terms consent: ${formatBoolean(lead.privacyTermsConsent)}`,
     `SMS consent: ${formatBoolean(lead.smsConsent)}`,
     `AI disclosure seen: ${formatBoolean(lead.aiDisclosureSeen)}`,
+    ...getIdentityReviewLines(lead, reviewFlags),
     "",
     "Attribution",
     `Landing page: ${formatOptional(lead.landingPage)}`,
@@ -148,11 +170,13 @@ function buildQuickRequestNote(lead: Extract<LeadRecord, { submissionType: "quic
 function buildAssessmentNote(
   lead: Extract<LeadRecord, { submissionType: "automation_assessment" }>,
   assessmentReference: string,
+  reviewFlags: readonly string[],
 ) {
   return [
     "Free Business Automation Assessment received",
     "",
     `Assessment: ${formatScalar(assessmentReference)}`,
+    `Lead ID: ${lead.leadId}`,
     `Primary challenge: ${getOptionLabel(
       biggestChallengeOptions,
       lead.biggestChallenge,
@@ -162,6 +186,7 @@ function buildAssessmentNote(
       lead.monthlyLeadRange,
     )}`,
     `Follow-up preference: ${getAssessmentFollowUpPreferenceLabel(lead)}`,
+    ...getIdentityReviewLines(lead, reviewFlags),
     "",
     "See the associated Automation Assessment record for the complete responses.",
   ].join("\n");
@@ -170,54 +195,17 @@ function buildAssessmentNote(
 function buildLeadNote(
   lead: LeadRecord,
   assessmentReference?: string,
+  reviewFlags: readonly string[] = [],
 ) {
   if (lead.submissionType !== "automation_assessment") {
-    return buildQuickRequestNote(lead);
+    return buildQuickRequestNote(lead, reviewFlags);
   }
 
   if (!assessmentReference) {
     throw new Error("gohighlevel-assessment-reference-missing");
   }
 
-  return buildAssessmentNote(lead, assessmentReference);
-}
-
-async function upsertContact(lead: LeadRecord) {
-  const response = await requestGoHighLevel({
-    method: "POST",
-    path: "/contacts/upsert",
-    version: "v3",
-    stage: "upsert-contact",
-    leadId: lead.leadId,
-    body: compactRecord({
-      firstName: lead.firstName,
-      lastName: lead.lastName,
-      email: lead.email,
-      phone: lead.phone,
-      companyName: lead.businessName,
-      website:
-        lead.submissionType === "quick_request" ? lead.website : undefined,
-      timezone: lead.timezone,
-      source: env.goHighLevelSource,
-      locationId: env.goHighLevelLocationId,
-      createNewIfDuplicateAllowed: false,
-    }),
-    expectedStatuses: [200],
-    parseJson: true,
-  });
-  const parsed = goHighLevelUpsertResponseSchema.safeParse(response);
-
-  if (!parsed.success) {
-    console.error("GoHighLevel lead sync failed", {
-      provider: "gohighlevel",
-      stage: "upsert-contact",
-      kind: "response",
-      leadId: lead.leadId,
-    });
-    throw new Error("gohighlevel-contact-id-missing");
-  }
-
-  return parsed.data.contact.id;
+  return buildAssessmentNote(lead, assessmentReference, reviewFlags);
 }
 
 async function addTags(contactId: string, lead: LeadRecord) {
@@ -242,7 +230,14 @@ async function createNote(
   contactId: string,
   lead: LeadRecord,
   assessmentReference?: string,
+  reviewFlags: readonly string[] = [],
 ) {
+  const noteBody = buildLeadNote(lead, assessmentReference, reviewFlags);
+
+  if (await hasSubmissionNote(contactId, lead)) {
+    return;
+  }
+
   try {
     await requestGoHighLevel({
       method: "POST",
@@ -251,7 +246,7 @@ async function createNote(
       stage: "create-note",
       leadId: lead.leadId,
       body: {
-        body: buildLeadNote(lead, assessmentReference),
+        body: noteBody,
         title:
           lead.submissionType === "automation_assessment"
             ? "Free Business Automation Assessment"
@@ -261,19 +256,38 @@ async function createNote(
     });
   } catch (error) {
     if (
-      lead.submissionType === "automation_assessment" &&
       isAmbiguousGoHighLevelFailure(error)
     ) {
-      console.warn("GoHighLevel assessment note outcome is unknown", {
-        provider: "gohighlevel",
-        stage: "create-note",
-        leadId: lead.leadId,
-      });
-      return;
+      if (await hasSubmissionNote(contactId, lead)) {
+        return;
+      }
     }
 
     throw error;
   }
+}
+
+async function hasSubmissionNote(contactId: string, lead: LeadRecord) {
+  const response = await requestGoHighLevel({
+    method: "GET",
+    path: `/contacts/${encodeURIComponent(contactId)}/notes`,
+    version: "v3",
+    stage: "get-contact-notes",
+    leadId: lead.leadId,
+    expectedStatuses: [200],
+    parseJson: true,
+    retrySafeRead: true,
+  });
+  const parsed = goHighLevelNotesResponseSchema.safeParse(response);
+
+  if (!parsed.success) {
+    throw new Error("gohighlevel-contact-notes-response-invalid");
+  }
+
+  const marker = `Lead ID: ${lead.leadId}`;
+  return parsed.data.notes.some((note) =>
+    note.body.split(/\r?\n/).some((line) => line.trim() === marker),
+  );
 }
 
 export async function sendLeadToGoHighLevel(
@@ -293,7 +307,8 @@ export async function sendLeadToGoHighLevel(
     lead.submissionType === "automation_assessment"
       ? await prepareAutomationAssessment(lead)
       : undefined;
-  const contactId = await upsertContact(lead);
+  const resolvedContact = await resolveOrCreateContact(lead);
+  const contactId = resolvedContact.contactId;
   const persistedAssessment = preparedAssessment
     ? await persistAutomationAssessment(
         preparedAssessment,
@@ -307,6 +322,7 @@ export async function sendLeadToGoHighLevel(
     contactId,
     lead,
     persistedAssessment?.assessmentReference,
+    resolvedContact.reviewFlags,
   );
 
   return {

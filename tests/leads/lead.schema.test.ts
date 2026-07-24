@@ -191,21 +191,21 @@ describe("leadSubmissionSchema", () => {
 
   it("requires a valid assessment submission nonce", () => {
     const {
-      submissionNonce: _submissionNonce,
+      submissionId: _submissionId,
       ...withoutSubmissionNonce
     } = makeAssessmentSubmission();
-    void _submissionNonce;
+    void _submissionId;
 
     const missing = leadSubmissionSchema.safeParse(withoutSubmissionNonce);
     const invalid = leadSubmissionSchema.safeParse({
       ...makeAssessmentSubmission(),
-      submissionNonce: "not-a-uuid",
+      submissionId: "not-a-uuid",
     });
 
     expect(missing.success).toBe(false);
     expect(invalid.success).toBe(false);
     expect(invalid.error?.issues.map((issue) => issue.path[0])).toContain(
-      "submissionNonce",
+      "submissionId",
     );
   });
 
