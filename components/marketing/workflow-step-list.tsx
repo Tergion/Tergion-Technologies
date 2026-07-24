@@ -173,7 +173,10 @@ export function WorkflowStepList({
                 }
               }}
               onPointerLeave={(event) => {
-                if (event.pointerType === "mouse") {
+                if (
+                  event.pointerType === "mouse" &&
+                  !event.currentTarget.contains(document.activeElement)
+                ) {
                   closeOpenStep();
                 }
               }}
