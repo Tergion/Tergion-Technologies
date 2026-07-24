@@ -29,6 +29,7 @@ export default function ContactPage() {
               Share the basics and we&apos;ll follow up.
             </p>
             <RequestModalTrigger
+              href={siteConfig.requestForms.quickRequest.href}
               triggerSource="contact-quick-request"
               className="mt-4 min-h-11 w-full px-5"
             >
@@ -44,6 +45,7 @@ export default function ContactPage() {
               opportunities.
             </p>
             <RequestModalTrigger
+              href={siteConfig.requestForms.automationAssessment.href}
               mode="automation_assessment"
               triggerSource="contact-automation-assessment"
               variant="outline"

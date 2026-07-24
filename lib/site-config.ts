@@ -1,4 +1,7 @@
+import { canonicalRequestFormUrls } from "@/lib/request-form-url";
+
 const clientLoginUrl = process.env.NEXT_PUBLIC_GHL_LOGIN_URL ?? "";
+const siteDomain = "https://tergion.com";
 
 export const siteConfig = {
   name: "Tergion Technologies",
@@ -7,7 +10,7 @@ export const siteConfig = {
   shortName: "Tergion",
   description:
     "AI-powered CRM, automation, and business systems for growing companies.",
-  domain: "https://tergion.com",
+  domain: siteDomain,
   contactEmail: "contact@tergion.com",
   privacyEmail: "contact@tergion.com",
   supportEmail: "contact@tergion.com",
@@ -43,6 +46,16 @@ export const siteConfig = {
     final: "Start a quick request",
     footer: "Contact Tergion",
     footerRequest: "Send a quick request",
+  },
+  requestForms: {
+    quickRequest: {
+      href: canonicalRequestFormUrls.quickRequest,
+      url: `${siteDomain}${canonicalRequestFormUrls.quickRequest}`,
+    },
+    automationAssessment: {
+      href: canonicalRequestFormUrls.automationAssessment,
+      url: `${siteDomain}${canonicalRequestFormUrls.automationAssessment}`,
+    },
   },
   navLinks: [
     { label: "Home", href: "/" },
