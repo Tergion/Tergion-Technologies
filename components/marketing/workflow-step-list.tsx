@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type FocusEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent,
+} from "react";
 
 import type { WorkflowStep } from "@/features/workflows/workflow.types";
 import { cn } from "@/lib/utils";
@@ -12,6 +18,8 @@ type WorkflowStepListProps = {
   onStepChange: (index: number) => void;
 };
 
+const detailFadeDurationMs = 140;
+
 export function WorkflowStepList({
   workflowSlug,
   steps,
@@ -19,8 +27,36 @@ export function WorkflowStepList({
   onStepChange,
 }: WorkflowStepListProps) {
   const [openStepIndex, setOpenStepIndex] = useState<number | null>(null);
+  const [closingStepIndex, setClosingStepIndex] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const openedByFocus = useRef(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const startClosingStep = useCallback((index: number) => {
+    if (closeTimerRef.current !== null) {
+      clearTimeout(closeTimerRef.current);
+    }
+
+    setClosingStepIndex(index);
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)")
+      .matches
+      ? 0
+      : detailFadeDurationMs;
+
+    closeTimerRef.current = setTimeout(() => {
+      setClosingStepIndex((current) => (current === index ? null : current));
+      closeTimerRef.current = null;
+    }, duration);
+  }, []);
+
+  const closeOpenStep = useCallback(() => {
+    if (openStepIndex === null) {
+      return;
+    }
+
+    startClosingStep(openStepIndex);
+    setOpenStepIndex(null);
+  }, [openStepIndex, startClosingStep]);
 
   useEffect(() => {
     if (openStepIndex === null) {
@@ -32,7 +68,7 @@ export function WorkflowStepList({
         event.target instanceof Node &&
         !listRef.current?.contains(event.target)
       ) {
-        setOpenStepIndex(null);
+        closeOpenStep();
       }
     }
 
@@ -41,9 +77,31 @@ export function WorkflowStepList({
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [openStepIndex]);
+  }, [closeOpenStep, openStepIndex]);
+
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current !== null) {
+        clearTimeout(closeTimerRef.current);
+      }
+    },
+    [],
+  );
 
   function openStep(index: number) {
+    if (openStepIndex !== null && openStepIndex !== index) {
+      startClosingStep(openStepIndex);
+    }
+
+    if (closingStepIndex === index) {
+      if (closeTimerRef.current !== null) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+
+      setClosingStepIndex(null);
+    }
+
     setOpenStepIndex(index);
     onStepChange(index);
   }
@@ -57,13 +115,17 @@ export function WorkflowStepList({
   }
 
   function toggleStep(index: number) {
-    setOpenStepIndex((current) => (current === index ? null : index));
-    onStepChange(index);
+    if (openStepIndex === index) {
+      closeOpenStep();
+      return;
+    }
+
+    openStep(index);
   }
 
   function handleBlur(event: FocusEvent<HTMLLIElement>) {
     if (!event.currentTarget.contains(event.relatedTarget)) {
-      setOpenStepIndex(null);
+      closeOpenStep();
     }
   }
 
@@ -90,13 +152,21 @@ export function WorkflowStepList({
         {steps.map((step, index) => {
           const isActive = index === activeStepIndex;
           const isOpen = index === openStepIndex;
+          const isClosing = index === closingStepIndex;
+          const isConnected = isOpen || isClosing;
+          const isHighlighted = isActive || isConnected;
           const detailId = `${workflowSlug}-step-${index + 1}-details`;
           const opensUp = index >= Math.max(steps.length - 3, 0);
 
           return (
             <li
               key={`${workflowSlug}-${step.title}`}
-              className={cn("relative min-w-0", isOpen ? "z-30" : "z-0")}
+              data-workflow-step-item
+              data-state={isOpen ? "open" : isClosing ? "closing" : "closed"}
+              className={cn(
+                "relative min-w-0",
+                isConnected ? "workflow-step-connected z-30" : "z-auto",
+              )}
               onPointerEnter={(event) => {
                 if (event.pointerType === "mouse") {
                   openStep(index);
@@ -104,26 +174,34 @@ export function WorkflowStepList({
               }}
               onPointerLeave={(event) => {
                 if (event.pointerType === "mouse") {
-                  setOpenStepIndex(null);
+                  closeOpenStep();
                 }
               }}
               onBlur={handleBlur}
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
-                  setOpenStepIndex(null);
+                  closeOpenStep();
                 }
               }}
             >
               <button
                 type="button"
+                data-workflow-step-trigger
                 className={cn(
                   "flex w-full min-w-0 items-start gap-3 rounded-md border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  isActive || isOpen
-                    ? "border-[color:var(--island-active-border)] bg-[var(--island-active-bg)] shadow-md shadow-accent-strong/10"
+                  isHighlighted
+                    ? "border-[color:var(--border-strong)] bg-[var(--island-active-bg)]"
                     : "border-[color:var(--field-border)] bg-[var(--field-bg)] hover:bg-[var(--island-hover-bg)]",
-                  isOpen && "rounded-b-none",
-                  isOpen && opensUp && "md:rounded-b-md md:rounded-t-none",
+                  isActive &&
+                    !isConnected &&
+                    "shadow-md shadow-accent-strong/10",
+                  isConnected &&
+                    "rounded-b-none border-b-transparent shadow-none",
+                  isConnected &&
+                    opensUp &&
+                    "md:rounded-b-md md:rounded-t-none md:border-b-[color:var(--border-strong)] md:border-t-transparent",
                 )}
+                aria-current={isActive ? "step" : undefined}
                 aria-expanded={isOpen}
                 aria-controls={detailId}
                 onClick={() => {
@@ -140,8 +218,8 @@ export function WorkflowStepList({
                 <span
                   className={cn(
                     "mt-0.5 grid size-7 shrink-0 place-items-center rounded-md border text-[0.68rem] font-semibold",
-                    isActive || isOpen
-                      ? "border-[color:var(--island-active-border)] bg-[var(--active-chip-bg)] text-accent-strong"
+                    isHighlighted
+                      ? "border-[color:var(--border-strong)] bg-[var(--active-chip-bg)] text-accent-strong"
                       : "border-[color:var(--field-border)] text-muted-foreground",
                   )}
                   aria-hidden="true"
@@ -152,7 +230,7 @@ export function WorkflowStepList({
                   <span
                     className={cn(
                       "block text-sm font-semibold",
-                      isActive || isOpen
+                      isHighlighted
                         ? "text-foreground"
                         : "text-muted-foreground",
                     )}
@@ -163,8 +241,8 @@ export function WorkflowStepList({
                     <span
                       className={cn(
                         "mt-1 inline-flex rounded-full border px-2 py-0.5 text-[0.68rem] font-medium",
-                        isActive || isOpen
-                          ? "border-[color:var(--island-active-border)] bg-[var(--active-chip-bg)] text-accent-strong"
+                        isHighlighted
+                          ? "border-[color:var(--border-strong)] bg-[var(--active-chip-bg)] text-accent-strong"
                           : "border-[color:var(--field-border)] text-muted-foreground",
                       )}
                     >
@@ -174,13 +252,16 @@ export function WorkflowStepList({
                 </span>
               </button>
 
-              {isOpen ? (
+              {isConnected ? (
                 <div
                   id={detailId}
                   role="region"
                   aria-label={`${step.title} explanation`}
+                  aria-hidden={!isOpen}
+                  data-workflow-step-details
+                  data-state={isOpen ? "open" : "closing"}
                   className={cn(
-                    "workflow-panel rounded-b-md border-t-0 px-4 py-3 text-sm leading-6 text-muted-foreground md:absolute md:left-0 md:right-0 md:z-30",
+                    "workflow-panel rounded-b-md border-[color:var(--border-strong)] border-t-0 px-4 py-3 text-sm leading-6 text-muted-foreground shadow-none md:absolute md:left-0 md:right-0 md:z-30",
                     opensUp
                       ? "md:bottom-full md:mb-[-1px] md:rounded-b-none md:rounded-t-md md:border-b-0 md:border-t"
                       : "md:top-full md:-mt-px md:rounded-b-md md:border-t-0",
