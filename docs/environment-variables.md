@@ -32,12 +32,20 @@
 - `LEAD_NOTIFICATION_EMAIL`: future internal lead notification recipient. Internal notification sending remains deferred and this value does not gate customer confirmation.
 - `GHL_SOURCE`: GoHighLevel contact source, defaults to `Tergion website lead form`.
 - `GHL_LEAD_TAGS`: comma-separated GoHighLevel tags to add after contact upsert, defaults to `website-lead`.
+- `GHL_ASSESSMENT_OBJECT_SCHEMA_KEY`: server-only Automation Assessment Custom Object key, expected to be `custom_objects.automation_assessment`.
+- `GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY`: server-only Contact association key, expected to be `automation_assessments_submitted_by`.
 - `ANALYTICS_PROVIDER`: analytics provider flag if enabled after review.
 - `NODE_ENV`: environment mode.
 
 ## Current Requirement Status
 
 Most variables are optional in local development. Production lead submission fails closed unless both Turnstile verification and GoHighLevel delivery are operational, so `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `GHL_PRIVATE_INTEGRATION_TOKEN`, and `GHL_LOCATION_ID` must be configured before public launch. Email sending and Upstash-backed distributed rate limiting and duplicate suppression should also be configured before launch. Without Upstash, the app falls back to in-memory checks that are useful locally but not durable across Cloudflare Worker isolates.
+
+Automation Assessment submissions require `GHL_ASSESSMENT_OBJECT_SCHEMA_KEY` and `GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY`. The example values are the expected identifiers, not proof of the live GoHighLevel configuration. Verify both against the location's read-only object-schema and association metadata before enabling assessment submissions, and use the verified values in Cloudflare. These identifiers are not credentials, but they are server-only configuration and must not use a `NEXT_PUBLIC_*` name.
+
+Reuse `GHL_PRIVATE_INTEGRATION_TOKEN`; do not create a second token. In addition to the existing scopes, the same Private Integration must have `associations/relation.readonly`. HighLevel requires that scope to inspect an existing relation after a retry or an ambiguous timeout. Keep the existing `associations/relation.write` scope for relation creation.
+
+The Worker validates the configured schema and association through read-only HighLevel endpoints and caches only the non-secret metadata for 15 minutes in the current Worker isolate. It does not fetch schema metadata for every form submission and does not cache the token, authorization headers, Contact data, or assessment answers. A missing or changed schema or an association orientation mismatch must fail closed with a generic user-facing error. See `docs/gohighlevel-automation-assessment.md` for the complete mapping and recovery contract.
 
 ## Transactional Confirmation Email
 

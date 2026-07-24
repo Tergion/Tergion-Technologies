@@ -1,22 +1,38 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { automationAssessmentDuplicateMessage } from "@/features/assessments/assessment.constants";
 import { leadDuplicateMessage } from "@/features/leads/lead.constants";
+import { deriveAssessmentLeadId } from "@/features/leads/submission-id";
 import {
   makeAssessmentSubmission,
   makeLeadSubmission,
 } from "@/tests/fixtures/leads";
+import {
+  makeGoHighLevelAssessmentAssociation,
+  makeGoHighLevelAssessmentSchemaResponse,
+  testGoHighLevelAssociationId,
+  testGoHighLevelAssociationKey,
+  testGoHighLevelLocationId,
+  testGoHighLevelSchemaKey,
+} from "@/tests/fixtures/gohighlevel";
 
 const emailMocks = vi.hoisted(() => ({
   sendInternalLeadNotification: vi.fn(),
   sendLeadConfirmationEmail: vi.fn(),
 }));
+const googleSheetsMocks = vi.hoisted(() => ({
+  appendLeadToGoogleSheet: vi.fn(),
+}));
 
 vi.mock("@/features/leads/email", () => emailMocks);
+vi.mock("@/features/leads/google-sheets", () => googleSheetsMocks);
 
 function clearIntegrationEnv() {
   delete process.env.GHL_PRIVATE_INTEGRATION_TOKEN;
   delete process.env.GHL_API_KEY;
   delete process.env.GHL_LOCATION_ID;
+  delete process.env.GHL_ASSESSMENT_OBJECT_SCHEMA_KEY;
+  delete process.env.GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY;
   delete process.env.TURNSTILE_SECRET_KEY;
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -29,6 +45,10 @@ function clearIntegrationEnv() {
 function setGoHighLevelEnv() {
   process.env.GHL_PRIVATE_INTEGRATION_TOKEN = "test-token";
   process.env.GHL_LOCATION_ID = "location-123";
+  process.env.GHL_ASSESSMENT_OBJECT_SCHEMA_KEY =
+    testGoHighLevelSchemaKey;
+  process.env.GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY =
+    testGoHighLevelAssociationKey;
 }
 
 async function importRoute() {
@@ -81,6 +101,82 @@ function mockSuccessfulGoHighLevelFetch() {
   return fetchMock;
 }
 
+function mockSuccessfulAssessmentGoHighLevelFetch() {
+  const fetchMock = vi.fn(
+    async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
+        return Response.json(makeGoHighLevelAssessmentSchemaResponse());
+      }
+
+      if (url.includes("/associations/key/")) {
+        return Response.json(makeGoHighLevelAssessmentAssociation());
+      }
+
+      if (url.endsWith("/records/search")) {
+        return Response.json({ records: [], total: 0 });
+      }
+
+      if (url.endsWith("/contacts/upsert")) {
+        return Response.json({ contact: { id: "contact-123" } });
+      }
+
+      if (
+        url.endsWith(
+          `/objects/${testGoHighLevelSchemaKey}/records`,
+        )
+      ) {
+        return Response.json(
+          { record: { id: "assessment-record" } },
+          { status: 201 },
+        );
+      }
+
+      if (
+        url.includes(
+          "/associations/relations/assessment-record?",
+        )
+      ) {
+        return Response.json({ relations: [] });
+      }
+
+      if (url.endsWith("/associations/relations")) {
+        const body = JSON.parse(String(init?.body)) as {
+          firstRecordId: string;
+          secondRecordId: string;
+        };
+
+        return Response.json(
+          {
+            id: "relation-1",
+            firstObjectKey: testGoHighLevelSchemaKey,
+            firstRecordId: body.firstRecordId,
+            secondObjectKey: "contact",
+            secondRecordId: body.secondRecordId,
+            associationId: testGoHighLevelAssociationId,
+            locationId: testGoHighLevelLocationId,
+          },
+          { status: 201 },
+        );
+      }
+
+      if (
+        url.endsWith("/contacts/contact-123/tags") ||
+        url.endsWith("/contacts/contact-123/notes")
+      ) {
+        return Response.json({}, { status: 201 });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    },
+  );
+
+  vi.stubGlobal("fetch", fetchMock);
+
+  return fetchMock;
+}
+
 describe("/api/leads", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -98,6 +194,13 @@ describe("/api/leads", () => {
       configured: true,
       provider: "resend",
       message: "Lead confirmation email sent.",
+    });
+    googleSheetsMocks.appendLeadToGoogleSheet.mockReset();
+    googleSheetsMocks.appendLeadToGoogleSheet.mockResolvedValue({
+      ok: true,
+      configured: false,
+      provider: "google-sheets",
+      message: "Google Sheets stubbed.",
     });
   });
 
@@ -137,18 +240,20 @@ describe("/api/leads", () => {
   });
 
   it("accepts an assessment and preserves confirmation-only behavior", async () => {
+    const submission = makeAssessmentSubmission({
+      assessmentFollowUpPreference: "confirmation-only",
+    });
     const POST = await importRoute();
     const response = await POST(
-      makePostRequest(
-        makeAssessmentSubmission({
-          assessmentFollowUpPreference: "confirmation-only",
-        }),
-      ),
+      makePostRequest(submission),
     );
     const body = await response.json();
+    const expectedLeadId = await deriveAssessmentLeadId(
+      submission.submissionNonce,
+    );
 
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({ ok: true });
+    expect(body).toMatchObject({ ok: true, leadId: expectedLeadId });
     expect(body.message).toContain("recorded");
     expect(body.message).toContain("confirmation email");
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledWith(
@@ -157,6 +262,241 @@ describe("/api/leads", () => {
         assessmentFollowUpPreference: "confirmation-only",
       }),
     );
+  });
+
+  it("short-circuits a completed assessment retry with the same stable lead ID", async () => {
+    const submission = makeAssessmentSubmission();
+    const POST = await importRoute();
+    const first = await POST(makePostRequest(submission));
+    const second = await POST(makePostRequest(submission));
+    const firstBody = await first.json();
+    const secondBody = await second.json();
+
+    expect(first.status).toBe(200);
+    expect(firstBody).toMatchObject({
+      ok: true,
+      leadId: await deriveAssessmentLeadId(submission.submissionNonce),
+    });
+    expect(second.status).toBe(200);
+    expect(secondBody).toEqual({
+      ok: true,
+      message: automationAssessmentDuplicateMessage,
+    });
+    expect(emailMocks.sendInternalLeadNotification).toHaveBeenCalledTimes(1);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not process the same assessment concurrently", async () => {
+    let releaseNotification: (() => void) | undefined;
+    let markNotificationStarted: (() => void) | undefined;
+    const notificationGate = new Promise<void>((resolve) => {
+      releaseNotification = resolve;
+    });
+    const notificationStarted = new Promise<void>((resolve) => {
+      markNotificationStarted = resolve;
+    });
+    emailMocks.sendInternalLeadNotification.mockImplementationOnce(
+      async () => {
+        markNotificationStarted?.();
+        await notificationGate;
+
+        return {
+          ok: true,
+          configured: false,
+          provider: "email",
+          message: "Internal notification stubbed.",
+        };
+      },
+    );
+    const submission = makeAssessmentSubmission();
+    const POST = await importRoute();
+    const firstResponsePromise = POST(makePostRequest(submission));
+
+    await notificationStarted;
+    const concurrentResponse = await POST(makePostRequest(submission));
+
+    expect(concurrentResponse.status).toBe(409);
+    await expect(concurrentResponse.json()).resolves.toMatchObject({
+      ok: false,
+    });
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+
+    releaseNotification?.();
+    const firstResponse = await firstResponsePromise;
+
+    expect(firstResponse.status).toBe(200);
+    expect(emailMocks.sendInternalLeadNotification).toHaveBeenCalledTimes(1);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails closed when distributed assessment completion state is unavailable", async () => {
+    process.env.UPSTASH_REDIS_REST_URL =
+      "https://redis.example.test";
+    process.env.UPSTASH_REDIS_REST_TOKEN = "private-test-token";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("temporary Redis failure");
+      }),
+    );
+    const POST = await importRoute();
+    const response = await POST(
+      makePostRequest(makeAssessmentSubmission()),
+    );
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+    });
+    expect(emailMocks.sendInternalLeadNotification).not.toHaveBeenCalled();
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("allows an incomplete assessment to retry with the same stable lead ID", async () => {
+    setGoHighLevelEnv();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let upsertAttempts = 0;
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+
+      if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
+        return Response.json(makeGoHighLevelAssessmentSchemaResponse());
+      }
+
+      if (url.includes("/associations/key/")) {
+        return Response.json(makeGoHighLevelAssessmentAssociation());
+      }
+
+      if (url.endsWith("/records/search")) {
+        return Response.json({ records: [], total: 0 });
+      }
+
+      if (url.endsWith("/contacts/upsert")) {
+        upsertAttempts += 1;
+
+        if (upsertAttempts === 1) {
+          return Response.json({}, { status: 503 });
+        }
+
+        return Response.json({ contact: { id: "contact-123" } });
+      }
+
+      if (
+        url.endsWith(
+          `/objects/${testGoHighLevelSchemaKey}/records`,
+        )
+      ) {
+        return Response.json(
+          { record: { id: "assessment-record" } },
+          { status: 201 },
+        );
+      }
+
+      if (
+        url.includes(
+          "/associations/relations/assessment-record?",
+        )
+      ) {
+        return Response.json({ relations: [] });
+      }
+
+      if (url.endsWith("/associations/relations")) {
+        const body = JSON.parse(String(init?.body)) as {
+          firstRecordId: string;
+          secondRecordId: string;
+        };
+
+        return Response.json(
+          {
+            id: "relation-1",
+            firstObjectKey: testGoHighLevelSchemaKey,
+            firstRecordId: body.firstRecordId,
+            secondObjectKey: "contact",
+            secondRecordId: body.secondRecordId,
+            associationId: testGoHighLevelAssociationId,
+            locationId: testGoHighLevelLocationId,
+          },
+          { status: 201 },
+        );
+      }
+
+      if (
+        url.endsWith("/contacts/contact-123/tags") ||
+        url.endsWith("/contacts/contact-123/notes")
+      ) {
+        return Response.json({}, { status: 201 });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const submission = makeAssessmentSubmission();
+    const POST = await importRoute();
+    const first = await POST(makePostRequest(submission));
+    const retry = await POST(makePostRequest(submission));
+
+    expect(first.status).toBe(500);
+    expect(retry.status).toBe(200);
+    await expect(retry.json()).resolves.toMatchObject({
+      ok: true,
+      leadId: await deriveAssessmentLeadId(submission.submissionNonce),
+    });
+    expect(upsertAttempts).toBe(2);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not repeat completed GoHighLevel work when downstream processing retries", async () => {
+    setGoHighLevelEnv();
+    const fetchMock = mockSuccessfulAssessmentGoHighLevelFetch();
+    googleSheetsMocks.appendLeadToGoogleSheet
+      .mockRejectedValueOnce(new Error("temporary sheets failure"))
+      .mockResolvedValueOnce({
+        ok: true,
+        configured: false,
+        provider: "google-sheets",
+        message: "Google Sheets stubbed.",
+      });
+    const submission = makeAssessmentSubmission();
+    const POST = await importRoute();
+    const first = await POST(makePostRequest(submission));
+    const retry = await POST(makePostRequest(submission));
+
+    expect(first.status).toBe(500);
+    expect(retry.status).toBe(200);
+    await expect(retry.json()).resolves.toMatchObject({
+      ok: true,
+      leadId: await deriveAssessmentLeadId(
+        submission.submissionNonce,
+      ),
+    });
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        String(input).endsWith("/contacts/upsert"),
+      ),
+    ).toHaveLength(1);
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        String(input).endsWith(
+          `/objects/${testGoHighLevelSchemaKey}/records`,
+        ),
+      ),
+    ).toHaveLength(1);
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        String(input).endsWith("/associations/relations"),
+      ),
+    ).toHaveLength(1);
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        String(input).endsWith("/contacts/contact-123/notes"),
+      ),
+    ).toHaveLength(1);
+    expect(googleSheetsMocks.appendLeadToGoogleSheet).toHaveBeenCalledTimes(
+      2,
+    );
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
   });
 
   it("rejects a wrong content type", async () => {

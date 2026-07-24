@@ -68,11 +68,17 @@ Set production values in Cloudflare before enabling live lead capture:
 - `RESEND_API_KEY` or `POSTMARK_SERVER_TOKEN`
 - `GHL_PRIVATE_INTEGRATION_TOKEN`
 - `GHL_LOCATION_ID`
+- `GHL_ASSESSMENT_OBJECT_SCHEMA_KEY`
+- `GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY`
 - Google Sheets credentials when Sheets append is enabled
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 
-Keep provider tokens and other credentials as Cloudflare secrets. The non-sensitive provider selection can be stored as a server-side runtime variable; the stable sender and reply-to identities are source-controlled in `lib/site-config.ts`.
+Keep provider tokens and other credentials as Cloudflare secrets. `GHL_ASSESSMENT_OBJECT_SCHEMA_KEY` and `GHL_ASSESSMENT_CONTACT_ASSOCIATION_KEY` are non-secret but server-only Worker variables; never expose them through `NEXT_PUBLIC_*`. Their expected values are `custom_objects.automation_assessment` and `automation_assessments_submitted_by`, respectively. Confirm both through read-only live discovery before enabling assessment submissions and override them if the verified keys differ. The non-sensitive provider selection can also be stored as a server-side runtime variable; the stable sender and reply-to identities are source-controlled in `lib/site-config.ts`.
+
+Reuse the existing `GHL_PRIVATE_INTEGRATION_TOKEN`; do not create or rotate a second token for assessments. Add the official `associations/relation.readonly` scope to that same Private Integration while preserving its existing scopes, including `associations/relation.write`. Read access is required to verify that a Contact-to-assessment relation already exists after a retry or an ambiguous provider timeout.
+
+At runtime, the Worker uses read-only schema and association endpoints to validate the configured object and relation orientation, then caches only non-secret metadata for 15 minutes in the current isolate. This avoids a discovery request for every submission. Validation must fail closed if the schema, field mapping, association, or orientation changes; credentials, authorization headers, Contact records, and assessment answers must never enter this cache. The complete endpoint, mapping, recovery, and smoke-test contract is in `docs/gohighlevel-automation-assessment.md`.
 
 The production lead route fails closed when the Turnstile secret or GoHighLevel credentials are missing. The deployed form also keeps submission disabled when the public Turnstile widget cannot issue a token. Configure and verify both systems before directing visitors to the form.
 
@@ -131,3 +137,5 @@ After deployment:
 11. Submit a duplicate request and confirm another confirmation is not sent.
 12. Confirm the response does not expose provider errors.
 13. Check Cloudflare and provider logs for delivery errors without full lead payloads.
+
+For the Automation Assessment production smoke test, use a controlled Tergion test email alias and entirely fictional business, phone, and assessment details; never use customer data. Submit one assessment and confirm that one Contact is upserted, one Automation Assessment record is created with a `TA-` reference, and the record is related to that Contact. Retry the identical submission and confirm that neither the assessment record nor relation is duplicated. Confirm Quick Request still creates no Automation Assessment record. Do not delete or modify the existing `TA-MANUAL-TEST-001` record.

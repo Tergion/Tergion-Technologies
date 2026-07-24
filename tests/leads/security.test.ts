@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   checkDuplicateLead,
+  isAssessmentSubmissionCompleted,
+  markAssessmentSubmissionCompleted,
   resetDuplicateLeadMemoryForTests,
 } from "@/features/leads/duplicate-check";
 import {
@@ -180,6 +182,7 @@ describe("lead duplicate checks", () => {
         "shared@example.com",
         undefined,
         now + 1,
+        "assessment-lead-one",
       ),
     ).resolves.toMatchObject({ duplicateLikely: false });
     await expect(
@@ -188,7 +191,31 @@ describe("lead duplicate checks", () => {
         "shared@example.com",
         undefined,
         now + 2,
+        "assessment-lead-one",
+      ),
+    ).resolves.toMatchObject({ duplicateLikely: false });
+    await expect(
+      checkDuplicateLead(
+        "automation_assessment",
+        "shared@example.com",
+        undefined,
+        now + 3,
+        "assessment-lead-two",
       ),
     ).resolves.toMatchObject({ duplicateLikely: true });
+  });
+
+  it("tracks completed assessment submissions separately from in-progress retries", async () => {
+    const leadId = "assessment-lead-completed";
+
+    await expect(
+      isAssessmentSubmissionCompleted(leadId),
+    ).resolves.toBe(false);
+
+    await markAssessmentSubmissionCompleted(leadId);
+
+    await expect(
+      isAssessmentSubmissionCompleted(leadId),
+    ).resolves.toBe(true);
   });
 });

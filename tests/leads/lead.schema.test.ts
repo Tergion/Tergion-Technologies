@@ -189,6 +189,26 @@ describe("leadSubmissionSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("requires a valid assessment submission nonce", () => {
+    const {
+      submissionNonce: _submissionNonce,
+      ...withoutSubmissionNonce
+    } = makeAssessmentSubmission();
+    void _submissionNonce;
+
+    const missing = leadSubmissionSchema.safeParse(withoutSubmissionNonce);
+    const invalid = leadSubmissionSchema.safeParse({
+      ...makeAssessmentSubmission(),
+      submissionNonce: "not-a-uuid",
+    });
+
+    expect(missing.success).toBe(false);
+    expect(invalid.success).toBe(false);
+    expect(invalid.error?.issues.map((issue) => issue.path[0])).toContain(
+      "submissionNonce",
+    );
+  });
+
   it("requires an assessment follow-up preference", () => {
     const {
       assessmentFollowUpPreference: _preference,
