@@ -2,14 +2,14 @@
 
 ## Transactional duplicate accounting
 
-Status: Post-implementation task; intentionally deferred from Phase 3B.
+Status: Completed.
 
-Current limitation: duplicate counters are incremented before the primary CRM
-provider accepts a submission. A primary-provider failure may therefore consume
-the duplicate allowance and temporarily suppress an immediate retry.
+Submission idempotency, same-form contact cooldowns, and shared client limits
+are now separate. A Redis Lua transaction atomically reserves the stable lead
+ID and hashed identity signals before provider writes.
 
-Future work should evaluate reservation, commit, and rollback semantics for the
-Redis-backed duplicate counters without weakening the shared client/IP rate
-limits. The design must preserve the separate Quick Request and Automation
-Assessment duplicate namespaces and define safe behavior for provider timeouts,
-ambiguous provider responses, and concurrent submissions before implementation.
+Durable GoHighLevel success commits the 15-minute cooldown and 24-hour daily
+accounting. Definite failures release identity reservations. Ambiguous provider
+outcomes retain the short reservation and use Contact, note, Assessment, and
+relation recovery on retry. Quick Request and Automation Assessment remain in
+separate identity namespaces while client/IP-derived rate limits remain shared.

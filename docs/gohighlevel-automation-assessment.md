@@ -2,23 +2,28 @@
 
 ## Submission Flow
 
-Quick Request keeps the existing GoHighLevel flow: Contact upsert, configured
-website-lead tags, and the existing Contact note. It does not call the Objects
-or Associations APIs.
+Both forms validate the request, apply spam and shared client rate limits, verify
+Turnstile, derive a stable lead ID from the browser's per-form-session
+`submissionId`, and reserve the submission before provider writes.
+
+Quick Request resolves or creates one Contact, applies configured website-lead
+tags, and creates one Contact note with its stable lead ID. It does not call the
+Objects or Associations APIs.
 
 Automation Assessment uses this order:
 
 1. The lead route performs its existing request, spam, rate-limit, Turnstile,
    and duplicate checks.
-2. A stable server-side lead ID is derived from the form's UUID submission
-   nonce. The assessment reference is `TA-<lead ID>`.
+2. The assessment reference is derived from the stable lead ID as
+   `TA-<lead ID>`.
 3. The Worker reads and validates the object schema and association metadata.
    Successful metadata is cached for 15 minutes in the Worker isolate.
 4. The Worker searches with an exact `eq` filter on the live
    `properties.<assessment-reference-key>` field and verifies the returned
    Assessment Reference exactly.
-5. The existing Contact upsert runs with the existing identity, source, and
-   duplicate settings.
+5. The shared Contact resolver searches email and phone independently. It
+   updates the unambiguous Contact safely, or uses the existing upsert only when
+   neither identifier matches.
 6. The Worker creates the Custom Object record or recovers the existing record.
 7. The Worker verifies or creates the Contact relation in the orientation
    returned by the live association.
@@ -27,17 +32,20 @@ Automation Assessment uses this order:
 10. The existing route continues with its downstream processing and
     confirmation-email policy.
 
-The route records bounded assessment CRM-completion markers in Upstash when
+The route stores bounded CRM and complete-submission markers in Upstash when
 configured, or in memory only when Upstash is not configured. With configured
-Upstash, marker reads and writes fail closed instead of trusting isolate-local
-state. A downstream retry does not repeat already completed GoHighLevel work.
-The complete-submission marker also keeps a successful duplicate browser
-request from resending the confirmation email.
-A five-minute per-reference processing lease uses Redis `SET NX` when Upstash
-is configured. Lease acquisition fails closed if configured Redis is
-unavailable, so concurrent Worker isolates cannot both create notes or send
-confirmations. The in-isolate lease is for local environments without Upstash;
-production requires Upstash for distributed coordination.
+Upstash, reservation, commit, release, and marker operations fail closed
+instead of trusting isolate-local state. A downstream retry does not repeat
+completed GoHighLevel work or confirmation email.
+
+The five-minute processing lease and identity reservations are acquired in one
+Redis Lua transaction. Definite provider failures release the matching identity
+reservations. Durable provider success commits the 15-minute same-form cooldown
+and 24-hour daily accounting before the lease is released. An ambiguous timeout
+retains the short reservation while the next attempt recovers Contact, note,
+Assessment, and relation state from stable identifiers. The in-isolate
+implementation mirrors this behavior for local development; production
+requires Upstash for distributed coordination.
 
 ## Runtime Configuration
 
@@ -61,6 +69,7 @@ type, location, and relation orientation before using it.
 
 The same Private Integration must have:
 
+- `contacts.readonly`
 - `contacts.write`
 - `objects/schema.readonly`
 - `objects/record.readonly`
@@ -69,8 +78,72 @@ The same Private Integration must have:
 - `associations/relation.readonly`
 - `associations/relation.write`
 
-`associations/relation.readonly` is needed to make relation creation retry-safe.
-Add it to the existing Private Integration; do not create or rotate a token.
+`contacts.readonly` is required for explicit Contact search and retry-safe note
+lookup. `associations/relation.readonly` is required for retry-safe relation
+creation. Add both to the existing Private Integration as needed; do not create
+or rotate a token.
+
+## Contact Identity Resolution
+
+Email is the primary identity input and phone is the secondary identity input.
+The Worker trims and lowercases email without altering aliases or domains. Phone
+comparison removes display punctuation and accepts 7 to 15 digits; it does not
+infer a country code. The submitted provider representation retains a leading
+`+` when supplied. This means exact phone matching still depends on the stored
+HighLevel number having the same country-code digits.
+
+The Worker performs exact advanced Contact searches for email and, when
+present, phone:
+
+- Neither identifier matches: use `POST /contacts/upsert` with
+  `createNewIfDuplicateAllowed: false`.
+- Both identifiers match the same Contact: reuse that Contact.
+- Only one identifier matches: reuse that Contact and fill the other identity
+  field only when the existing field is empty.
+- Email and phone match different Contacts: fail closed without updating,
+  creating, associating, or confirming.
+- One identifier returns multiple Contacts: fail closed without choosing a
+  Contact.
+- Search is unavailable or its response is invalid: fail closed.
+
+Conflicts produce only the stable lead ID, category, masked identifiers, and
+provider Contact IDs in safe server diagnostics. The public response is the same
+generic contact-verification message for conflicts, ambiguous matches, and
+provider failures, so the endpoint does not reveal whether an identifier exists.
+
+After an unambiguous match, first and last names are filled only when missing.
+Business name, validated Quick Request website, and timezone may receive a
+nonempty submitted value. Omitted or blank values never clear Contact fields.
+A different nonempty email or phone is never overwritten. Submission-specific
+preferences remain in the new Quick Request note or Assessment record, which
+preserves prior notes and Assessment records as history.
+
+Quick Request and Automation Assessment identity cooldowns are separate. Either
+form may follow the other immediately and both resolve to the same Contact.
+Same-form cooldowns and daily limits use hashed email and phone; shared client
+rate limits remain cross-form.
+
+Exact Redis key formats are:
+
+- `lead:idempotency:<submissionType>:v2:processing:<leadId>`
+- `lead:idempotency:<submissionType>:v2:gohighlevel-completed:<leadId>`
+- `lead:idempotency:<submissionType>:v2:completed:<leadId>`
+- `lead:cooldown:<submissionType>:v1:<email|phone>:<24-char SHA-256>`
+- `lead:daily:<submissionType>:v1:<email|phone>:<24-char SHA-256>`
+- `lead:rate:<hour|day>:<24-char SHA-256 client signal>`
+
+Raw email, phone, and IP values never appear in Redis keys.
+
+## Manual HighLevel Settings
+
+Application-level resolution fails safely regardless of dashboard duplicate
+preferences. Nicolas must still confirm the sub-account settings manually:
+
+1. Open **Settings**, then **Business Profile**.
+2. Open **Contact Deduplication Preferences**.
+3. Confirm **Allow Duplicate Contact** is off.
+4. Confirm the primary matching field is **Email**.
+5. Confirm the secondary matching field is **Phone**.
 
 ## Verified API Contracts
 
@@ -85,8 +158,11 @@ the endpoint-specific `Version: v3` header:
 | Read association by key | `GET /associations/key/{key}` | `associations.readonly` | `200` | `400`, `401`, `422` |
 | Read record relations | `GET /associations/relations/{recordId}` | `associations/relation.readonly` | `200` | `400`, `401`, `422` |
 | Create relation | `POST /associations/relations` | `associations/relation.write` | `201` | `400`, `401`, `422` |
+| Search Contacts | `POST /contacts/search` | `contacts.readonly` | `200` | redacted provider error |
+| Update Contact | `PUT /contacts/{contactId}` | `contacts.write` | `200` | redacted provider error |
 | Upsert Contact | `POST /contacts/upsert` | `contacts.write` | `200` | redacted provider error |
 | Add Contact tags | `POST /contacts/{contactId}/tags` | `contacts.write` | `201` | redacted provider error |
+| Read Contact notes | `GET /contacts/{contactId}/notes` | `contacts.readonly` | `200` | redacted provider error |
 | Create Contact note | `POST /contacts/{contactId}/notes` | `contacts.write` | `201` | redacted provider error |
 
 Schema and association reads send `locationId`; schema discovery also sends
@@ -188,7 +264,14 @@ Multiple assessment records may still relate to the same Contact.
 
 Recovery behavior:
 
-- Contact upsert is reused as the existing duplicate-aware operation.
+- Contact searches are read-only and use bounded retries for documented
+  transient responses.
+- New-Contact upsert retains `createNewIfDuplicateAllowed: false`. An ambiguous
+  upsert result is recovered by repeating explicit Contact resolution rather
+  than blindly posting again.
+- A Quick Request or Assessment note contains the stable `Lead ID` marker.
+  Note creation uses a preflight lookup and an ambiguous create result is
+  recovered with another lookup, so a retry does not create a second note.
 - Record search requires an exact Assessment Reference and matching stored
   properties before an existing record is reused.
 - A failed or ambiguous record create is followed by an exact search; the
@@ -199,9 +282,6 @@ Recovery behavior:
   transient network, `429`, and `5xx` conditions. A `Retry-After` value within
   the two-second request-delay cap is honored exactly; a longer value stops the
   local retry instead of retrying early or blocking the Worker.
-- An ambiguous assessment-note response is not automatically retried because
-  note creation is non-idempotent. Core Contact, assessment, and relation
-  persistence remains successful, and the safe correlation ID is logged.
 - Confirmation-email failure remains nonfatal after primary persistence.
 
 ## Security
@@ -221,22 +301,27 @@ Recovery behavior:
 
 After deployment:
 
-1. Use a controlled Tergion test alias and entirely fictional assessment data.
-2. Submit one Automation Assessment.
-3. Confirm one Contact is upserted.
-4. Confirm one Automation Assessment record has `TA-<lead ID>` as its
+1. Confirm the required scopes and manual duplicate-preference checklist above.
+2. Use a controlled Tergion test alias and entirely fictional data.
+3. Submit one Quick Request and confirm one Contact and one Quick Request note.
+4. Submit one Automation Assessment with the same email and phone. Confirm the
+   same Contact is reused and the Quick Request note remains unchanged.
+5. Confirm one Automation Assessment record has `TA-<lead ID>` as its
    Assessment Reference and all dropdown fields contain their configured
    options.
-5. Confirm the assessment is related to that Contact using the configured
+6. Confirm the assessment is related to that Contact using the configured
    association.
-6. Retry the identical browser submission and confirm the record, relation,
+7. Retry the identical browser submission and confirm the record, relation,
    note, and confirmation email are not duplicated.
-7. Submit a second assessment for the same test Contact and confirm a second
+8. After the same-form cooldown, submit a second Assessment and confirm a second
    assessment record is created.
-8. Submit a Quick Request and confirm it creates no Automation Assessment
-   record.
-9. Review Worker logs for only redacted correlation metadata.
-10. Do not edit or delete `TA-MANUAL-TEST-001`.
+9. Repeat the sequence in reverse with a second fictional identity: Assessment
+   first, then Quick Request. Confirm one shared Contact and no extra Assessment.
+10. Submit deliberately conflicting test identifiers only in a controlled
+    non-customer account and confirm the public response reveals no Contact
+    existence and no CRM write occurs.
+11. Review Worker logs for only redacted correlation metadata.
+12. Do not edit or delete `TA-MANUAL-TEST-001`.
 
 ## Official References
 
@@ -248,4 +333,10 @@ After deployment:
 - [Get relations by record ID](https://marketplace.gohighlevel.com/docs/ghl/associations/get-relations-by-record-id/)
 - [Create relation](https://marketplace.gohighlevel.com/docs/ghl/associations/create-relation/)
 - [HighLevel Associations and Relations reference](https://doc.clickup.com/8631005/d/h/87cpx-293776/cd0f4122abc04d3/87cpx-384436)
+- [Advanced Contact search](https://marketplace.gohighlevel.com/docs/ghl/contacts/search-contacts-advanced/)
+- [Get Contact](https://marketplace.gohighlevel.com/docs/ghl/contacts/get-contact/)
+- [Update Contact](https://marketplace.gohighlevel.com/docs/ghl/contacts/update-contact/)
+- [Upsert Contact](https://marketplace.gohighlevel.com/docs/ghl/contacts/upsert-contact/)
+- [Read Contact notes](https://marketplace.gohighlevel.com/docs/ghl/contacts/get-all-notes/)
+- [Create Contact note](https://marketplace.gohighlevel.com/docs/ghl/contacts/create-note/)
 - [HighLevel API scopes](https://marketplace.gohighlevel.com/docs/Authorization/Scopes/)
