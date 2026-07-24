@@ -120,11 +120,15 @@ test("applies the hover treatment to form choices but not disabled actions", asy
   page,
 }) => {
   await page.goto("/contact");
-  await page.getByRole("button", { name: "Start a quick request" }).click();
+  await page.getByRole("link", { name: "Start a quick request" }).click();
 
   const dialog = page.getByRole("dialog", {
     name: "Choose how to start",
   });
+  await expect(dialog.getByRole("tab", { name: "Quick Request" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await dialog.getByLabel("First name *").fill("Hover");
   await dialog.getByLabel("Business name *").fill("Hover Business");
   await dialog.getByLabel("Email *").fill("hover@example.com");

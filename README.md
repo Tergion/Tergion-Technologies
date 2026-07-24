@@ -47,6 +47,15 @@ Copy `.env.example` to a local `.env.local` when credentials are available. Do n
 
 This site includes the public marketing foundation, implementation-aligned legal pages, examples scaffold, a 4-step Quick Request, an 8-step Business Automation Assessment, `/api/leads`, `/api/health`, SEO basics, security headers, and provider boundaries.
 
+## Request Modal Links
+
+Canonical request modal links are centralized in `siteConfig.requestForms`:
+
+- Quick Request: `https://tergion.com/contact?form=quick-request`
+- Automation Assessment: `https://tergion.com/contact?form=automation-assessment`
+
+Supported `form` values are `quick-request` and `automation-assessment`. Invalid values are ignored without showing an error. Only the form mode belongs in these URLs; never add PII such as names, email addresses, phone numbers, notes, or assessment answers. Closing the modal removes only the `form` parameter and preserves other query parameters, including UTM values.
+
 ## Integration Status
 
 GoHighLevel contact sync is implemented when a Private Integration token and location ID are configured. Production lead submission fails closed when GoHighLevel delivery is unconfigured or when Cloudflare Turnstile cannot be verified; localhost and automated tests retain safe missing-credential stubs. Production rate limiting and duplicate suppression use Upstash Redis when configured and fall back to in-memory development storage otherwise. Transactional customer confirmation email supports Resend and Postmark when the selected provider and matching provider token are configured. The fixed sender uses `notifications@tergion.com`, the reply-to identity uses `noreply@tergion.com`, and the message directs corrections to `contact@tergion.com`. Confirmation delivery failures do not overturn an otherwise accepted lead. Google Sheets, internal lead notification email, and analytics remain stubbed or deferred.

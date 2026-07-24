@@ -2,11 +2,13 @@ import { expect, test, type Locator } from "@playwright/test";
 
 async function openLeadForm(page: import("@playwright/test").Page) {
   await page.goto("/contact");
-  await page.getByRole("button", { name: "Start a quick request" }).click();
+  await page.getByRole("link", { name: "Start a quick request" }).click();
 
-  return page.getByRole("dialog", {
-    name: "Choose how to start",
-  });
+  const dialog = await expectRequestModalMode(page, "Quick Request");
+
+  await expectUrlFormMode(page, "quick-request");
+
+  return dialog;
 }
 
 async function completeContactBasics(
@@ -91,18 +93,44 @@ async function advanceQuickRequestToReview(
 
 async function openAssessment(page: import("@playwright/test").Page) {
   await page.goto("/contact");
-  await page.getByRole("button", { name: "Take the free assessment" }).click();
-  const dialog = page.getByRole("dialog", { name: "Choose how to start" });
+  await page.getByRole("link", { name: "Take the free assessment" }).click();
+  const dialog = await expectRequestModalMode(page, "Automation Assessment");
 
-  await expect(
-    dialog.getByRole("tab", { name: "Automation Assessment" }),
-  ).toHaveAttribute("aria-selected", "true");
+  await expectUrlFormMode(page, "automation-assessment");
   await dialog
     .getByRole("tabpanel", { name: "Automation Assessment" })
     .getByRole("button", { name: "Start assessment" })
     .click();
 
   return dialog;
+}
+
+async function expectRequestModalMode(
+  page: import("@playwright/test").Page,
+  mode: "Quick Request" | "Automation Assessment",
+) {
+  const dialog = page.getByRole("dialog", { name: "Choose how to start" });
+
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("tab", { name: mode })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+
+  return dialog;
+}
+
+function currentUrl(page: import("@playwright/test").Page) {
+  return new URL(page.url());
+}
+
+async function expectUrlFormMode(
+  page: import("@playwright/test").Page,
+  expected: string | null,
+) {
+  await expect
+    .poll(() => currentUrl(page).searchParams.get("form"))
+    .toBe(expected);
 }
 
 async function advanceAssessmentToStepSeven(
@@ -477,19 +505,188 @@ test("existing triggers open Quick Request and assessment triggers open the corr
   page,
 }) => {
   await page.goto("/contact");
-  await page.getByRole("button", { name: "Start a quick request" }).click();
+  const quickTrigger = page.getByRole("link", { name: "Start a quick request" });
+  await quickTrigger.click();
   let dialog = page.getByRole("dialog", { name: "Choose how to start" });
 
   await expect(dialog.getByRole("tab", { name: "Quick Request" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
+  await expectUrlFormMode(page, "quick-request");
   await dialog.getByRole("button", { name: "Close" }).click();
-  await page.getByRole("button", { name: "Take the free assessment" }).click();
+  await expect(quickTrigger).toBeFocused();
+  await expectUrlFormMode(page, null);
+  await page.getByRole("link", { name: "Take the free assessment" }).click();
   dialog = page.getByRole("dialog", { name: "Choose how to start" });
   await expect(
     dialog.getByRole("tab", { name: "Automation Assessment" }),
   ).toHaveAttribute("aria-selected", "true");
+  await expectUrlFormMode(page, "automation-assessment");
+});
+
+test("request modal direct links open the requested form mode globally", async ({
+  page,
+}) => {
+  await page.goto("/contact?form=quick-request");
+  await expectRequestModalMode(page, "Quick Request");
+
+  await page.goto("/contact?form=automation-assessment");
+  let dialog = await expectRequestModalMode(page, "Automation Assessment");
+  await expect(
+    dialog
+      .getByRole("tabpanel", { name: "Automation Assessment" })
+      .getByRole("button", { name: "Start assessment" }),
+  ).toBeVisible();
+
+  await page.goto("/?form=automation-assessment");
+  await expectRequestModalMode(page, "Automation Assessment");
+
+  await page.goto("/services?form=quick-request");
+  dialog = await expectRequestModalMode(page, "Quick Request");
+  await expect(
+    dialog
+      .getByRole("tabpanel", { name: "Quick Request" })
+      .getByLabel("First name *", { exact: true }),
+  ).toBeVisible();
+});
+
+test("invalid or missing request form parameters do not open the modal", async ({
+  page,
+}) => {
+  for (const route of [
+    "/contact?form=assessment",
+    "/contact?form=quick",
+    "/contact?form=unknown",
+    "/contact?form=",
+    "/contact",
+  ]) {
+    await page.goto(route);
+    await expect(
+      page.getByRole("dialog", { name: "Choose how to start" }),
+    ).toHaveCount(0);
+  }
+});
+
+test("closing a URL-opened modal clears only form state and leaves the page usable", async ({
+  page,
+}) => {
+  await page.goto(
+    "/contact?utm_source=linkedin&utm_campaign=q3&form=automation-assessment#main-content",
+  );
+  const dialog = await expectRequestModalMode(page, "Automation Assessment");
+
+  await page.evaluate(() => window.scrollTo(0, 320));
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(0);
+  const scrollBeforeClose = await page.evaluate(() => window.scrollY);
+  await dialog.getByRole("button", { name: "Close" }).click();
+
+  await expect(dialog).not.toBeVisible();
+  const url = currentUrl(page);
+  expect(url.pathname).toBe("/contact");
+  expect(url.searchParams.get("form")).toBeNull();
+  expect(url.searchParams.get("utm_source")).toBe("linkedin");
+  expect(url.searchParams.get("utm_campaign")).toBe("q3");
+  expect(url.hash).toBe("#main-content");
+  await expect(page.locator("#main-content")).toBeFocused();
+  await expect(page.locator('[data-slot="dialog-overlay"]')).toHaveCount(0);
+  await expect(page.locator("[inert]")).toHaveCount(0);
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .not.toBe("hidden");
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(0);
+
+  await page.mouse.wheel(0, 500);
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(scrollBeforeClose);
+});
+
+test("Escape closes a URL-opened modal without reopening it", async ({ page }) => {
+  await page.goto("/contact?form=quick-request");
+  const dialog = await expectRequestModalMode(page, "Quick Request");
+
+  await page.keyboard.press("Escape");
+
+  await expect(dialog).not.toBeVisible();
+  await expectUrlFormMode(page, null);
+  await page.waitForTimeout(250);
+  await expect(
+    page.getByRole("dialog", { name: "Choose how to start" }),
+  ).toHaveCount(0);
+});
+
+test("tab switching synchronizes the URL without resetting either form", async ({
+  page,
+}) => {
+  await page.goto(
+    "/contact?utm_source=linkedin&utm_campaign=q3&form=automation-assessment",
+  );
+  const historyLength = await page.evaluate(() => history.length);
+  const dialog = await expectRequestModalMode(page, "Automation Assessment");
+  const assessmentPanel = dialog.getByRole("tabpanel", {
+    name: "Automation Assessment",
+  });
+
+  await assessmentPanel.getByRole("button", { name: "Start assessment" }).click();
+  const assessmentFirstName = assessmentPanel.getByLabel("First name *", {
+    exact: true,
+  });
+  await assessmentFirstName.fill("Assessment Person");
+
+  await dialog.getByRole("tab", { name: "Quick Request" }).click();
+  await expectUrlFormMode(page, "quick-request");
+  expect(currentUrl(page).searchParams.get("utm_source")).toBe("linkedin");
+  expect(currentUrl(page).searchParams.get("utm_campaign")).toBe("q3");
+  const quickPanel = dialog.getByRole("tabpanel", { name: "Quick Request" });
+  const quickFirstName = quickPanel.getByLabel("First name *", {
+    exact: true,
+  });
+  await quickFirstName.fill("Quick Person");
+
+  await dialog.getByRole("tab", { name: "Automation Assessment" }).click();
+  await expectUrlFormMode(page, "automation-assessment");
+  expect(await page.evaluate(() => history.length)).toBe(historyLength);
+  await expect(assessmentFirstName).toHaveValue("Assessment Person");
+
+  await dialog.getByRole("tab", { name: "Quick Request" }).click();
+  await expect(quickFirstName).toHaveValue("Quick Person");
+  await expect(
+    dialog.getByRole("tab", { name: "Quick Request" }),
+  ).toHaveAttribute("aria-selected", "true");
+});
+
+test("direct request form URLs avoid console and mobile overflow regressions", async ({
+  page,
+}) => {
+  const consoleErrors: string[] = [];
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/contact?form=automation-assessment");
+  const dialog = await expectRequestModalMode(page, "Automation Assessment");
+  const dialogBox = await dialog.boundingBox();
+
+  expect(dialogBox).not.toBeNull();
+  expect(dialogBox?.x).toBeGreaterThanOrEqual(0);
+  expect((dialogBox?.x ?? 0) + (dialogBox?.width ?? 0)).toBeLessThanOrEqual(
+    390,
+  );
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  expect(consoleErrors).toEqual([]);
 });
 
 test("quick request mirrors the assessment presentation across four steps", async ({
@@ -561,11 +758,13 @@ test("assessment uses accessible keyboard tabs and eight-step progress", async (
   });
   await assessmentTab.focus();
   await assessmentTab.press("ArrowLeft");
+  await expectUrlFormMode(page, "quick-request");
   await expect(dialog.getByRole("tab", { name: "Quick Request" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
   await dialog.getByRole("tab", { name: "Quick Request" }).press("End");
+  await expectUrlFormMode(page, "automation-assessment");
   await expect(assessmentTab).toHaveAttribute("aria-selected", "true");
 
   await advanceAssessmentToReview(dialog);
@@ -748,7 +947,7 @@ test("closing the modal restores trigger focus, scrolling, and removes dialog st
   page,
 }) => {
   await page.goto("/contact");
-  const trigger = page.getByRole("button", { name: "Start a quick request" });
+  const trigger = page.getByRole("link", { name: "Start a quick request" });
   await trigger.click();
   const dialog = page.getByRole("dialog", { name: "Choose how to start" });
 
@@ -848,7 +1047,7 @@ test("submits an explicit confirmation-only assessment", async ({ page }) => {
 test("first modal open is responsive with the eager bundle", async ({ page }) => {
   await page.goto("/contact");
   const startedAt = await page.evaluate(() => performance.now());
-  await page.getByRole("button", { name: "Start a quick request" }).click();
+  await page.getByRole("link", { name: "Start a quick request" }).click();
   await expect(
     page.getByRole("dialog", { name: "Choose how to start" }),
   ).toBeVisible();
