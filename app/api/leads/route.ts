@@ -1,19 +1,30 @@
-import { appendLeadToGoogleSheet } from "@/features/leads/google-sheets";
+import {
+  automationAssessmentDuplicateMessage,
+  getAutomationAssessmentSuccessMessage,
+} from "@/features/assessments/assessment.constants";
 import { checkDuplicateLead } from "@/features/leads/duplicate-check";
-import { checkLeadRateLimit } from "@/features/leads/rate-limit";
+import {
+  sendInternalLeadNotification,
+  sendLeadConfirmationEmail,
+} from "@/features/leads/email";
+import { appendLeadToGoogleSheet } from "@/features/leads/google-sheets";
+import { sendLeadToGoHighLevel } from "@/features/leads/gohighlevel";
 import {
   leadDuplicateMessage,
   leadSuccessMessage,
 } from "@/features/leads/lead.constants";
 import { leadSubmissionSchema } from "@/features/leads/lead.schema";
+import type {
+  LeadRecord,
+  LeadSubmission,
+} from "@/features/leads/lead.types";
+import { checkLeadRateLimit } from "@/features/leads/rate-limit";
 import {
-  sendInternalLeadNotification,
-  sendLeadConfirmationEmail,
-} from "@/features/leads/email";
-import { sendLeadToGoHighLevel } from "@/features/leads/gohighlevel";
+  readLeadJsonBody,
+  validateLeadRequestHeaders,
+} from "@/features/leads/request-guards";
 import { checkLeadSpamSignals } from "@/features/leads/spam-check";
 import { verifyTurnstileToken } from "@/features/leads/turnstile";
-import type { LeadRecord } from "@/features/leads/lead.types";
 import { env } from "@/lib/env";
 
 function getRemoteIp(request: Request) {
@@ -39,19 +50,64 @@ function validationErrorResponse() {
   );
 }
 
-export async function POST(request: Request) {
-  let rawPayload: unknown;
+function getSubmissionSuccessMessage(payload: LeadSubmission) {
+  return payload.submissionType === "automation_assessment"
+    ? getAutomationAssessmentSuccessMessage(
+        payload.assessmentFollowUpPreference,
+      )
+    : leadSuccessMessage;
+}
 
-  try {
-    rawPayload = await request.json();
-  } catch {
-    return validationErrorResponse();
+function getSubmissionDuplicateMessage(payload: LeadSubmission) {
+  return payload.submissionType === "automation_assessment"
+    ? automationAssessmentDuplicateMessage
+    : leadDuplicateMessage;
+}
+
+export async function POST(request: Request) {
+  const headerValidation = validateLeadRequestHeaders(request);
+
+  if (!headerValidation.ok) {
+    return Response.json(
+      { ok: false, message: headerValidation.message },
+      { status: headerValidation.status },
+    );
   }
 
-  const parsed = leadSubmissionSchema.safeParse(rawPayload);
+  const body = await readLeadJsonBody(request);
+
+  if (!body.ok) {
+    return Response.json(
+      { ok: false, message: body.message },
+      { status: body.status },
+    );
+  }
+
+  const parsed = leadSubmissionSchema.safeParse(body.value);
 
   if (!parsed.success) {
     return validationErrorResponse();
+  }
+
+  const payload = parsed.data;
+  const spam = checkLeadSpamSignals(payload);
+
+  if (spam.reasons.includes("honeypot-filled")) {
+    return Response.json({
+      ok: true,
+      message: getSubmissionSuccessMessage(payload),
+    });
+  }
+
+  if (!spam.passed) {
+    return Response.json(
+      {
+        ok: false,
+        message:
+          "We could not accept the request right now. Please try again later.",
+      },
+      { status: 400 },
+    );
   }
 
   const rateLimit = await checkLeadRateLimit(request);
@@ -60,22 +116,10 @@ export async function POST(request: Request) {
     return Response.json(
       {
         ok: false,
-        message: "We could not accept the request right now. Please try again later.",
+        message:
+          "We could not accept the request right now. Please try again later.",
       },
       { status: 429 },
-    );
-  }
-
-  const payload = parsed.data;
-  const spam = checkLeadSpamSignals(payload);
-
-  if (!spam.passed) {
-    return Response.json(
-      {
-        ok: false,
-        message: "We could not accept the request right now. Please try again later.",
-      },
-      { status: 400 },
     );
   }
 
@@ -94,20 +138,23 @@ export async function POST(request: Request) {
     );
   }
 
-  const duplicate = await checkDuplicateLead(payload.email, payload.phone);
+  const duplicate = await checkDuplicateLead(
+    payload.submissionType,
+    payload.email,
+    payload.phone,
+  );
 
   if (duplicate.duplicateLikely) {
     return Response.json({
       ok: true,
-      message: leadDuplicateMessage,
+      message: getSubmissionDuplicateMessage(payload),
     });
   }
 
-  const createdAt = new Date().toISOString();
   const lead: LeadRecord = {
     ...payload,
     leadId: crypto.randomUUID(),
-    createdAt,
+    createdAt: new Date().toISOString(),
     status: "new",
     security: {
       turnstileVerified: turnstile.success,
@@ -155,7 +202,7 @@ export async function POST(request: Request) {
 
   return Response.json({
     ok: true,
-    message: leadSuccessMessage,
+    message: getSubmissionSuccessMessage(payload),
     leadId: lead.leadId,
   });
 }

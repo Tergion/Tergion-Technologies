@@ -120,16 +120,25 @@ test("applies the hover treatment to form choices but not disabled actions", asy
   page,
 }) => {
   await page.goto("/contact");
-  await page.getByRole("button", { name: "Start with the basics" }).click();
+  await page.getByRole("button", { name: "Start a quick request" }).click();
 
   const dialog = page.getByRole("dialog", {
-    name: "Request a free automation review",
+    name: "Choose how to start",
   });
-  const selectedChoice = dialog.getByRole("button", { name: "Email" });
-  const unselectedChoice = dialog.getByRole("button", { name: "Phone" });
+  await dialog.getByLabel("First name *").fill("Hover");
+  await dialog.getByLabel("Business name *").fill("Hover Business");
+  await dialog.getByLabel("Email *").fill("hover@example.com");
+  await dialog.getByRole("button", { name: "Continue" }).click();
 
-  await expect(selectedChoice).toHaveAttribute("aria-pressed", "true");
-  await expect(unselectedChoice).toHaveAttribute("aria-pressed", "false");
+  const selectedRadio = dialog.getByRole("radio", { name: "Email" });
+  const unselectedRadio = dialog.getByRole("radio", {
+    name: "No preference",
+  });
+  const selectedChoice = selectedRadio.locator("..");
+  const unselectedChoice = unselectedRadio.locator("..");
+
+  await expect(selectedRadio).toBeChecked();
+  await expect(unselectedRadio).not.toBeChecked();
 
   for (const choice of [selectedChoice, unselectedChoice]) {
     const before = await readActionStyles(choice);
@@ -151,15 +160,23 @@ test("applies the hover treatment to form choices but not disabled actions", asy
     await page.mouse.move(0, 0);
   }
 
-  await unselectedChoice.click();
-  await expect(unselectedChoice).toHaveAttribute("aria-pressed", "true");
-  await expect(selectedChoice).toHaveAttribute("aria-pressed", "false");
+  await unselectedRadio.check();
+  await expect(unselectedRadio).toBeChecked();
+  await expect(selectedRadio).not.toBeChecked();
+
+  await dialog.getByRole("button", { name: "Back" }).click();
 
   const disabledBackButton = dialog.getByRole("button", { name: "Back" });
   const disabledBefore = await readActionStyles(disabledBackButton);
 
   await expect(disabledBackButton).toBeDisabled();
   await disabledBackButton.hover({ force: true });
+  await expect
+    .poll(
+      async () =>
+        (await readActionStyles(disabledBackButton)).hasVisibleShadow,
+    )
+    .toBe(false);
   const disabledAfter = await readActionStyles(disabledBackButton);
 
   expect(disabledAfter.backgroundColor).toBe(disabledBefore.backgroundColor);

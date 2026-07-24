@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useRequestModal } from "@/components/forms/request-modal-provider";
+import type { RequestModalMode } from "@/components/forms/request-modal-provider";
 import { cn } from "@/lib/utils";
 
 type RequestModalTriggerProps = Omit<
@@ -12,6 +13,8 @@ type RequestModalTriggerProps = Omit<
 > & {
   icon?: ReactNode;
   label?: string;
+  mode?: RequestModalMode;
+  triggerSource?: string;
 };
 
 export function RequestModalTrigger({
@@ -19,6 +22,8 @@ export function RequestModalTrigger({
   className,
   icon,
   label = "Start when ready",
+  mode = "quick_request",
+  triggerSource,
   ...props
 }: RequestModalTriggerProps) {
   const { openRequestModal } = useRequestModal();
@@ -27,7 +32,13 @@ export function RequestModalTrigger({
     <Button
       type="button"
       className={cn(className)}
-      onClick={(event) => openRequestModal(event.currentTarget)}
+      onClick={(event) =>
+        openRequestModal({
+          mode,
+          trigger: event.currentTarget,
+          triggerSource,
+        })
+      }
       {...props}
     >
       {children ?? (

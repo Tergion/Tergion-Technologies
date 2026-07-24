@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeLeadRecord } from "@/tests/fixtures/leads";
+import {
+  makeAssessmentRecord,
+  makeLeadRecord,
+} from "@/tests/fixtures/leads";
 
 function setGoHighLevelEnv() {
   process.env.GHL_PRIVATE_INTEGRATION_TOKEN = "test-token";
@@ -125,5 +128,58 @@ describe("sendLeadToGoHighLevel", () => {
     await expect(sendLeadToGoHighLevel(makeLeadRecord())).rejects.toThrow(
       "gohighlevel-upsert-contact-failed",
     );
+  });
+
+  it("adds assessment tags and a structured confirmation-only note", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, _init?: RequestInit) => {
+      void _init;
+      const url = String(input);
+
+      if (url.endsWith("/contacts/upsert")) {
+        return Response.json({ contact: { id: "assessment-contact" } });
+      }
+
+      return Response.json({}, { status: 201 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { sendLeadToGoHighLevel } = await import(
+      "@/features/leads/gohighlevel"
+    );
+
+    await sendLeadToGoHighLevel(
+      makeAssessmentRecord({
+        assessmentFollowUpPreference: "confirmation-only",
+        incomingCallOwner: "other",
+        incomingCallOwnerOther: "Service desk\u2028team",
+      }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    const [, upsertInit] = fetchMock.mock.calls[0];
+    const [, tagInit] = fetchMock.mock.calls[1];
+    const [, noteInit] = fetchMock.mock.calls[2];
+    const upsertBody = JSON.parse(String(upsertInit?.body));
+    const tagBody = JSON.parse(String(tagInit?.body));
+    const noteBody = JSON.parse(String(noteInit?.body)) as {
+      title: string;
+      body: string;
+    };
+
+    expect(upsertBody).not.toHaveProperty("turnstileToken");
+    expect(upsertBody).not.toHaveProperty("honeypot");
+    expect(upsertBody).not.toHaveProperty("customFields");
+    expect(tagBody.tags).toEqual([
+      "website-lead",
+      "automation-review",
+      "automation-assessment",
+      "assessment-confirmation-only",
+    ]);
+    expect(noteBody.title).toBe("Free Business Automation Assessment");
+    expect(noteBody.body).toContain(
+      "Assessment follow-up preference: No follow-up beyond confirmation email",
+    );
+    expect(noteBody.body).toContain("Monthly leads: 20");
+    expect(noteBody.body).not.toContain("20-to-50");
+    expect(noteBody.body).not.toContain("\u2028");
   });
 });

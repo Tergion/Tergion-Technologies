@@ -47,6 +47,7 @@ const contactEmail = siteConfig.contactEmail;
 const privacyEmail = siteConfig.privacyEmail;
 const effectiveDate = siteConfig.policyEffectiveDate;
 const lastUpdatedDate = siteConfig.policyLastUpdatedDate;
+const formLegalLastUpdatedDate = "July 22, 2026";
 const jurisdiction = siteConfig.jurisdiction;
 
 const defaultContact = {
@@ -58,7 +59,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
   privacy: {
     title: "Privacy Policy",
     effectiveDate,
-    lastUpdatedDate,
+    lastUpdatedDate: formLegalLastUpdatedDate,
     intro: `${companyName} respects privacy. This Privacy Policy explains how we collect, use, disclose, retain, and protect information through tergion.com, website request forms, and related website communications.`,
     contact: {
       label: "Privacy Contact",
@@ -75,12 +76,13 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
       {
         heading: "Information We Collect",
         body: [
-          "We collect information you submit through the website request form and related communications. Required form fields are first name, business name, email, preferred contact method, scheduling preference, contact consent, and privacy and terms acknowledgement. Phone is required only when phone or text is selected as the preferred contact method.",
-          "Optional information may include last name, phone, website, industry, business size, location or service area, whether the business uses a CRM, current CRM, automation interests, request priority, notes, and other business context you choose to provide.",
+          "We collect information you submit through the Quick Request, Business Automation Assessment, and related communications. The Quick Request requires first name, business name, email, preferred contact method, scheduling preference, contact consent, and privacy and terms acknowledgement. Phone is required only when phone or text is selected as the preferred contact method.",
+          "The Business Automation Assessment collects first name, optional last name, business name, email, phone, preferred contact method, industry, approximate monthly lead volume, optional approximate customer value, website or message inquiry handling, incoming-call ownership, missed-call practices, lead response-time practices, optional quote follow-up practices, optional pipeline visibility, optional lead and customer tracking method, operational challenge, follow-up preference, and optional assessment notes.",
+          "Other optional Quick Request information may include last name, phone, website, industry, business size, location or service area, whether the business uses a CRM, current CRM, automation interests, request priority, notes, and other business context you choose to provide.",
           "We also collect consent records, including contact consent, privacy and terms acknowledgement, optional SMS consent, and an AI disclosure indicator used by the form.",
           "Technical and security information may include browser or device metadata, request metadata, referrer, landing page, timezone, UTM parameters if present, completion timing, honeypot signals, rate-limit and duplicate-check signals, and Cloudflare Turnstile verification results when Turnstile is configured.",
           "Communications with Tergion Technologies, including emails or messages sent to or from us, may also be retained as part of responding to a request.",
-          "Please do not submit sensitive, regulated, confidential, or third-party personal information unless it is necessary, authorized, and appropriate for the request.",
+          "Please do not submit passwords, customer records, financial account details, payment card details, health information, regulated data, or confidential third-party information through either form.",
         ],
       },
       {
@@ -88,7 +90,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         items: [
           {
             label: "Responding to requests",
-            text: "We use submitted information to review requests, contact you based on your preferences, answer questions, and schedule follow-up when appropriate.",
+            text: "We use submitted information to review requests, honor the assessment follow-up preference you select, contact you based on your preferences and consent, answer questions, and schedule follow-up when appropriate.",
           },
           {
             label: "Planning services",
@@ -129,7 +131,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
           },
           {
             label: "Lead handling",
-            text: "Google Sheets support remains deferred in the inspected implementation. When transactional confirmation email is configured, the selected email provider receives the recipient address and confirmation content needed to confirm a website request.",
+            text: "When configured, the selected email provider receives the recipient address and confirmation content needed to confirm a website request or assessment. Lead information may also be sent to the configured CRM for contact management, request notes, tags, and preference-aware follow-up handling.",
           },
           {
             label: "CRM and automation tools",
@@ -215,7 +217,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
   terms: {
     title: "Terms of Use",
     effectiveDate,
-    lastUpdatedDate,
+    lastUpdatedDate: formLegalLastUpdatedDate,
     intro: `These Terms of Use govern access to and use of tergion.com and website request interactions with ${companyName}.`,
     contact: defaultContact,
     sections: [
@@ -270,7 +272,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
             text: "Do not submit illegal, fraudulent, abusive, or misleading content.",
           },
           {
-            text: "Do not submit confidential, sensitive, regulated, or third-party personal information unless you are authorized and it is necessary for the request.",
+            text: "Do not submit passwords, customer records, financial account details, payment card details, health information, regulated data, or confidential third-party information through the website forms.",
           },
           {
             text: "Do not submit information on behalf of another person or business without authority.",
@@ -396,7 +398,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
   "data-notice": {
     title: "Data Notice",
     effectiveDate,
-    lastUpdatedDate,
+    lastUpdatedDate: formLegalLastUpdatedDate,
     intro: "This short notice summarizes what the website request form collects and why. The full Privacy Policy provides more detail.",
     contact: {
       label: "Privacy Contact",
@@ -412,11 +414,11 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
           },
           {
             label: "Business and request information",
-            text: "Website, industry, business size, service area, CRM use, current CRM, automation interests, priority, scheduling preference, notes, and related context you choose to provide.",
+            text: "Website, industry, business size, service area, CRM use, current CRM, automation interests, priority, scheduling preference, approximate lead volume, approximate customer value, inquiry handling, call handling, missed-call practices, response-time practices, quote follow-up, pipeline visibility, tracking method, operational challenge, optional assessment notes, and related context you choose to provide.",
           },
           {
             label: "Contact preferences and consent records",
-            text: "Preferred contact method, scheduling preference, contact consent, privacy and terms acknowledgement, optional SMS consent, and AI disclosure indicator.",
+            text: "Preferred contact method, scheduling preference, assessment follow-up preference, contact consent, privacy and terms acknowledgement, optional SMS consent, and AI disclosure indicator.",
           },
           {
             label: "Technical and security data",
@@ -431,7 +433,8 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
       {
         heading: "Purposes",
         body: [
-          "We collect this information to respond to your request, evaluate automation, CRM, and business systems needs, schedule follow-up, prevent spam or abuse, secure the site, improve services, and maintain appropriate records.",
+          "We collect this information to respond to your request, evaluate automation, CRM, and business systems needs, honor the assessment follow-up preference you select, schedule follow-up when appropriate, prevent spam or abuse, secure the site, improve services, and maintain appropriate records.",
+          "Do not submit passwords, customer records, financial account details, payment card details, health information, regulated data, or confidential third-party information through the website forms.",
         ],
       },
       {

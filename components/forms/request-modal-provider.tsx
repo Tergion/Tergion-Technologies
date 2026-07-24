@@ -11,9 +11,18 @@ import {
 
 import { LeadFormModal } from "@/components/forms/lead-form-modal";
 
+export type RequestModalMode = "quick_request" | "automation_assessment";
+
+type OpenRequestModalOptions = {
+  mode?: RequestModalMode;
+  trigger?: HTMLElement | null;
+  triggerSource?: string;
+};
+
 type RequestModalContextValue = {
   isRequestModalOpen: boolean;
-  openRequestModal: (trigger?: HTMLElement | null) => void;
+  activeMode: RequestModalMode;
+  openRequestModal: (options?: OpenRequestModalOptions) => void;
   closeRequestModal: () => void;
 };
 
@@ -21,16 +30,29 @@ const RequestModalContext = createContext<RequestModalContextValue | null>(null)
 
 export function RequestModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [activeMode, setActiveMode] =
+    useState<RequestModalMode>("quick_request");
+  const [triggerSource, setTriggerSource] = useState("");
+  const [sessionKey, setSessionKey] = useState(0);
   const lastFocusedElement = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(false);
 
-  function openRequestModal(trigger?: HTMLElement | null) {
+  function openRequestModal(options: OpenRequestModalOptions = {}) {
+    const {
+      mode = "quick_request",
+      trigger,
+      triggerSource: nextTriggerSource = "",
+    } = options;
+
     if (trigger) {
       lastFocusedElement.current = trigger;
     } else if (document.activeElement instanceof HTMLElement) {
       lastFocusedElement.current = document.activeElement;
     }
 
+    setActiveMode(mode);
+    setTriggerSource(nextTriggerSource);
+    setSessionKey((current) => current + 1);
     setOpen(true);
   }
 
@@ -56,12 +78,20 @@ export function RequestModalProvider({ children }: { children: ReactNode }) {
     <RequestModalContext.Provider
       value={{
         isRequestModalOpen: open,
+        activeMode,
         openRequestModal,
         closeRequestModal,
       }}
     >
       {children}
-      <LeadFormModal open={open} onOpenChange={setOpen} />
+      <LeadFormModal
+        key={sessionKey}
+        open={open}
+        activeMode={activeMode}
+        triggerSource={triggerSource}
+        onModeChange={setActiveMode}
+        onOpenChange={setOpen}
+      />
     </RequestModalContext.Provider>
   );
 }

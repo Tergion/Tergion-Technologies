@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { makeLeadRecord } from "@/tests/fixtures/leads";
+import {
+  makeAssessmentRecord,
+  makeLeadRecord,
+} from "@/tests/fixtures/leads";
 
 function clearEmailEnv() {
   delete process.env.EMAIL_PROVIDER;
@@ -82,6 +85,39 @@ describe("sendLeadConfirmationEmail", () => {
     expect(body.html).toContain("Request received");
     expect(body.text).toContain("YOUR REQUEST DETAILS");
     expect(JSON.stringify(body)).not.toContain("resend-test-secret");
+  });
+
+  it("sends a type-aware assessment confirmation through the same provider layer", async () => {
+    process.env.EMAIL_PROVIDER = "resend";
+    process.env.RESEND_API_KEY = "resend-test-secret";
+    const fetchMock = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) => {
+        void _input;
+        void _init;
+        return Response.json({ id: "email-456" });
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { sendLeadConfirmationEmail } = await import(
+      "@/features/leads/email"
+    );
+
+    await sendLeadConfirmationEmail(
+      makeAssessmentRecord({
+        assessmentFollowUpPreference: "confirmation-only",
+      }),
+    );
+
+    const [, init] = fetchMock.mock.calls[0];
+    const body = JSON.parse(String(init?.body)) as Record<string, string>;
+
+    expect(body.subject).toBe(
+      "We received your Tergion automation assessment",
+    );
+    expect(body.html).toContain("Your preference is recorded");
+    expect(body.text).toContain(
+      "No follow-up beyond the confirmation email",
+    );
   });
 
   it("sends multipart confirmation through the Postmark outbound stream", async () => {

@@ -11,11 +11,9 @@ import type {
 import { useForm, useWatch } from "react-hook-form";
 import type { ZodError } from "zod";
 
-import { FormProgress } from "@/components/forms/form-progress";
-import { LeadFormStepContact } from "@/components/forms/lead-form-step-contact";
-import { LeadFormStepContext } from "@/components/forms/lead-form-step-context";
-import { LeadFormStepPreferences } from "@/components/forms/lead-form-step-preferences";
-import { LeadFormStepReview } from "@/components/forms/lead-form-step-review";
+import { AutomationAssessmentIntro } from "@/components/forms/automation-assessment-intro";
+import { AutomationAssessmentStep } from "@/components/forms/automation-assessment-steps";
+import { AssessmentProgress } from "@/components/forms/assessment-progress";
 import { LeadSubmissionStatus } from "@/components/forms/lead-submission-status";
 import {
   FormErrorAlert,
@@ -25,20 +23,77 @@ import {
 import type { TurnstileStatus } from "@/components/forms/turnstile-widget";
 import { Button } from "@/components/ui/button";
 import {
-  leadSuccessMessage,
-  quickRequestFormVersion,
-} from "@/features/leads/lead.constants";
+  automationAssessmentFormVersion,
+  getAutomationAssessmentSuccessMessage,
+} from "@/features/assessments/assessment.constants";
 import {
-  leadContactBasicsStepSchema,
-  leadContactPreferencesStepSchema,
-  leadReviewStepSchema,
-  quickRequestSchema,
-} from "@/features/leads/lead.schema";
-import { submitLead } from "@/features/leads/lead-submit";
+  assessmentBusinessProfileStepSchema,
+  assessmentContactPreferencesStepSchema,
+  assessmentContactStepSchema,
+  assessmentLeadIntakeStepSchema,
+  assessmentNextStepSchema,
+  assessmentResponseVisibilityStepSchema,
+  assessmentSystemsChallengeStepSchema,
+  automationAssessmentSchema,
+} from "@/features/assessments/assessment.schema";
 import type {
-  QuickRequest,
-  QuickRequestInput,
-} from "@/features/leads/lead.types";
+  AutomationAssessment,
+  AutomationAssessmentInput,
+} from "@/features/assessments/assessment.types";
+import { submitLead } from "@/features/leads/lead-submit";
+
+const stepHeadings = [
+  "Contact",
+  "Contact Preferences",
+  "Business Profile",
+  "Lead Intake",
+  "Response and Visibility",
+  "Systems and Challenge",
+  "Next Step",
+  "Review and Consent",
+] as const;
+
+const stepSchemas = [
+  assessmentContactStepSchema,
+  assessmentContactPreferencesStepSchema,
+  assessmentBusinessProfileStepSchema,
+  assessmentLeadIntakeStepSchema,
+  assessmentResponseVisibilityStepSchema,
+  assessmentSystemsChallengeStepSchema,
+  assessmentNextStepSchema,
+] as const;
+
+const fieldStep: Partial<Record<Path<AutomationAssessmentInput>, number>> = {
+  firstName: 0,
+  lastName: 0,
+  businessName: 0,
+  email: 0,
+  phone: 1,
+  preferredContactMethod: 1,
+  schedulingPreference: 1,
+  industry: 2,
+  monthlyLeadRange: 2,
+  customerValueRange: 2,
+  websiteInquiryProcess: 3,
+  incomingCallOwner: 3,
+  incomingCallOwnerOther: 3,
+  missedCallProcess: 3,
+  leadResponseTime: 4,
+  quoteFollowUpProcess: 4,
+  pipelineVisibility: 4,
+  leadTrackingMethod: 5,
+  biggestChallenge: 5,
+  biggestChallengeOther: 5,
+  assessmentFollowUpPreference: 6,
+  additionalNotes: 6,
+  contactConsent: 7,
+  privacyTermsConsent: 7,
+  smsConsent: 7,
+};
+
+const assessmentFieldOrder = Object.keys(fieldStep) as Array<
+  Path<AutomationAssessmentInput>
+>;
 
 function applyZodErrors<T extends FieldValues>(
   setError: UseFormSetError<T>,
@@ -51,38 +106,15 @@ function applyZodErrors<T extends FieldValues>(
 
     if (typeof field === "string") {
       const fieldPath = field as Path<T>;
-
       firstField ??= fieldPath;
-      setError(field as Path<T>, {
-        type: "manual",
-        message: issue.message,
-      });
+      setError(fieldPath, { type: "manual", message: issue.message });
     }
   }
 
   return firstField;
 }
 
-const leadFieldOrder = [
-  "firstName",
-  "lastName",
-  "businessName",
-  "email",
-  "phone",
-  "preferredContactMethod",
-  "schedulingPreference",
-  "contactConsent",
-  "privacyTermsConsent",
-] satisfies Array<Path<QuickRequestInput>>;
-
-const stepHeadings = [
-  "Contact",
-  "Contact Preferences",
-  "Business Context",
-  "Review and Consent",
-] as const;
-
-export function LeadForm({
+export function AutomationAssessmentForm({
   active,
   triggerSource,
 }: {
@@ -90,37 +122,43 @@ export function LeadForm({
   triggerSource: string;
 }) {
   const [startedAt] = useState(() => Date.now());
+  const [introVisible, setIntroVisible] = useState(true);
   const [step, setStep] = useState(0);
   const [formError, setFormError] =
     useState<FormErrorNotification | null>(null);
-  const [successMessage, setSuccessMessage] = useState(leadSuccessMessage);
+  const [successMessage, setSuccessMessage] = useState(
+    getAutomationAssessmentSuccessMessage("personalized-review"),
+  );
   const [submissionState, setSubmissionState] = useState<
     "idle" | "submitting" | "success"
   >("idle");
   const [turnstileStatus, setTurnstileStatus] =
     useState<TurnstileStatus>("loading");
 
-  const form = useForm<QuickRequestInput, undefined, QuickRequest>({
-    resolver: zodResolver(quickRequestSchema),
+  const form = useForm<
+    AutomationAssessmentInput,
+    undefined,
+    AutomationAssessment
+  >({
+    resolver: zodResolver(automationAssessmentSchema),
     defaultValues: {
-      submissionType: "quick_request",
-      formVersion: quickRequestFormVersion,
+      submissionType: "automation_assessment",
+      formVersion: automationAssessmentFormVersion,
       firstName: "",
       lastName: "",
       businessName: "",
       email: "",
       phone: "",
-      website: "",
-      preferredContactMethod: "email",
       schedulingPreference: "",
       industry: "",
-      businessSize: "",
-      locationOrServiceArea: "",
-      usesCrm: "not-sure",
-      currentCrm: "",
-      automationInterests: [],
-      requestPriority: "",
-      notes: "",
+      customerValueRange: "",
+      websiteInquiryProcess: "",
+      incomingCallOwnerOther: "",
+      quoteFollowUpProcess: "",
+      pipelineVisibility: "",
+      leadTrackingMethod: "",
+      biggestChallengeOther: "",
+      additionalNotes: "",
       contactConsent: false,
       privacyTermsConsent: false,
       smsConsent: false,
@@ -134,24 +172,22 @@ export function LeadForm({
       utmContent: "",
       referrer: "",
       landingPage: "",
-      aiDisclosureSeen: true,
       triggerSource,
+      aiDisclosureSeen: true,
     },
   });
   const [contactConsent, privacyTermsConsent] = useWatch({
     control: form.control,
     name: ["contactConsent", "privacyTermsConsent"],
   });
-  const requiredConsentsAccepted = contactConsent && privacyTermsConsent;
   const turnstileReady =
     turnstileStatus === "ready" ||
     turnstileStatus === "development-bypass";
-  const canSubmit = requiredConsentsAccepted && turnstileReady;
+  const canSubmit =
+    Boolean(contactConsent && privacyTermsConsent) && turnstileReady;
 
   const handleTurnstileStatusChange = useCallback(
-    (status: TurnstileStatus) => {
-      setTurnstileStatus(status);
-    },
+    (status: TurnstileStatus) => setTurnstileStatus(status),
     [],
   );
   const clearFormError = useCallback(() => setFormError(null), []);
@@ -200,15 +236,12 @@ export function LeadForm({
     return () => window.clearTimeout(statusTimer);
   }, [active, clearFormError, form]);
 
-  function focusField(name?: Path<QuickRequestInput>) {
-    if (!name) {
-      return;
-    }
+  function focusField(name?: Path<AutomationAssessmentInput>) {
+    if (!name) return;
 
     window.requestAnimationFrame(() => {
       form.setFocus(name);
-
-      const idElement = document.getElementById(name);
+      const idElement = document.getElementById(`assessment-${name}`);
       const radioElement = document.querySelector<HTMLElement>(
         `[name="${name}"]`,
       );
@@ -224,105 +257,93 @@ export function LeadForm({
     });
   }
 
-  function focusFirstFieldError(errors: FieldErrors<QuickRequestInput>) {
-    const fieldNames = Object.keys(errors);
-    const firstOrderedField = leadFieldOrder.find((field) =>
-      fieldNames.includes(field),
-    );
-    const firstField =
-      firstOrderedField ??
-      (fieldNames[0] as Path<QuickRequestInput> | undefined);
+  function showAndFocusField(name?: Path<AutomationAssessmentInput>) {
+    if (!name) return;
 
-    focusField(firstField);
+    const nextStep = fieldStep[name];
+    if (nextStep !== undefined) setStep(nextStep);
+    focusField(name);
   }
 
-  function setStepAndFocus(nextStep: number) {
-    setStep(nextStep);
+  function focusStepHeading() {
     window.requestAnimationFrame(() => {
-      document.getElementById("quick-request-step-heading")?.focus();
+      document.getElementById("assessment-step-heading")?.focus();
     });
   }
 
-  async function goNext() {
+  function goToStep(nextStep: number) {
+    setStep(nextStep);
+    focusStepHeading();
+  }
+
+  function startAssessment() {
+    setIntroVisible(false);
+    focusStepHeading();
+  }
+
+  function goNext() {
     clearFormError();
     form.clearErrors();
+    const result = stepSchemas[step].safeParse(form.getValues());
 
-    if (step === 0) {
-      const result = leadContactBasicsStepSchema.safeParse(form.getValues());
-
-      if (!result.success) {
-        const firstError = applyZodErrors(form.setError, result.error);
-        showFormError(formValidationAlertMessage);
-        focusField(firstError);
-        return;
-      }
+    if (!result.success) {
+      showAndFocusField(applyZodErrors(form.setError, result.error));
+      showFormError(formValidationAlertMessage);
+      return;
     }
 
-    if (step === 1) {
-      const currentPhone = form.getValues("phone");
-      const result = leadContactPreferencesStepSchema.safeParse(
-        form.getValues(),
-      );
-
-      if (!result.success) {
-        const firstError = applyZodErrors(form.setError, result.error);
-        showFormError(formValidationAlertMessage);
-        focusField(firstError);
-        return;
-      }
-
-      if (result.data.phone !== currentPhone) {
-        form.setValue("phone", result.data.phone ?? "", {
-          shouldDirty: true,
-          shouldValidate: false,
-        });
-      }
-    }
-
-    setStepAndFocus(Math.min(step + 1, 3));
+    goToStep(Math.min(step + 1, 7));
   }
 
   function goBack() {
     clearFormError();
     form.clearErrors();
-    setStepAndFocus(Math.max(step - 1, 0));
-  }
 
-  async function onSubmit(values: QuickRequest) {
-    clearFormError();
-    form.clearErrors();
-
-    const reviewResult = leadReviewStepSchema.safeParse(values);
-
-    if (!reviewResult.success) {
-      const firstError = applyZodErrors(form.setError, reviewResult.error);
-      showFormError(formValidationAlertMessage);
-      focusField(firstError);
+    if (step === 0) {
+      setIntroVisible(true);
       return;
     }
 
-    const finalPayload = {
+    goToStep(step - 1);
+  }
+
+  function focusFirstFieldError(errors: FieldErrors<AutomationAssessmentInput>) {
+    const names = Object.keys(errors);
+    const firstField = assessmentFieldOrder.find((field) =>
+      names.includes(field),
+    );
+    showAndFocusField(
+      firstField ?? (names[0] as Path<AutomationAssessmentInput> | undefined),
+    );
+  }
+
+  async function onSubmit(values: AutomationAssessment) {
+    clearFormError();
+    const parsed = automationAssessmentSchema.safeParse({
       ...values,
       completionStartedAt: startedAt,
-    };
-
-    const parsed = quickRequestSchema.safeParse(finalPayload);
+    });
 
     if (!parsed.success) {
       const firstError = applyZodErrors(form.setError, parsed.error);
       showFormError(formValidationAlertMessage);
-      focusField(firstError);
+      showAndFocusField(firstError);
       return;
     }
 
     try {
       setSubmissionState("submitting");
       const result = await submitLead(parsed.data);
-      setSuccessMessage(result.message || leadSuccessMessage);
+      setSuccessMessage(
+        result.message ||
+          getAutomationAssessmentSuccessMessage(
+            parsed.data.assessmentFollowUpPreference,
+          ),
+      );
       setSubmissionState("success");
     } catch {
       showFormError(
-        "We could not submit the request right now. Please try again later.",
+        "We could not submit the assessment right now. Please try again later.",
       );
       form.setValue("turnstileToken", "", {
         shouldDirty: true,
@@ -338,72 +359,61 @@ export function LeadForm({
       <LeadSubmissionStatus
         status={submissionState}
         message={successMessage}
+        successHeading="Assessment received"
+        submittingHeading="Submitting your assessment"
       />
     );
   }
 
+  if (introVisible) {
+    return <AutomationAssessmentIntro onStart={startAssessment} />;
+  }
+
   return (
     <form
-      className="relative flex h-full min-h-0 flex-1 flex-col bg-[var(--modal-bg)]"
+      className="relative flex h-full min-h-0 flex-col bg-[var(--modal-bg)]"
       onSubmit={form.handleSubmit(onSubmit, (errors) => {
         showFormError(formValidationAlertMessage);
         focusFirstFieldError(errors);
       })}
     >
       <FormErrorAlert
-        id="quick-request-form-error"
+        id="assessment-form-error"
         notification={formError}
         onDismiss={dismissFormError}
       />
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto bg-[var(--modal-bg)] px-5 py-5">
-        <FormProgress
-          step={step + 1}
-          totalSteps={4}
-          label="Quick request progress"
-        />
-
+        <AssessmentProgress step={step + 1} />
         <h2
-          id="quick-request-step-heading"
+          id="assessment-step-heading"
           tabIndex={-1}
           className="text-lg font-semibold text-foreground outline-none"
         >
           {stepHeadings[step]}
         </h2>
-
-        {step === 0 ? <LeadFormStepContact form={form} /> : null}
-        {step === 1 ? <LeadFormStepPreferences form={form} /> : null}
-        {step === 2 ? <LeadFormStepContext form={form} /> : null}
-        {step === 3 ? (
-          <LeadFormStepReview
-            form={form}
-            active={active}
-            onTurnstileStatusChange={handleTurnstileStatusChange}
-          />
-        ) : null}
+        <AutomationAssessmentStep
+          step={step}
+          form={form}
+          active={active}
+          onTurnstileStatusChange={handleTurnstileStatusChange}
+        />
       </div>
-
       <div className="flex flex-col-reverse gap-3 border-t border-[color:var(--field-border)] bg-[var(--modal-bg)] px-5 py-4 sm:flex-row sm:justify-between">
         <Button
           type="button"
           variant="outline"
           className="min-h-11 border-[color:var(--field-border)] bg-[var(--field-bg)]"
           onClick={goBack}
-          disabled={step === 0}
         >
           Back
         </Button>
-
-        {step < 3 ? (
+        {step < 7 ? (
           <Button type="button" className="min-h-11 px-5" onClick={goNext}>
             Continue
           </Button>
         ) : (
-          <Button
-            type="submit"
-            className="min-h-11 px-5"
-            disabled={!canSubmit}
-          >
-            Send a quick request
+          <Button type="submit" className="min-h-11 px-5" disabled={!canSubmit}>
+            Submit assessment
           </Button>
         )}
       </div>

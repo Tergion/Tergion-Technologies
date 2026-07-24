@@ -45,7 +45,7 @@ Copy `.env.example` to a local `.env.local` when credentials are available. Do n
 
 ## Current Site Scope
 
-This site includes the public marketing foundation, implementation-aligned legal pages, examples scaffold, a 3-step lead form, `/api/leads`, `/api/health`, SEO basics, security headers, and provider boundaries.
+This site includes the public marketing foundation, implementation-aligned legal pages, examples scaffold, a 4-step Quick Request, an 8-step Business Automation Assessment, `/api/leads`, `/api/health`, SEO basics, security headers, and provider boundaries.
 
 ## Integration Status
 

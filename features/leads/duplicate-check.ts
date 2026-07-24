@@ -2,6 +2,7 @@ import { hasUpstashRedisConfig } from "@/lib/env";
 import { runUpstashPipeline } from "@/features/leads/upstash";
 
 type DuplicateSignalType = "email" | "phone";
+type SubmissionType = "quick_request" | "automation_assessment";
 
 type DuplicateSignal = {
   type: DuplicateSignalType;
@@ -81,7 +82,15 @@ async function getDuplicateSignals(email: string, phone?: string) {
   );
 }
 
-function getSignalWindowKey(signal: DuplicateSignal, window: DuplicateWindow) {
+function getSignalWindowKey(
+  submissionType: SubmissionType,
+  signal: DuplicateSignal,
+  window: DuplicateWindow,
+) {
+  if (submissionType === "automation_assessment") {
+    return `lead:duplicate:automation_assessment:${window.label}:${signal.type}:${signal.hash}`;
+  }
+
   return `lead:duplicate:${window.label}:${signal.type}:${signal.hash}`;
 }
 
@@ -97,6 +106,7 @@ function getDuplicateReason(
 }
 
 async function checkInMemoryDuplicateLead(
+  submissionType: SubmissionType,
   email: string,
   phone: string | undefined,
   now: number,
@@ -114,7 +124,7 @@ async function checkInMemoryDuplicateLead(
 
   for (const signal of signals) {
     for (const window of duplicateWindows) {
-      const key = getSignalWindowKey(signal, window);
+      const key = getSignalWindowKey(submissionType, signal, window);
       const current = seenLeads.get(key);
 
       if (!current) {
@@ -146,11 +156,15 @@ async function checkInMemoryDuplicateLead(
   return { duplicateLikely: false };
 }
 
-async function checkUpstashDuplicateLead(email: string, phone?: string) {
+async function checkUpstashDuplicateLead(
+  submissionType: SubmissionType,
+  email: string,
+  phone?: string,
+) {
   const signals = await getDuplicateSignals(email, phone);
   const commands = signals.flatMap((signal) =>
     duplicateWindows.flatMap((window) => {
-      const key = getSignalWindowKey(signal, window);
+      const key = getSignalWindowKey(submissionType, signal, window);
 
       return [
         ["INCR", key],
@@ -179,19 +193,20 @@ async function checkUpstashDuplicateLead(email: string, phone?: string) {
 }
 
 export async function checkDuplicateLead(
+  submissionType: SubmissionType,
   email: string,
   phone?: string,
   now = Date.now(),
 ): Promise<{ duplicateLikely: boolean; reason?: string }> {
   if (hasUpstashRedisConfig()) {
     try {
-      return await checkUpstashDuplicateLead(email, phone);
+      return await checkUpstashDuplicateLead(submissionType, email, phone);
     } catch {
-      return checkInMemoryDuplicateLead(email, phone, now);
+      return checkInMemoryDuplicateLead(submissionType, email, phone, now);
     }
   }
 
-  return checkInMemoryDuplicateLead(email, phone, now);
+  return checkInMemoryDuplicateLead(submissionType, email, phone, now);
 }
 
 export function resetDuplicateLeadMemoryForTests() {

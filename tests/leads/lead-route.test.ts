@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { leadDuplicateMessage } from "@/features/leads/lead.constants";
-import { makeLeadSubmission } from "@/tests/fixtures/leads";
+import {
+  makeAssessmentSubmission,
+  makeLeadSubmission,
+} from "@/tests/fixtures/leads";
 
 const emailMocks = vi.hoisted(() => ({
   sendInternalLeadNotification: vi.fn(),
@@ -104,7 +107,7 @@ describe("/api/leads", () => {
     clearIntegrationEnv();
   });
 
-  it("rejects honeypot spam without calling providers", async () => {
+  it("returns silent success for honeypot spam without calling providers", async () => {
     setGoHighLevelEnv();
     const fetchMock = mockSuccessfulGoHighLevelFetch();
     const POST = await importRoute();
@@ -112,9 +115,75 @@ describe("/api/leads", () => {
       makePostRequest(makeLeadSubmission({ honeypot: "filled" })),
     );
 
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toMatchObject({ ok: false });
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(emailMocks.sendInternalLeadNotification).not.toHaveBeenCalled();
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("accepts a cached legacy Quick Request without discriminator fields", async () => {
+    const { submissionType: _type, formVersion: _version, ...legacy } =
+      makeLeadSubmission();
+    void _type;
+    void _version;
+    const POST = await importRoute();
+    const response = await POST(makePostRequest(legacy));
+
+    expect(response.status).toBe(200);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ submissionType: "quick_request" }),
+    );
+  });
+
+  it("accepts an assessment and preserves confirmation-only behavior", async () => {
+    const POST = await importRoute();
+    const response = await POST(
+      makePostRequest(
+        makeAssessmentSubmission({
+          assessmentFollowUpPreference: "confirmation-only",
+        }),
+      ),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true });
+    expect(body.message).toContain("recorded");
+    expect(body.message).toContain("confirmation email");
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        submissionType: "automation_assessment",
+        assessmentFollowUpPreference: "confirmation-only",
+      }),
+    );
+  });
+
+  it("rejects a wrong content type", async () => {
+    const POST = await importRoute();
+    const response = await POST(
+      new Request("https://tergion.com/api/leads", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: JSON.stringify(makeLeadSubmission()),
+      }),
+    );
+
+    expect(response.status).toBe(415);
+    expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+  });
+
+  it("rejects a request body larger than 32 KB", async () => {
+    const POST = await importRoute();
+    const response = await POST(
+      new Request("https://tergion.com/api/leads", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ value: "x".repeat(33 * 1024) }),
+      }),
+    );
+
+    expect(response.status).toBe(413);
     expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
   });
 
