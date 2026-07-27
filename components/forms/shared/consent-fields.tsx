@@ -63,6 +63,13 @@ export function ConsentFields({
             <Link href="/terms" className="text-primary hover:text-foreground">
               Terms of Use
             </Link>
+            , and I acknowledge the{" "}
+            <Link
+              href="/data-notice"
+              className="text-primary hover:text-foreground"
+            >
+              Data Notice
+            </Link>
             .
           </Label>
           <FormFieldError id={`${privacyId}-error`} message={privacyError} />

@@ -474,8 +474,24 @@ test("keeps submit disabled until required consents are selected", async ({
   const submitButton = dialog.getByRole("button", {
     name: "Send a quick request",
   });
+  const quickRequestPanel = dialog.getByRole("tabpanel", {
+    name: "Quick Request",
+  });
 
   await expect(submitButton).toBeDisabled();
+  const quickRequestDataNoticeLinks = quickRequestPanel.getByRole("link", {
+    name: "Data Notice",
+  });
+
+  await expect(quickRequestDataNoticeLinks).toHaveCount(2);
+  await expect(quickRequestDataNoticeLinks.first()).toHaveAttribute(
+    "href",
+    "/data-notice",
+  );
+  await expect(quickRequestDataNoticeLinks.last()).toHaveAttribute(
+    "href",
+    "/data-notice",
+  );
 
   await dialog.getByLabel(/I agree to be contacted/).check();
   await expect(submitButton).toBeDisabled();
@@ -1062,6 +1078,9 @@ test("submits both form types with one shared identity and separate submission I
     })
     .check();
   await assessmentPanel.getByRole("button", { name: "Continue" }).click();
+  await expect(
+    assessmentPanel.getByRole("link", { name: "Data Notice" }),
+  ).toHaveAttribute("href", "/data-notice");
   await assessmentPanel
     .getByLabel(/may use the information I submitted/)
     .check();
