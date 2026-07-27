@@ -47,7 +47,7 @@ const contactEmail = siteConfig.contactEmail;
 const privacyEmail = siteConfig.privacyEmail;
 const effectiveDate = siteConfig.policyEffectiveDate;
 const lastUpdatedDate = siteConfig.policyLastUpdatedDate;
-const formLegalLastUpdatedDate = "July 22, 2026";
+const formLegalLastUpdatedDate = "July 26, 2026";
 const jurisdiction = siteConfig.jurisdiction;
 
 const defaultContact = {
@@ -69,41 +69,75 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
       {
         heading: "Scope",
         body: [
-          "This policy applies to tergion.com and the website request or contact interactions controlled by Tergion Technologies.",
-          "It does not govern third-party websites, client systems, CRM accounts, automation platforms, or other services that Tergion Technologies does not control. Future client agreements may include additional privacy, security, and service terms.",
+          "This policy applies to tergion.com and the website request, assessment, and related communication interactions controlled by Tergion Technologies.",
+          "It does not govern third-party websites, client systems, CRM accounts, automation platforms, or other services that Tergion Technologies does not control. A signed client agreement may provide additional privacy, security, and service terms for paid work.",
         ],
       },
       {
-        heading: "Information We Collect",
+        heading: "Categories of Information Collected",
         body: [
-          "We collect information you submit through the Quick Request, Business Automation Assessment, and related communications. The Quick Request requires first name, business name, email, preferred contact method, scheduling preference, contact consent, and privacy and terms acknowledgement. Phone is required only when phone or text is selected as the preferred contact method.",
-          "The Business Automation Assessment collects first name, optional last name, business name, email, phone, preferred contact method, industry, approximate monthly lead volume, optional approximate customer value, website or message inquiry handling, incoming-call ownership, missed-call practices, lead response-time practices, optional quote follow-up practices, optional pipeline visibility, optional lead and customer tracking method, operational challenge, follow-up preference, and optional assessment notes.",
-          "Other optional Quick Request information may include last name, phone, website, industry, business size, location or service area, whether the business uses a CRM, current CRM, automation interests, request priority, notes, and other business context you choose to provide.",
-          "We also collect consent records, including contact consent, privacy and terms acknowledgement, optional SMS consent, and an AI disclosure indicator used by the form.",
-          "Technical and security information may include browser or device metadata, request metadata, referrer, landing page, timezone, UTM parameters if present, completion timing, honeypot signals, rate-limit and duplicate-check signals, and Cloudflare Turnstile verification results when Turnstile is configured.",
-          "Communications with Tergion Technologies, including emails or messages sent to or from us, may also be retained as part of responding to a request.",
-          "Please do not submit passwords, customer records, financial account details, payment card details, health information, regulated data, or confidential third-party information through either form.",
+          "Depending on how you interact with the website, Tergion Technologies collects contact and business identifiers, request or assessment answers, communication and consent preferences, website attribution information, communications, and limited technical and security information.",
+          "Please do not submit passwords, customer lists or records, financial account or payment-card details, health information, regulated data, or another party's personal or confidential information through a website form.",
         ],
       },
       {
-        heading: "How We Use Information",
+        heading: "Quick Request Information",
+        body: [
+          "A Quick Request requires first name, business name, email, preferred contact method, a free-text scheduling preference, contact consent, and privacy and terms acknowledgement. Phone is required only when phone or text is selected as the preferred contact method.",
+          "Optional Quick Request information may include last name, phone, website, industry, business size, location or service area, whether the business uses a CRM, current CRM, automation interests, request priority, notes, and other business context you choose to provide.",
+          "The form also records optional SMS consent, the form version, an AI-disclosure indicator, and request attribution or security fields described below.",
+        ],
+      },
+      {
+        heading: "Automation Assessment Information",
+        body: [
+          "The Business Automation Assessment collects first name, optional last name, business name, email, phone, preferred contact method, scheduling preference, industry, approximate monthly lead volume, optional approximate customer value, website or message inquiry handling, incoming-call ownership, missed-call practices, lead response-time practices, optional quote follow-up practices, optional pipeline visibility, optional lead and customer tracking method, operational challenge, follow-up preference, and optional assessment notes.",
+          "The assessment also records contact consent, privacy and terms acknowledgement, optional SMS consent, the form version, an AI-disclosure indicator, and request attribution or security fields described below.",
+        ],
+      },
+      {
+        heading: "Technical and Security Information",
+        body: [
+          "Technical, attribution, and security information may include browser or device metadata available in a request, referrer, landing page, timezone, UTM parameters if present, completion timing, honeypot signals, hashed or otherwise limited rate-limit and duplicate-control signals, and Cloudflare Turnstile verification results when Turnstile is configured.",
+          "Tergion application and provider logs may record limited operational metadata, such as a generated request identifier, provider name, processing stage, response status, and masked contact diagnostics when an error needs review. The application is designed not to log full form payloads, raw provider response bodies, or full IP addresses.",
+          "Communications with Tergion Technologies, including emails or messages sent to or from us, may be retained with the related prospective-client record.",
+        ],
+      },
+      {
+        heading: "Purposes of Processing",
         items: [
           {
-            label: "Responding to requests",
-            text: "We use submitted information to review requests, honor the assessment follow-up preference you select, contact you based on your preferences and consent, answer questions, and schedule follow-up when appropriate.",
+            label: "Quick Request contact and business information",
+            text: "Used to receive and respond to an inquiry, understand the requested business context, manage a prospective-client record, assign internal follow-up, send a transactional confirmation when configured, and communicate according to the selected contact and scheduling preferences.",
           },
           {
-            label: "Planning services",
-            text: "We use business context to evaluate CRM, automation, AI-assisted workflow, lead follow-up, communication, and business systems needs.",
+            label: "Automation Assessment answers",
+            text: "Used to review the assessment, identify possible workflow, CRM, follow-up, and automation opportunities, prepare a response or internal planning notes, create and manage the related GoHighLevel contact and Automation Assessment records when the integration is configured, and honor the selected follow-up preference.",
           },
           {
-            label: "Operating the website",
-            text: "We use technical and security information to operate the site, validate submissions, prevent spam or abuse, reduce duplicate submissions, maintain records, improve services, and protect the website.",
+            label: "Contact, consent, and preference records",
+            text: "Used to document the requested communication method, scheduling preference, contact authorization, policy acknowledgement, optional SMS choice, assessment follow-up choice, and later opt-out or suppression instructions.",
           },
           {
-            label: "Legal and operational needs",
-            text: "We may use information to comply with legal obligations, enforce terms, protect rights and security, and maintain business records.",
+            label: "Technical, attribution, and security information",
+            text: "Used to operate and protect the website, validate submissions, prevent spam, abuse, fraud, and repeated submissions, investigate security or delivery events, diagnose failures, and understand how a request reached the form.",
           },
+          {
+            label: "Communications and transactional email records",
+            text: "Used to respond to the request, preserve relevant conversation history, provide and troubleshoot confirmations, manage follow-up, and document corrections, consent changes, or opt-outs.",
+          },
+          {
+            label: "Legal and limited service improvement purposes",
+            text: "Relevant information may be used to comply with legal and recordkeeping obligations, protect the website and Tergion Technologies, resolve disputes, investigate fraud or security events, and improve Tergion processes and services using information limited to what is appropriate for that purpose.",
+          },
+        ],
+      },
+      {
+        heading: "Purpose Limitation",
+        body: [
+          "Tergion Technologies uses information for the specific purposes described at collection and in this policy, or for another purpose that is reasonably compatible with the context in which the information was provided. We do not authorize unrelated use through a general 'any business purpose' or 'any commercial purpose' provision.",
+          "If Tergion Technologies later plans to use personal information for a materially different purpose, it will provide an appropriate updated notice before that use and obtain consent when applicable law requires it.",
+          "Assessment responses are not sold and are not used for unrelated advertising in the inspected website implementation.",
         ],
       },
       {
@@ -115,10 +149,10 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         ],
       },
       {
-        heading: "How We Share Information",
+        heading: "Service Providers and Disclosures",
         body: [
-          "We do not sell personal information submitted through the website request form.",
-          "We may share information with service providers only as needed to support hosting, website security, communications, lead handling, business operations, professional advice, legal obligations, security investigations, or a business transfer.",
+          "We disclose information only as reasonably needed for the purposes described in this policy, including to providers that support hosting, website security, form protection, transactional communications, CRM and lead handling, professional advice, legal obligations, security investigations, or a business transfer.",
+          "Provider availability and configuration may change. Tergion Technologies should review provider access, contracts, settings, and retention before enabling a provider for live data.",
         ],
         items: [
           {
@@ -131,11 +165,11 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
           },
           {
             label: "Lead handling",
-            text: "When configured, the selected email provider receives the recipient address and confirmation content needed to confirm a website request or assessment. Lead information may also be sent to the configured CRM for contact management, request notes, tags, and preference-aware follow-up handling.",
+            text: "When configured, Resend or Postmark receives the recipient address and confirmation content needed to send a transactional request or assessment confirmation. The selected provider may maintain delivery, bounce, complaint, suppression, and troubleshooting records under its settings and terms.",
           },
           {
             label: "CRM and automation tools",
-            text: "GoHighLevel may receive website lead contact details, consent context, attribution details, and request notes when the GoHighLevel integration is configured. Other CRM and automation platforms may be used for future client work or lead handling if configured.",
+            text: "GoHighLevel may receive contact details, consent and preference context, attribution details, Quick Request notes, tags, and Automation Assessment Custom Object records when the integration is configured.",
           },
           {
             label: "Professional and legal needs",
@@ -144,18 +178,55 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         ],
       },
       {
-        heading: "Cookies and Similar Technologies",
+        heading: "Sale and Advertising Disclosures",
         body: [
-          "The current website code does not enable non-essential analytics scripts, advertising cookies, or cross-context behavioral advertising.",
-          "The website and its providers may use necessary technologies for routing, security, form operation, anti-spam protection, and normal browser functionality. If analytics, advertising, chatbot, or additional tracking tools are added later, this policy and related notices should be updated before those tools are used publicly.",
+          "Tergion Technologies does not sell personal information submitted through the Quick Request or Automation Assessment. The inspected website implementation does not share that information for cross-context behavioral advertising and does not enable non-essential advertising cookies.",
+          "The website and its providers may use necessary technologies for routing, security, form operation, anti-spam protection, and normal browser functionality. This policy and the Data Notice should be updated before analytics, advertising, chatbot, or additional tracking tools are used publicly.",
         ],
       },
       {
         heading: "Retention",
         body: [
-          "We keep request and lead information only as long as reasonably needed for follow-up, operations, security, legal, and recordkeeping purposes.",
-          "As a working default, unresolved website lead records should not be retained longer than 24 months unless a client relationship, legal need, active conversation, security need, or deletion request changes that period.",
-          "Security signals should be kept for shorter periods when practical. The current in-memory rate-limit and duplicate-check mechanisms are temporary operational controls, not long-term storage systems.",
+          "Tergion Technologies keeps information only for as long as reasonably necessary and proportionate for the purposes described in this policy. Tergion Technologies does not apply one fixed period to every record; retention is determined by the record type, the status of the inquiry or relationship, consent documentation, provider settings, security needs, and legal, accounting, dispute, or contractual requirements.",
+          "When information is no longer reasonably needed, Tergion Technologies may delete it, anonymize or deidentify it, aggregate it, or restrict access. A shorter or longer period may apply when a record supports an active relationship, a legal hold, a dispute, fraud or security investigation, accounting duties, a contract, or documentation of consent or an opt-out.",
+        ],
+        items: [
+          {
+            label: "Unresolved Quick Requests and Automation Assessments",
+            text: "Kept while the request or assessment remains reasonably relevant for review and follow-up, then subject to periodic review using the criteria above. Quick Requests and assessments may require separate deletion actions because they can exist in different CRM records.",
+          },
+          {
+            label: "Active prospects and converted clients",
+            text: "Prospect communications are kept while discussions remain active and for a reasonable period afterward. If a prospect becomes a client, relevant contact, communication, assessment, service, contractual, and accounting records may be retained under the client relationship and any signed agreement.",
+          },
+          {
+            label: "GoHighLevel contacts and Automation Assessment records",
+            text: "Contact records, notes, tags, consent context, and separate Automation Assessment Custom Object records are kept while needed for inquiry management, preference-aware follow-up, relationship history, and the other purposes described here. Deleting a contact may not by itself delete every separately stored Custom Object, provider log, suppression, or legally required record.",
+          },
+          {
+            label: "Transactional email and communication records",
+            text: "Confirmation content, addresses, delivery events, and provider logs are retained according to the selected email provider's settings and the time reasonably needed for delivery, troubleshooting, security, and recordkeeping. Provider retention should be reviewed when configuration changes.",
+          },
+          {
+            label: "Consent, opt-out, and suppression records",
+            text: "Limited records of contact consent, optional SMS choices, policy acknowledgement, opt-outs, bounces, complaints, and suppression decisions may be kept longer than the underlying inquiry when reasonably needed to document and honor communication choices, prevent unwanted contact, or meet legal obligations.",
+          },
+          {
+            label: "Rate limits, duplicate controls, security logs, and provider logs",
+            text: "The application's rate-limit and duplicate-control records expire automatically after short operational periods. Security and application logs are generally retained for shorter operational periods under provider settings unless needed to investigate abuse, fraud, a security event, or a legal matter. Exact anti-abuse thresholds are not published.",
+          },
+          {
+            label: "Backups, legal holds, and required records",
+            text: "Backup copies and provider recovery copies follow normal backup, restoration, and deletion cycles. Records subject to a legal hold, dispute, fraud investigation, security need, accounting duty, contract, or other legal requirement may be isolated or access-restricted and kept until that need ends.",
+          },
+        ],
+      },
+      {
+        heading: "Deletion and Privacy Requests",
+        body: [
+          `You may submit an access, correction, deletion, or communication opt-out request by emailing ${privacyEmail}. Describe the request and the information or interaction it concerns. Tergion Technologies may need to verify your identity or authority before acting and will evaluate the request under applicable law.`,
+          "Deletion is not absolute. Legal and contractual exceptions may permit or require retention of limited information for fraud prevention, website and account security, accounting, an active dispute or legal hold, contract performance, consent documentation, opt-out or suppression records, and other obligations permitted by law.",
+          "When a deletion request is approved, Tergion Technologies will take reasonable steps appropriate to the relevant systems and providers. Deletion from active systems may not immediately remove information from backups or provider recovery systems. Backup information will remain protected and follow normal retention and restoration cycles; if restored to an active system, it should remain subject to the approved deletion request. Tergion Technologies does not promise selective deletion from an immutable backup when that operation is not technically supported.",
         ],
       },
       {
@@ -166,9 +237,8 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         ],
       },
       {
-        heading: "Your Choices and Rights",
+        heading: "Your Communication Choices",
         body: [
-          `You may contact ${privacyEmail} to request access, correction, deletion, or an opt-out from follow-up communications. We may need to verify your identity and evaluate the request based on applicable law, security needs, legal obligations, and current business records.`,
           "If marketing emails are sent in the future, they should include an unsubscribe or opt-out method. If SMS is used, you can opt out by replying STOP or by contacting us. Providing a phone number is not automatic consent to SMS marketing.",
         ],
       },
@@ -188,9 +258,16 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         ],
       },
       {
-        heading: "Children",
+        heading: "International Users",
         body: [
-          "This website is intended for business users and is not directed to children under 13. We do not knowingly collect personal information from children under 13.",
+          "Tergion Technologies operates this website from the United States, and website information and provider records may be processed in the United States or other places where the providers operate.",
+          "Website accessibility from another country does not by itself determine which privacy law applies. If applicable law gives you additional nonwaivable rights, Tergion Technologies will evaluate a request under that law. Do not submit information if you are not authorized to transfer it to the United States.",
+        ],
+      },
+      {
+        heading: "Children's Privacy",
+        body: [
+          "This website is intended for business users and is not directed to children under 13. We do not knowingly collect personal information from children under 13. Contact the Privacy Contact if you believe a child submitted information so the situation can be reviewed.",
         ],
       },
       {
@@ -222,24 +299,52 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
     contact: defaultContact,
     sections: [
       {
-        heading: "Acceptance of Terms",
+        heading: "Website Use and No Client Relationship",
         body: [
           "By using this website or submitting a request, you agree to these Terms of Use. If you do not agree, do not use the website or submit information through the request form.",
-        ],
-      },
-      {
-        heading: "Website Purpose",
-        body: [
           `${companyName} provides information about B2B CRM implementation, workflow automation, AI-assisted operations, lead follow-up systems, customer communication systems, business systems, and related operational technology services.`,
-          "The website is informational and does not itself create a client relationship, services agreement, fiduciary relationship, or obligation to provide services.",
+          "The website is informational. Website access, a form submission, an assessment, a reply, or preliminary discussion does not create a client, professional, fiduciary, confidential, or services relationship and does not obligate Tergion Technologies to accept or perform work.",
+          "Paid professional services require a separate written agreement signed or otherwise formally accepted by the applicable parties. A Master Services Agreement, Statement of Work, subscription agreement, or other signed client contract may establish different service, risk, privacy, liability, indemnity, and dispute terms and will control for the services it covers if it conflicts with these Website Terms.",
         ],
       },
       {
-        heading: "Request Forms and Communications",
+        heading: "Requests, Assessments, and User Submissions",
         body: [
-          "If you submit a request, you agree that the information you provide is accurate and that you are authorized to submit it.",
+          "Quick Requests and Automation Assessments are provided to help Tergion Technologies understand an inquiry and identify possible business-system or automation opportunities. They are not secure file-transfer tools and are not intended for customer datasets, credentials, regulated data, or another party's confidential materials.",
           "Submitting a request does not guarantee a meeting, proposal, service availability, result, appointment, or client relationship. Tergion Technologies may contact you based on your preferences and consent.",
           "SMS consent is optional and separate. Providing a phone number or selecting phone as a preferred contact method is not automatic consent to SMS marketing.",
+          "You retain responsibility for information, content, instructions, materials, and data you supply. Tergion Technologies may use a submission only for the limited purposes described in the Privacy Policy and Data Notice and does not assume that you have authority merely because a form accepted the submission.",
+        ],
+      },
+      {
+        heading: "User Representations and Authority",
+        body: [
+          "You represent that information you submit is accurate in all material respects, that you are authorized to act for the person or business identified, and that you have obtained the rights, notices, permissions, and consents necessary for Tergion Technologies to receive and use the submission for the disclosed purposes.",
+          "Do not submit another person's personal information, customer data, another company's confidential process information, or protected materials unless the submission is necessary for a lawful request and you have authority to provide it. You are responsible for user-supplied instructions and materials and for evaluating whether a requested workflow, message, outreach practice, scraping activity, review process, or data use is lawful.",
+          "Tergion Technologies will not knowingly perform an unlawful instruction merely because a user accepts responsibility. It may ask for proof of authority or refuse a request.",
+        ],
+      },
+      {
+        heading: "Prohibited Conduct",
+        body: [
+          "You may not misuse the website, forms, examples, recommendations, or communications.",
+        ],
+        items: [
+          {
+            text: "Do not submit illegal, fraudulent, deceptive, abusive, defamatory, or materially false information, including information that could cause a dispute with another person or business.",
+          },
+          {
+            text: "Do not submit passwords, customer lists or records, financial account or payment-card details, health information, regulated data, or another person's personal information or another company's confidential process information without authorization.",
+          },
+          {
+            text: "Do not upload or transmit text, logos, images, trademarks, marketing materials, software, instructions, or other content that infringes or violates intellectual-property, privacy, publicity, confidentiality, contractual, or other third-party rights.",
+          },
+          {
+            text: "Do not request or use the website to support unlawful outreach, scraping, messaging, review manipulation, surveillance, discrimination, or data-processing practices, and do not misuse an example, recommendation, or workflow contrary to law.",
+          },
+          {
+            text: "Do not attempt unauthorized access, probing, circumvention, interference, malicious-code delivery, abusive automation, scraping of the website, impersonation, or spam submissions.",
+          },
         ],
       },
       {
@@ -247,46 +352,14 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         body: [
           "Tergion Technologies does not guarantee revenue growth, lead growth, review improvement, search rankings, deliverability, uptime, compliance outcomes, AI accuracy, or specific business results.",
           "Services and examples described on the website are designed to improve organization, follow-up, visibility, workflow consistency, and operational control, but actual results depend on many factors outside the website's control.",
+          "Website content is not legal, financial, tax, compliance, marketing, security, or other professional advice. Consult qualified professionals for advice specific to your business, industry, and obligations.",
         ],
       },
       {
-        heading: "No Professional Advice",
-        body: [
-          "Website content is not legal, financial, tax, compliance, marketing, security, or other professional advice. You should consult qualified professionals for advice specific to your business, industry, and obligations.",
-        ],
-      },
-      {
-        heading: "AI-Related Limitations",
+        heading: "AI-Assisted Tools and Limitations",
         body: [
           "AI-assisted tools may support planning, composing, summarizing, routing, and workflow ideation. AI outputs can be inaccurate, incomplete, or outdated.",
           "Human review is required before relying on AI-assisted output for client recommendations, implementations, messages, claims, compliance decisions, or operational changes. You remain responsible for approving workflows, messages, claims, and business practices used by your organization.",
-        ],
-      },
-      {
-        heading: "Acceptable Use",
-        body: [
-          "You may not misuse the website or request form.",
-        ],
-        items: [
-          {
-            text: "Do not submit illegal, fraudulent, abusive, or misleading content.",
-          },
-          {
-            text: "Do not submit passwords, customer records, financial account details, payment card details, health information, regulated data, or confidential third-party information through the website forms.",
-          },
-          {
-            text: "Do not submit information on behalf of another person or business without authority.",
-          },
-          {
-            text: "Do not upload or transmit malicious code, attempt unauthorized access, scrape or automate abusive traffic, interfere with site security, impersonate others, or submit spam requests.",
-          },
-        ],
-      },
-      {
-        heading: "User-Submitted Information",
-        body: [
-          "You grant Tergion Technologies permission to use information you submit as needed to respond to your request, evaluate business systems needs, prepare planning materials, operate the website, prevent abuse, and maintain records.",
-          "You represent that you have the rights and authority needed to submit the information and to allow Tergion Technologies to use it for those limited purposes.",
         ],
       },
       {
@@ -301,14 +374,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         heading: "Third-Party Services",
         body: [
           "The website may use third-party providers for hosting, security, communications, lead handling, and business operations. Third-party services have their own terms and privacy practices.",
-          "GoHighLevel, CRM platforms, email providers, analytics tools, or other providers may have additional terms when used for website lead handling, client work, or live integrations.",
-        ],
-      },
-      {
-        heading: "Reviews and Testimonials",
-        body: [
-          "If reviews, testimonials, or public client feedback are shown later, they should be genuine, authorized, and not fake, purchased, coerced, or misleading.",
-          "Tergion Technologies does not guarantee review outcomes or review-platform results.",
+          "GoHighLevel, email providers, Cloudflare, Upstash, CRM platforms, and other providers may impose additional terms or availability limits. Tergion Technologies does not control third-party systems and is not responsible for their independent acts, content, terms, or privacy practices, subject to rights and liabilities that cannot legally be excluded.",
         ],
       },
       {
@@ -319,36 +385,76 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         ],
       },
       {
-        heading: "Disclaimers",
+        heading: "Disclaimer of Warranties",
         body: [
-          "The website is provided as is and as available. To the maximum extent allowed by law, Tergion Technologies disclaims warranties of any kind, whether express, implied, or statutory, including implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement.",
+          "The website is provided as is and as available. To the maximum extent permitted by applicable law, Tergion Technologies disclaims warranties of any kind, whether express, implied, or statutory, including implied warranties of merchantability, fitness for a particular purpose, title, and non-infringement.",
           "We do not warrant that the website will be uninterrupted, error-free, secure, or available at all times.",
+          "Nothing in this section excludes a warranty or statutory right that cannot legally be excluded.",
         ],
       },
       {
         heading: "Limitation of Liability",
         body: [
-          "To the maximum extent allowed by law, Tergion Technologies will not be liable for indirect, incidental, consequential, special, exemplary, or punitive damages arising from your use of the website or request form.",
-          "Some jurisdictions do not allow certain limitations. In those cases, the limitation applies only to the extent allowed by applicable law.",
+          "To the maximum extent permitted by applicable law, Tergion Technologies and its owners, officers, employees, contractors, and agents will not be liable for indirect, incidental, consequential, special, exemplary, or punitive damages arising out of or relating to the website, a request or assessment, website content, or these Website Terms. This exclusion includes lost profits, lost revenue, lost data, loss of goodwill, reputational harm, business interruption, and the cost of replacement products or services, even if the possibility of such damages was disclosed.",
+          "The website is generally provided without charge. These Website Terms therefore do not use a fees-paid-during-the-previous-12-months aggregate cap or invent a fixed dollar cap for free website use. Any aggregate or fee-based liability cap for paid professional services must be established in an applicable Master Services Agreement, Statement of Work, subscription agreement, or other signed client contract, and that agreement controls for the services it covers.",
+          "These exclusions do not apply to fraud, willful misconduct, gross negligence to the extent it cannot legally be limited, statutory rights that cannot be waived, or any other liability that applicable law prohibits limiting. If a jurisdiction does not permit a particular exclusion or limitation, that exclusion or limitation applies only to the maximum extent permitted by applicable law, and the remaining provisions remain in effect.",
+          "This section allocates risk but does not prevent a person from filing a claim or guarantee that a court will enforce every limitation.",
         ],
       },
       {
-        heading: "Indemnity",
+        heading: "Indemnification",
         body: [
-          "You agree to defend, indemnify, and hold Tergion Technologies harmless from claims, damages, liabilities, costs, and expenses arising from your misuse of the website, unauthorized submissions, violation of these terms, violation of law, or infringement of another person's rights.",
+          "To the maximum extent permitted by applicable law, you agree to defend, indemnify, and hold harmless Tergion Technologies and its owners, officers, employees, contractors, and agents from third-party claims, demands, proceedings, liabilities, losses, judgments, damages, costs, and reasonable attorneys' fees to the extent arising out of or relating to your material breach of these Terms; unlawful use of the website; misuse of a form, example, recommendation, or service; fraudulent, deceptive, or materially false submission; unauthorized access attempt; submission of information without authority; submission of another person's personal information or another company's confidential information without authorization; infringement or violation of intellectual-property, privacy, publicity, confidentiality, contractual, or other third-party rights; violation of applicable law caused by your conduct; or content, instructions, materials, or data you supply.",
+          "This obligation does not apply to Tergion Technologies' fraud, willful misconduct, material breach of these Terms, liability that cannot legally be shifted, or a claim caused solely by Tergion Technologies' unlawful conduct.",
+          "Tergion Technologies will provide reasonably prompt notice after learning of a covered claim. A delay in notice reduces your obligations only to the extent the delay materially prejudices the defense. You will provide reasonable cooperation. You may control the defense with counsel reasonably acceptable to Tergion Technologies, and Tergion Technologies may participate with separate counsel at its own expense unless a conflict of interest or a covered failure to defend reasonably requires otherwise.",
+          "You may not settle a covered claim without Tergion Technologies' prior written consent if the settlement admits wrongdoing by Tergion Technologies, imposes a payment or nonmonetary obligation on Tergion Technologies, restricts its operations, or does not provide an unconditional release of the covered parties. Consent will not be unreasonably withheld for a settlement that fully satisfies these conditions.",
+          "A signed client agreement may contain separate, more specific indemnity and defense provisions and will control for the paid services it covers.",
         ],
       },
       {
-        heading: "Governing Law and Informal Resolution",
+        heading: "Governing Law and Dispute Resolution",
         body: [
-          `These terms are governed by the laws of ${jurisdiction}, without regard to conflict-of-law rules.`,
-          `Before starting a formal dispute, please contact ${contactEmail} so the issue can be reviewed informally. These terms do not add a binding arbitration clause or class-action waiver.`,
+          `These Website Terms and disputes arising from them are governed by the laws of ${jurisdiction}, excluding its conflict-of-laws rules, except to the extent federal law or another nonwaivable law applies.`,
+          `Before starting a formal court proceeding, please send a description of the issue and requested resolution to ${contactEmail} so the parties have a reasonable opportunity to review it informally. This requested informal process does not prevent or delay a small-claims filing, a request for emergency or injunctive relief, a statutory complaint, a regulatory report, or any claim for which a pre-suit process cannot lawfully be required.`,
+          "A permitted court proceeding may be filed in a state or federal court located in Washington that has subject-matter jurisdiction and is a proper venue under applicable law. You consent to personal jurisdiction in Washington only to the extent that consent is valid and permitted under applicable law. These Terms do not require an exclusive Washington county and preserve any forum or jurisdictional right that cannot legally be waived.",
+          "These Website Terms do not require binding arbitration, waive a jury trial, impose a class-action waiver, or shorten an applicable limitations period.",
         ],
       },
       {
-        heading: "Changes",
+        heading: "Suspension or Termination",
         body: [
-          "We may update these Terms of Use from time to time. The Last Updated date controls the current version posted on the website.",
+          "Tergion Technologies may refuse, suspend, or terminate website access, a request, assessment review, communication, or proposed work when it reasonably suspects illegality, abuse, fraud, infringement, unauthorized data, security interference, or a violation of these Terms.",
+          "Tergion Technologies may preserve relevant records and report conduct when reasonably necessary to protect rights or security or comply with law. Suspension or termination does not require Tergion Technologies to perform a user instruction that it believes may be unlawful.",
+        ],
+      },
+      {
+        heading: "Severability",
+        body: [
+          "If a court with authority finds a provision of these Terms unlawful or unenforceable, that provision will be enforced to the maximum extent permitted or severed to the minimum extent necessary, and the remaining provisions will remain in effect.",
+        ],
+      },
+      {
+        heading: "Waiver",
+        body: [
+          "A failure or delay in enforcing a provision is not a waiver of that provision or any other right. A waiver must be clear and applies only to the specific instance for which it is given.",
+        ],
+      },
+      {
+        heading: "Assignment",
+        body: [
+          "You may not assign or transfer your rights or obligations under these Website Terms without Tergion Technologies' prior written consent. Tergion Technologies may assign these Terms in connection with a merger, reorganization, sale of assets, or transfer of the website or business, subject to applicable law.",
+        ],
+      },
+      {
+        heading: "Changes to the Terms",
+        body: [
+          "We may update these Terms of Use from time to time. The Last Updated date identifies the current version posted on the website. Changes apply prospectively when posted unless a later date is stated, and material changes should receive additional notice when applicable law requires it.",
+        ],
+      },
+      {
+        heading: "Entire Agreement for Website Use",
+        body: [
+          "These Terms, together with the Privacy Policy, Data Notice, AI Disclosure, and any other policy expressly incorporated into them, are the entire agreement governing free public website use and website request interactions. They do not replace or amend a signed client agreement, and a signed client agreement controls for the paid services it covers.",
         ],
       },
     ],
@@ -399,14 +505,14 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
     title: "Data Notice",
     effectiveDate,
     lastUpdatedDate: formLegalLastUpdatedDate,
-    intro: "This short notice summarizes what the website request form collects and why. The full Privacy Policy provides more detail.",
+    intro: "This notice applies at collection to the Quick Request and Automation Assessment. It summarizes what is collected, why, the principal provider categories, the retention approach, and available choices. The full Privacy Policy provides more detail.",
     contact: {
       label: "Privacy Contact",
       email: privacyEmail,
     },
     sections: [
       {
-        heading: "Categories Collected",
+        heading: "What We Collect",
         items: [
           {
             label: "Contact identifiers",
@@ -422,7 +528,7 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
           },
           {
             label: "Technical and security data",
-            text: "Referrer, landing page, timezone, UTM parameters if present, completion timing, honeypot signals, rate-limit and duplicate-check signals, and Turnstile verification result when configured.",
+            text: "Referrer, landing page, timezone, UTM parameters if present, completion timing, honeypot signals, limited or hashed rate-limit and duplicate-control signals, and Turnstile verification results when configured.",
           },
           {
             label: "Communications",
@@ -431,16 +537,39 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         ],
       },
       {
-        heading: "Purposes",
+        heading: "Why We Collect It",
+        items: [
+          {
+            label: "Quick Request information",
+            text: "To receive and respond to the inquiry, understand the business context, manage a prospective-client record, assign follow-up, send a transactional confirmation when configured, and communicate according to the selected contact and scheduling preferences.",
+          },
+          {
+            label: "Automation Assessment answers",
+            text: "To review the assessment, identify possible workflow and automation opportunities, prepare response or planning notes, create and manage related GoHighLevel contact and Assessment records when configured, and honor the selected follow-up preference.",
+          },
+          {
+            label: "Consent and communication preferences",
+            text: "To document contact authorization, policy acknowledgement, optional SMS choice, assessment follow-up choice, scheduling preference, and later opt-out or suppression instructions.",
+          },
+          {
+            label: "Technical, attribution, and security data",
+            text: "To operate and protect the website, validate submissions, prevent spam, abuse, fraud, and repeated submissions, investigate security or delivery events, diagnose failures, and understand how a request reached the form.",
+          },
+          {
+            label: "Communications",
+            text: "To respond, preserve relevant conversation history, troubleshoot confirmations, manage follow-up, and document corrections, consent changes, or opt-outs.",
+          },
+        ],
         body: [
-          "We collect this information to respond to your request, evaluate automation, CRM, and business systems needs, honor the assessment follow-up preference you select, schedule follow-up when appropriate, prevent spam or abuse, secure the site, improve services, and maintain appropriate records.",
-          "Do not submit passwords, customer records, financial account details, payment card details, health information, regulated data, or confidential third-party information through the website forms.",
+          "Information may also be used in a limited form to comply with law, protect the website and Tergion Technologies, resolve disputes, investigate fraud or security events, and improve Tergion processes and services. A materially different use will receive an updated notice or consent when required.",
+          "Do not submit passwords, customer lists or records, financial account or payment-card details, health information, regulated data, or another party's personal or confidential information through the website forms.",
         ],
       },
       {
-        heading: "Sharing",
+        heading: "Principal Provider Categories",
         body: [
-          "Information may be shared with service providers such as hosting, security, email, Google Workspace or Google Sheets if enabled, CRM or automation tools if enabled, and professional advisors when needed for website operations, communications, lead handling, security, and business operations.",
+          "Information may be disclosed as needed to hosting and website-security providers, Cloudflare Turnstile when configured, Upstash for limited anti-abuse controls when configured, GoHighLevel for contact and assessment record management when configured, Resend or Postmark for transactional confirmation email when configured, and professional advisors or authorities when reasonably necessary for legal, security, or business-continuity purposes.",
+          "Google Sheets, analytics, advertising, chatbot, and marketing-email integrations are not active in the current website implementation.",
         ],
       },
       {
@@ -450,15 +579,16 @@ export const legalPages: Record<LegalPageSlug, LegalPageContent> = {
         ],
       },
       {
-        heading: "Retention",
+        heading: "How Long We Keep It",
         body: [
-          "Information is retained as reasonably needed for follow-up, operations, security, legal, and recordkeeping purposes. As a working default, unresolved website lead records should not be retained longer than 24 months unless a client relationship, legal need, active conversation, security need, or deletion request changes that period.",
+          "Information is retained only as long as reasonably necessary and proportionate for inquiry or assessment review, prospective-client follow-up, communications, security, consent documentation, legal obligations, disputes, and recordkeeping. The period depends on the record type, whether a conversation or client relationship remains active, provider settings, and legal, accounting, security, contractual, or opt-out needs.",
+          "Rate-limit and duplicate-control data expires after short operational periods. CRM contact and separate Assessment records require record-specific review and deletion. Transactional email and provider logs follow provider settings. Backups and recovery copies follow normal provider retention and restoration cycles. Tergion Technologies may delete, anonymize, deidentify, aggregate, or restrict access to information when it is no longer needed.",
         ],
       },
       {
-        heading: "Choices",
+        heading: "Your Choices and Contact",
         body: [
-          `Contact ${privacyEmail} to request access, correction, deletion, or opt-out from follow-up. Requests may require identity verification and will be evaluated under applicable law.`,
+          `Email ${privacyEmail} to request access, correction, deletion, or an opt-out from follow-up. Tergion Technologies may need to verify your identity or authority and will evaluate the request under applicable law. Legal, contractual, fraud, security, accounting, dispute, consent, opt-out, and backup exceptions may apply.`,
         ],
         items: [
           {
