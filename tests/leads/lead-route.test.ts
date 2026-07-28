@@ -720,8 +720,10 @@ describe("/api/leads", () => {
   it("does not repeat completed GoHighLevel work when downstream processing retries", async () => {
     setGoHighLevelEnv();
     const fetchMock = mockSuccessfulAssessmentGoHighLevelFetch();
+    const privateProviderDetail = "private sheets provider response";
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     googleSheetsMocks.appendLeadToGoogleSheet
-      .mockRejectedValueOnce(new Error("temporary sheets failure"))
+      .mockRejectedValueOnce(new Error(privateProviderDetail))
       .mockResolvedValueOnce({
         ok: true,
         configured: false,
@@ -770,6 +772,17 @@ describe("/api/leads", () => {
       2,
     );
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
+    expect(errorLog).toHaveBeenCalledWith(
+      "Lead submission processing failed",
+      expect.objectContaining({
+        stage: "append-google-sheet",
+        errorCode: "unexpected-error",
+        submissionType: "automation_assessment",
+      }),
+    );
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain(
+      privateProviderDetail,
+    );
   });
 
   it("rejects a wrong content type", async () => {
@@ -1041,6 +1054,7 @@ describe("/api/leads", () => {
   it("fails closed when production GoHighLevel delivery is unconfigured", async () => {
     vi.stubEnv("NODE_ENV", "production");
     process.env.TURNSTILE_SECRET_KEY = "test-secret";
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
 
@@ -1068,6 +1082,69 @@ describe("/api/leads", () => {
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(emailMocks.sendLeadConfirmationEmail).not.toHaveBeenCalled();
+    expect(errorLog).toHaveBeenCalledWith(
+      "Lead submission processing failed",
+      expect.objectContaining({
+        stage: "sync-gohighlevel",
+        errorCode: "gohighlevel-production-delivery-unavailable",
+        submissionType: "quick_request",
+      }),
+    );
+  });
+
+  it("logs a safe assessment schema failure code", async () => {
+    setGoHighLevelEnv();
+    const schema = makeGoHighLevelAssessmentSchemaResponse();
+    schema.fields = schema.fields.filter(
+      (field) => field.name !== "Industry",
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
+        return Response.json(schema);
+      }
+
+      if (url.includes("/associations/key/")) {
+        return Response.json(makeGoHighLevelAssessmentAssociation());
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    const POST = await importRoute();
+    const response = await POST(
+      makePostRequest(makeAssessmentSubmission()),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body).toMatchObject({ ok: false });
+    expect(JSON.stringify(body)).not.toContain(
+      "assessment-schema-field-missing",
+    );
+    expect(errorLog).toHaveBeenCalledWith(
+      "Lead submission processing failed",
+      expect.objectContaining({
+        stage: "sync-gohighlevel",
+        errorCode: "assessment-schema-field-missing",
+        submissionType: "automation_assessment",
+        provider: "gohighlevel",
+      }),
+    );
+  });
+
+  it("does not log a processing failure for a successful request", async () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    const POST = await importRoute();
+    const response = await POST(makePostRequest(makeLeadSubmission()));
+
+    expect(response.status).toBe(200);
+    expect(errorLog).not.toHaveBeenCalledWith(
+      "Lead submission processing failed",
+      expect.anything(),
+    );
   });
 
   it("returns a generic server error when GoHighLevel fails", async () => {
