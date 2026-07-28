@@ -21,6 +21,10 @@ import {
   leadDuplicateMessage,
   leadSuccessMessage,
 } from "@/features/leads/lead.constants";
+import {
+  logLeadProcessingFailure,
+  type LeadProcessingStage,
+} from "@/features/leads/lead-diagnostics";
 import { leadSubmissionSchema } from "@/features/leads/lead.schema";
 import type { LeadRecord, LeadSubmission } from "@/features/leads/lead.types";
 import { checkLeadRateLimit } from "@/features/leads/rate-limit";
@@ -190,6 +194,8 @@ export async function POST(request: Request) {
 
   const reservation = reservationResult.reservation;
   let goHighLevelDurable = false;
+  let processingStage: LeadProcessingStage =
+    "check-gohighlevel-completion";
 
   try {
     const lead: LeadRecord = {
@@ -207,6 +213,7 @@ export async function POST(request: Request) {
       },
     };
     try {
+      processingStage = "check-gohighlevel-completion";
       const goHighLevelAlreadyCompleted =
         await isGoHighLevelSubmissionCompleted(
           payload.submissionType,
@@ -214,6 +221,7 @@ export async function POST(request: Request) {
         );
 
       if (!goHighLevelAlreadyCompleted) {
+        processingStage = "sync-gohighlevel";
         const goHighLevel = await sendLeadToGoHighLevel(lead);
 
         if (
@@ -225,11 +233,21 @@ export async function POST(request: Request) {
 
       }
 
+      processingStage = "commit-gohighlevel-submission";
       await commitGoHighLevelSubmission(reservation);
       goHighLevelDurable = true;
+      processingStage = "append-google-sheet";
       await appendLeadToGoogleSheet(lead);
+      processingStage = "send-internal-notification";
       await sendInternalLeadNotification(lead);
     } catch (error) {
+      logLeadProcessingFailure({
+        error,
+        stage: processingStage,
+        submissionType: payload.submissionType,
+        leadId,
+      });
+
       if (isContactResolutionError(error)) {
         return processingErrorResponse(
           error.category === "provider_unavailable" ? 503 : 409,
@@ -244,8 +262,15 @@ export async function POST(request: Request) {
     }
 
     try {
+      processingStage = "mark-submission-completed";
       await markLeadSubmissionCompleted(payload.submissionType, leadId);
-    } catch {
+    } catch (error) {
+      logLeadProcessingFailure({
+        error,
+        stage: processingStage,
+        submissionType: payload.submissionType,
+        leadId,
+      });
       return processingErrorResponse(503);
     }
 
