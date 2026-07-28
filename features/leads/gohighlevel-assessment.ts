@@ -249,27 +249,25 @@ async function discoverAssessmentConfiguration(
   });
 }
 
-let assessmentConfigurationPromise:
-  | Promise<AssessmentConfiguration>
-  | undefined;
+let assessmentConfiguration: AssessmentConfiguration | undefined;
 let assessmentConfigurationExpiresAt = 0;
 
-function getAssessmentConfiguration(leadId: string) {
+async function getAssessmentConfiguration(leadId: string) {
   if (
-    !assessmentConfigurationPromise ||
-    Date.now() >= assessmentConfigurationExpiresAt
+    assessmentConfiguration &&
+    Date.now() < assessmentConfigurationExpiresAt
   ) {
-    assessmentConfigurationExpiresAt =
-      Date.now() + assessmentConfigurationCacheTtlMs;
-    assessmentConfigurationPromise =
-      discoverAssessmentConfiguration(leadId).catch((error) => {
-        assessmentConfigurationPromise = undefined;
-        assessmentConfigurationExpiresAt = 0;
-        throw error;
-      });
+    return assessmentConfiguration;
   }
 
-  return assessmentConfigurationPromise;
+  const discoveredConfiguration =
+    await discoverAssessmentConfiguration(leadId);
+
+  assessmentConfiguration = discoveredConfiguration;
+  assessmentConfigurationExpiresAt =
+    Date.now() + assessmentConfigurationCacheTtlMs;
+
+  return discoveredConfiguration;
 }
 
 function ensureAssessmentReference(leadId: string) {
@@ -624,6 +622,6 @@ export async function persistAutomationAssessment(
 }
 
 export function resetGoHighLevelAssessmentCacheForTests() {
-  assessmentConfigurationPromise = undefined;
+  assessmentConfiguration = undefined;
   assessmentConfigurationExpiresAt = 0;
 }
