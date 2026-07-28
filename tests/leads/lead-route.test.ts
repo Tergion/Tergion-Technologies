@@ -717,6 +717,94 @@ describe("/api/leads", () => {
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(1);
   });
 
+  it("releases identity reservations after ambiguous read failures", async () => {
+    setGoHighLevelEnv();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const successfulFetch = mockSuccessfulAssessmentGoHighLevelFetch();
+    let remainingSearchFailures = 3;
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (
+          String(input).endsWith("/records/search") &&
+          remainingSearchFailures > 0
+        ) {
+          remainingSearchFailures -= 1;
+          return Response.json(
+            { message: "temporary provider failure" },
+            { status: 503 },
+          );
+        }
+
+        return successfulFetch(input, init);
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const POST = await importRoute();
+    const first = await POST(
+      makePostRequest(makeAssessmentSubmission()),
+    );
+    const retry = await POST(
+      makePostRequest(
+        makeAssessmentSubmission({
+          submissionId: "423e4567-e89b-42d3-a456-426614174000",
+        }),
+      ),
+    );
+
+    expect(first.status).toBe(500);
+    expect(retry.status).toBe(200);
+    await expect(retry.json()).resolves.toMatchObject({ ok: true });
+    expect(remainingSearchFailures).toBe(0);
+    expect(
+      successfulFetch.mock.calls.filter(([input]) =>
+        String(input).endsWith("/contacts/upsert"),
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("retains identity reservations after ambiguous mutation failures", async () => {
+    setGoHighLevelEnv();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let upsertAttempts = 0;
+    const fetchMock = vi.fn(
+      async (input: RequestInfo | URL) => {
+        const url = String(input);
+
+        if (url.endsWith("/contacts/search")) {
+          return Response.json({ contacts: [], total: 0 });
+        }
+
+        if (url.endsWith("/contacts/upsert")) {
+          upsertAttempts += 1;
+          return Response.json(
+            { message: "temporary provider failure" },
+            { status: 503 },
+          );
+        }
+
+        throw new Error(`Unexpected URL: ${url}`);
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const POST = await importRoute();
+    const first = await POST(makePostRequest(makeLeadSubmission()));
+    const retry = await POST(
+      makePostRequest(
+        makeLeadSubmission({
+          submissionId: "523e4567-e89b-42d3-a456-426614174000",
+        }),
+      ),
+    );
+
+    expect(first.status).toBe(500);
+    expect(retry.status).toBe(200);
+    await expect(retry.json()).resolves.toEqual({
+      ok: true,
+      message: leadDuplicateMessage,
+    });
+    expect(upsertAttempts).toBe(1);
+  });
+
   it("does not repeat completed GoHighLevel work when downstream processing retries", async () => {
     setGoHighLevelEnv();
     const fetchMock = mockSuccessfulAssessmentGoHighLevelFetch();
@@ -921,10 +1009,10 @@ describe("/api/leads", () => {
     expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(2);
   });
 
-  it("blocks the fourth request from the same client signal in an hour", async () => {
+  it("blocks the seventh request from the same client signal in an hour", async () => {
     const POST = await importRoute();
 
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < 6; i += 1) {
       const response = await POST(
         makePostRequest(
           makeLeadSubmission({
@@ -941,8 +1029,8 @@ describe("/api/leads", () => {
     const blocked = await POST(
       makePostRequest(
         makeLeadSubmission({
-          submissionId: "623e4567-e89b-42d3-a456-426614174000",
-          email: "rate-4@example.com",
+          submissionId: "923e4567-e89b-42d3-a456-426614174000",
+          email: "rate-7@example.com",
         }),
         "203.0.113.20",
       ),
@@ -950,7 +1038,7 @@ describe("/api/leads", () => {
 
     expect(blocked.status).toBe(429);
     await expect(blocked.json()).resolves.toMatchObject({ ok: false });
-    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(3);
+    expect(emailMocks.sendLeadConfirmationEmail).toHaveBeenCalledTimes(6);
   });
 
   it("accepts a valid Turnstile token when Turnstile is configured", async () => {

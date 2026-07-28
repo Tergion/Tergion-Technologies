@@ -29,7 +29,11 @@ export function ConsentFields({
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3">
+      <Label
+        htmlFor={contactId}
+        data-consent-card={contactId}
+        className="action-button flex cursor-pointer items-start gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3 transition-[background-color,border-color,box-shadow,transform] duration-200 hover:border-[color:var(--button-border-hover)] hover:bg-[var(--button-muted-hover)] active:translate-y-px has-[:checked]:border-[color:var(--island-active-border)] has-[:checked]:bg-[var(--island-active-bg)] has-[:checked]:hover:bg-[var(--button-active-hover)] has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-[var(--island-focus-ring)]"
+      >
         <input
           id={contactId}
           type="checkbox"
@@ -38,13 +42,21 @@ export function ConsentFields({
           aria-describedby={`${contactId}-error`}
           {...contactRegistration}
         />
-        <div className="space-y-1">
-          <Label htmlFor={contactId}>{contactCopy}</Label>
-          <FormFieldError id={`${contactId}-error`} message={contactError} />
-        </div>
-      </div>
+        <span className="space-y-1 leading-5">
+          <span className="block">{contactCopy}</span>
+          <FormFieldError
+            as="span"
+            id={`${contactId}-error`}
+            message={contactError}
+          />
+        </span>
+      </Label>
 
-      <div className="flex gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3">
+      <Label
+        htmlFor={privacyId}
+        data-consent-card={privacyId}
+        className="action-button flex cursor-pointer items-start gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3 transition-[background-color,border-color,box-shadow,transform] duration-200 hover:border-[color:var(--button-border-hover)] hover:bg-[var(--button-muted-hover)] active:translate-y-px has-[:checked]:border-[color:var(--island-active-border)] has-[:checked]:bg-[var(--island-active-bg)] has-[:checked]:hover:bg-[var(--button-active-hover)] has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-[var(--island-focus-ring)]"
+      >
         <input
           id={privacyId}
           type="checkbox"
@@ -53,8 +65,8 @@ export function ConsentFields({
           aria-describedby={`${privacyId}-error`}
           {...privacyRegistration}
         />
-        <div className="space-y-1">
-          <Label htmlFor={privacyId}>
+        <span className="space-y-1 leading-5">
+          <span className="block">
             I agree to the{" "}
             <Link href="/privacy" className="text-primary hover:text-foreground">
               Privacy Policy
@@ -71,23 +83,31 @@ export function ConsentFields({
               Data Notice
             </Link>
             .
-          </Label>
-          <FormFieldError id={`${privacyId}-error`} message={privacyError} />
-        </div>
-      </div>
+          </span>
+          <FormFieldError
+            as="span"
+            id={`${privacyId}-error`}
+            message={privacyError}
+          />
+        </span>
+      </Label>
 
-      <div className="flex gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3">
+      <Label
+        htmlFor={smsId}
+        data-consent-card={smsId}
+        className="action-button flex cursor-pointer items-start gap-3 rounded-lg border border-[color:var(--field-border)] bg-[var(--field-bg-muted)] p-3 leading-5 transition-[background-color,border-color,box-shadow,transform] duration-200 hover:border-[color:var(--button-border-hover)] hover:bg-[var(--button-muted-hover)] active:translate-y-px has-[:checked]:border-[color:var(--island-active-border)] has-[:checked]:bg-[var(--island-active-bg)] has-[:checked]:hover:bg-[var(--button-active-hover)] has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-[var(--island-focus-ring)]"
+      >
         <input
           id={smsId}
           type="checkbox"
           className="mt-1 size-4 shrink-0 rounded border-[color:var(--field-border)] bg-[var(--field-bg)] accent-[var(--island-active-border)]"
           {...smsRegistration}
         />
-        <Label htmlFor={smsId} className="leading-5">
+        <span>
           I agree to receive text messages from Tergion Technologies about my
           request. Message and data rates may apply. Reply STOP to opt out.
-        </Label>
-      </div>
+        </span>
+      </Label>
     </div>
   );
 }

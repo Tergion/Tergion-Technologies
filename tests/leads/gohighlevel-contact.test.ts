@@ -262,18 +262,23 @@ describe("GoHighLevel Contact resolution", () => {
   });
 
   it("fails closed when email and phone resolve to different Contacts", async () => {
+    const lead = makeLeadRecord({
+      phone: "+15551234567",
+    });
     const fetchMock = makeResolverFetch({
       emailContacts: [makeGoHighLevelContact({ id: "contact-email" })],
       phoneContacts: [makeGoHighLevelContact({ id: "contact-phone" })],
     });
     vi.stubGlobal("fetch", fetchMock);
-    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warningLog = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => {});
     const { resolveOrCreateContact } = await import(
       "@/features/leads/gohighlevel-contact"
     );
 
     await expect(
-      resolveOrCreateContact(makeLeadRecord({ phone: "+15551234567" })),
+      resolveOrCreateContact(lead),
     ).rejects.toMatchObject({ category: "conflicting_identifiers" });
     expect(
       fetchMock.mock.calls.some(([, init]) => init?.method === "PUT"),
@@ -283,6 +288,27 @@ describe("GoHighLevel Contact resolution", () => {
         String(input).endsWith("/contacts/upsert"),
       ),
     ).toBe(false);
+    expect(warningLog).toHaveBeenCalledWith(
+      "GoHighLevel contact resolution requires review",
+      {
+        provider: "gohighlevel",
+        stage: "contact-resolution",
+        leadId: lead.leadId,
+        category: "conflicting_identifiers",
+      },
+    );
+    expect(JSON.stringify(warningLog.mock.calls)).not.toContain(
+      "test@example.com",
+    );
+    expect(JSON.stringify(warningLog.mock.calls)).not.toContain(
+      "+15551234567",
+    );
+    expect(JSON.stringify(warningLog.mock.calls)).not.toContain(
+      "contact-email",
+    );
+    expect(JSON.stringify(warningLog.mock.calls)).not.toContain(
+      "contact-phone",
+    );
   });
 
   it.each(["email", "phone"] as const)(

@@ -300,7 +300,7 @@ describe("sendLeadToGoHighLevel", () => {
         }
 
         if (url.endsWith("/records/search")) {
-          return jsonResponse({ records: [], total: 0 });
+          return jsonResponse({ records: [], total: 0 }, 201);
         }
 
         if (url.endsWith("/contacts/upsert")) {
@@ -497,6 +497,35 @@ describe("sendLeadToGoHighLevel", () => {
         Version: "v3",
       });
     }
+  });
+
+  it("fails closed on a malformed 201 assessment search response", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
+        return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
+      }
+
+      if (url.includes("/associations/key/")) {
+        return jsonResponse(makeGoHighLevelAssessmentAssociation());
+      }
+
+      if (url.endsWith("/records/search")) {
+        return jsonResponse({ record: [] }, 201);
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { prepareAutomationAssessment } = await import(
+      "@/features/leads/gohighlevel-assessment"
+    );
+
+    await expect(
+      prepareAutomationAssessment(makeCompleteAssessment()),
+    ).rejects.toThrow("assessment-record-search-invalid-response");
+    expect(callsFor(fetchMock, "/contacts/upsert")).toHaveLength(0);
   });
 
   it("reuses the record and relation when the same assessment is retried", async () => {

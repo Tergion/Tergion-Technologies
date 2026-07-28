@@ -299,6 +299,22 @@ test("shows validation for missing required contact fields", async ({ page }) =>
     "position",
     "absolute",
   );
+  const formBox = await panel.locator("form").boundingBox();
+  const alertBox = await alert.boundingBox();
+
+  if (!formBox || !alertBox) {
+    throw new Error("Expected the centered form alert to be visible");
+  }
+
+  expect(
+    Math.abs(
+      alertBox.x +
+        alertBox.width / 2 -
+        (formBox.x + formBox.width / 2),
+    ),
+  ).toBeLessThanOrEqual(1);
+  expect(alertBox.y).toBeCloseTo(formBox.y + 8, 0);
+  await expect(alert).toHaveCSS("text-align", "center");
   await expect(
     panel.getByText("Scheduling preference is required."),
   ).not.toBeVisible();
@@ -498,6 +514,89 @@ test("keeps submit disabled until required consents are selected", async ({
 
   await dialog.getByLabel(/I agree to the/).check();
   await expect(submitButton).toBeEnabled();
+});
+
+test("renders required markers red and leaves optional labels unchanged", async ({
+  page,
+}) => {
+  const dialog = await openLeadForm(page);
+  const quickRequestPanel = dialog.getByRole("tabpanel", {
+    name: "Quick Request",
+  });
+
+  await expect(
+    quickRequestPanel.getByText("Last name (optional)", { exact: true }),
+  ).toBeVisible();
+  const quickContactMarkers = quickRequestPanel.locator(
+    "[data-required-marker]",
+  );
+  await expect(quickContactMarkers).toHaveCount(3);
+
+  for (const marker of await quickContactMarkers.all()) {
+    await expect(marker).toHaveCSS("color", "rgb(163, 58, 46)");
+  }
+
+  await completeContactBasics(dialog);
+  await quickRequestPanel.getByRole("button", { name: "Continue" }).click();
+  await expect(
+    quickRequestPanel.getByText("Phone (optional)", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    quickRequestPanel.locator("[data-required-marker]"),
+  ).toHaveCount(2);
+
+  await dialog.getByRole("tab", { name: "Automation Assessment" }).click();
+  const assessmentPanel = dialog.getByRole("tabpanel", {
+    name: "Automation Assessment",
+  });
+  await assessmentPanel
+    .getByRole("button", { name: "Start assessment" })
+    .click();
+
+  await expect(
+    assessmentPanel.getByText("Last name (optional)", { exact: true }),
+  ).toBeVisible();
+  const assessmentContactMarkers = assessmentPanel.locator(
+    "[data-required-marker]",
+  );
+  await expect(assessmentContactMarkers).toHaveCount(3);
+
+  for (const marker of await assessmentContactMarkers.all()) {
+    await expect(marker).toHaveCSS("color", "rgb(163, 58, 46)");
+  }
+});
+
+test("toggles consent checkboxes from anywhere on their cards", async ({
+  page,
+}) => {
+  const dialog = await openLeadForm(page);
+
+  await advanceQuickRequestToReview(dialog);
+
+  for (const [cardId, accessibleName] of [
+    ["contactConsent", /I agree to be contacted/],
+    ["privacyTermsConsent", /I agree to the/],
+    ["smsConsent", /I agree to receive text messages/],
+  ] as const) {
+    const checkbox = dialog.getByLabel(accessibleName);
+    const card = dialog.locator(`[data-consent-card="${cardId}"]`);
+    const cardBox = await card.boundingBox();
+
+    if (!cardBox) {
+      throw new Error(`Expected consent card ${cardId} to be visible`);
+    }
+
+    const blankArea = {
+      x: cardBox.width - 8,
+      y: cardBox.height / 2,
+    };
+
+    await card.click({ position: blankArea });
+    await expect(checkbox).toBeChecked();
+
+    await card.click({ position: blankArea });
+    await expect(checkbox).not.toBeChecked();
+  }
 });
 
 test("restores the populated review and allows retry after submission failure", async ({
@@ -961,11 +1060,18 @@ test("keeps the reduced-motion alert inside the mobile form viewport", async ({
     throw new Error("Expected the mobile form alert to be visible");
   }
 
-  expect(alertBox.x).toBeGreaterThanOrEqual(formBox.x + 15);
+  expect(alertBox.x).toBeGreaterThanOrEqual(formBox.x + 7);
   expect(alertBox.x + alertBox.width).toBeLessThanOrEqual(
-    formBox.x + formBox.width - 15,
+    formBox.x + formBox.width - 7,
   );
-  expect(alertBox.y).toBeCloseTo(formBox.y + 16, 0);
+  expect(
+    Math.abs(
+      alertBox.x +
+        alertBox.width / 2 -
+        (formBox.x + formBox.width / 2),
+    ),
+  ).toBeLessThanOrEqual(1);
+  expect(alertBox.y).toBeCloseTo(formBox.y + 8, 0);
   expect(dismissBox.width).toBeGreaterThanOrEqual(44);
   expect(dismissBox.height).toBeGreaterThanOrEqual(44);
   await expect(panel.locator("[data-form-error-overlay]")).toHaveCSS(

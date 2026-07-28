@@ -328,7 +328,7 @@ async function findAssessmentRecord(
       ],
       searchAfter: [],
     },
-    expectedStatuses: [200],
+    expectedStatuses: [200, 201],
     parseJson: true,
     retrySafeRead: true,
   });
