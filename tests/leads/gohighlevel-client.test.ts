@@ -311,4 +311,30 @@ describe("GoHighLevel request client", () => {
     ).rejects.toMatchObject({ kind: "http", status: 503 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("distinguishes ambiguous mutation failures from read failures", async () => {
+    const {
+      GoHighLevelRequestError,
+      isAmbiguousGoHighLevelMutationFailure,
+    } = await import("@/features/leads/gohighlevel-client");
+    const readFailure = new GoHighLevelRequestError({
+      kind: "timeout",
+      stage: "search-assessment-record",
+    });
+    const mutationFailure = new GoHighLevelRequestError({
+      kind: "timeout",
+      stage: "create-assessment-record",
+    });
+    const definiteMutationFailure = new GoHighLevelRequestError({
+      kind: "authorization",
+      stage: "create-assessment-record",
+      status: 401,
+    });
+
+    expect(isAmbiguousGoHighLevelMutationFailure(readFailure)).toBe(false);
+    expect(isAmbiguousGoHighLevelMutationFailure(mutationFailure)).toBe(true);
+    expect(
+      isAmbiguousGoHighLevelMutationFailure(definiteMutationFailure),
+    ).toBe(false);
+  });
 });

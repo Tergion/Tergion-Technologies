@@ -16,7 +16,7 @@ import {
 import { appendLeadToGoogleSheet } from "@/features/leads/google-sheets";
 import { sendLeadToGoHighLevel } from "@/features/leads/gohighlevel";
 import { isContactResolutionError } from "@/features/leads/gohighlevel-contact";
-import { isAmbiguousGoHighLevelFailure } from "@/features/leads/gohighlevel-client";
+import { isAmbiguousGoHighLevelMutationFailure } from "@/features/leads/gohighlevel-client";
 import {
   leadDuplicateMessage,
   leadSuccessMessage,
@@ -193,7 +193,7 @@ export async function POST(request: Request) {
   }
 
   const reservation = reservationResult.reservation;
-  let goHighLevelDurable = false;
+  let retainIdentityReservation = false;
   let processingStage: LeadProcessingStage =
     "check-gohighlevel-completion";
 
@@ -235,7 +235,7 @@ export async function POST(request: Request) {
 
       processingStage = "commit-gohighlevel-submission";
       await commitGoHighLevelSubmission(reservation);
-      goHighLevelDurable = true;
+      retainIdentityReservation = true;
       processingStage = "append-google-sheet";
       await appendLeadToGoogleSheet(lead);
       processingStage = "send-internal-notification";
@@ -254,8 +254,8 @@ export async function POST(request: Request) {
         );
       }
 
-      if (isAmbiguousGoHighLevelFailure(error)) {
-        goHighLevelDurable = true;
+      if (isAmbiguousGoHighLevelMutationFailure(error)) {
+        retainIdentityReservation = true;
       }
 
       return processingErrorResponse();
@@ -291,7 +291,7 @@ export async function POST(request: Request) {
     });
   } finally {
     await releaseLeadSubmission(reservation, {
-      releaseIdentityReservation: !goHighLevelDurable,
+      releaseIdentityReservation: !retainIdentityReservation,
     });
   }
 }

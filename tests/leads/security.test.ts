@@ -66,10 +66,10 @@ describe("lead rate limiting", () => {
     resetLeadRateLimitMemoryForTests();
   });
 
-  it("blocks the fourth request in the same hourly window", async () => {
+  it("blocks the seventh request in the same hourly window", async () => {
     const now = Date.UTC(2026, 6, 10, 12);
 
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < 6; i += 1) {
       await expect(
         checkLeadRateLimit(makeRequest(), now + i),
       ).resolves.toMatchObject({
@@ -78,19 +78,19 @@ describe("lead rate limiting", () => {
     }
 
     await expect(
-      checkLeadRateLimit(makeRequest(), now + 3),
+      checkLeadRateLimit(makeRequest(), now + 6),
     ).resolves.toMatchObject({
       allowed: false,
       reason: "development-in-memory-rate-limit-hour",
     });
   });
 
-  it("blocks the eleventh request in the same daily window", async () => {
+  it("blocks the twenty-first request in the same daily window", async () => {
     const now = Date.UTC(2026, 6, 10, 12);
 
-    for (let i = 0; i < 10; i += 1) {
-      const hourOffset = Math.floor(i / 3) * 60 * 60 * 1000;
-      const secondOffset = (i % 3) * 1000;
+    for (let i = 0; i < 20; i += 1) {
+      const hourOffset = Math.floor(i / 6) * 60 * 60 * 1000;
+      const secondOffset = (i % 6) * 1000;
 
       await expect(
         checkLeadRateLimit(makeRequest(), now + hourOffset + secondOffset),
@@ -100,11 +100,26 @@ describe("lead rate limiting", () => {
     }
 
     await expect(
-      checkLeadRateLimit(makeRequest(), now + 3 * 60 * 60 * 1000 + 1000),
+      checkLeadRateLimit(makeRequest(), now + 3 * 60 * 60 * 1000 + 2000),
     ).resolves.toMatchObject({
       allowed: false,
       reason: "development-in-memory-rate-limit-day",
     });
+  });
+
+  it("does not extend fixed windows when blocked requests continue", async () => {
+    const now = Date.UTC(2026, 6, 10, 12);
+
+    for (let i = 0; i < 6; i += 1) {
+      await checkLeadRateLimit(makeRequest(), now + i);
+    }
+
+    await expect(
+      checkLeadRateLimit(makeRequest(), now + 30 * 60 * 1000),
+    ).resolves.toMatchObject({ allowed: false });
+    await expect(
+      checkLeadRateLimit(makeRequest(), now + 60 * 60 * 1000 + 1),
+    ).resolves.toMatchObject({ allowed: true });
   });
 });
 

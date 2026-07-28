@@ -66,7 +66,9 @@ function isTransientStatus(status: number) {
   return status === 429 || status >= 500;
 }
 
-export function isAmbiguousGoHighLevelFailure(error: unknown) {
+export function isAmbiguousGoHighLevelFailure(
+  error: unknown,
+): error is GoHighLevelRequestError {
   return (
     error instanceof GoHighLevelRequestError &&
     (error.kind === "network" ||
@@ -76,6 +78,22 @@ export function isAmbiguousGoHighLevelFailure(error: unknown) {
         error.status >= 200 &&
         error.status < 300) ||
       (error.status !== undefined && isTransientStatus(error.status)))
+  );
+}
+
+const goHighLevelMutationStages = new Set<GoHighLevelRequestStage>([
+  "create-assessment-record",
+  "create-assessment-relation",
+  "update-contact",
+  "upsert-contact",
+  "add-tags",
+  "create-note",
+]);
+
+export function isAmbiguousGoHighLevelMutationFailure(error: unknown) {
+  return (
+    isAmbiguousGoHighLevelFailure(error) &&
+    goHighLevelMutationStages.has(error.stage)
   );
 }
 

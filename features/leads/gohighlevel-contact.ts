@@ -4,8 +4,6 @@ import { z } from "zod";
 
 import {
   getProviderPhone,
-  maskEmail,
-  maskPhone,
   normalizeContactEmail,
   normalizeContactName,
   normalizeContactPhone,
@@ -453,15 +451,6 @@ function logResolutionFailure(
     stage: "contact-resolution",
     leadId: lead.leadId,
     category: result.status,
-    maskedEmail: maskEmail(lead.email),
-    maskedPhone: maskPhone(lead.phone),
-    ...("emailContactIds" in result
-      ? {
-          emailContactIds: result.emailContactIds,
-          phoneContactIds: result.phoneContactIds,
-        }
-      : {}),
-    ...("contactIds" in result ? { contactIds: result.contactIds } : {}),
   });
 }
 
