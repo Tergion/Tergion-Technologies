@@ -946,6 +946,7 @@ describe("sendLeadToGoHighLevel", () => {
   });
 
   it("creates separate assessments for the same upserted Contact", async () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     const createdReferences: string[] = [];
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -1039,6 +1040,104 @@ describe("sendLeadToGoHighLevel", () => {
       "TA-assessment-123",
       "TA-assessment-456",
     ]);
+    expect(
+      callsFor(
+        fetchMock,
+        `/objects/${testGoHighLevelSchemaKey}?`,
+      ),
+    ).toHaveLength(1);
+    expect(callsFor(fetchMock, "/associations/key/")).toHaveLength(1);
+    expect(errorLog).not.toHaveBeenCalled();
+  });
+
+  it("does not share in-flight assessment discovery", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
+        return jsonResponse(makeGoHighLevelAssessmentSchemaResponse());
+      }
+
+      if (url.includes("/associations/key/")) {
+        return jsonResponse(makeGoHighLevelAssessmentAssociation());
+      }
+
+      if (url.endsWith("/records/search")) {
+        return jsonResponse({ records: [], total: 0 });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { prepareAutomationAssessment } = await import(
+      "@/features/leads/gohighlevel-assessment"
+    );
+
+    const [first, second] = await Promise.all([
+      prepareAutomationAssessment(makeCompleteAssessment()),
+      prepareAutomationAssessment(
+        makeCompleteAssessment({ leadId: "assessment-456" }),
+      ),
+    ]);
+
+    expect(first.assessmentReference).toBe("TA-assessment-123");
+    expect(second.assessmentReference).toBe("TA-assessment-456");
+    expect(
+      callsFor(
+        fetchMock,
+        `/objects/${testGoHighLevelSchemaKey}?`,
+      ),
+    ).toHaveLength(2);
+    expect(callsFor(fetchMock, "/associations/key/")).toHaveLength(2);
+  });
+
+  it("retries discovery after a failed assessment configuration", async () => {
+    let schemaRequests = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes(`/objects/${testGoHighLevelSchemaKey}?`)) {
+        schemaRequests += 1;
+        const schema = makeGoHighLevelAssessmentSchemaResponse();
+
+        if (schemaRequests === 1) {
+          schema.fields = schema.fields.filter(
+            (field) => field.name !== "Monthly Lead Range",
+          );
+        }
+
+        return jsonResponse(schema);
+      }
+
+      if (url.includes("/associations/key/")) {
+        return jsonResponse(makeGoHighLevelAssessmentAssociation());
+      }
+
+      if (url.endsWith("/records/search")) {
+        return jsonResponse({ records: [], total: 0 });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { prepareAutomationAssessment } = await import(
+      "@/features/leads/gohighlevel-assessment"
+    );
+
+    await expect(
+      prepareAutomationAssessment(makeCompleteAssessment()),
+    ).rejects.toThrow("assessment-schema-field-missing");
+    await expect(
+      prepareAutomationAssessment(
+        makeCompleteAssessment({ leadId: "assessment-456" }),
+      ),
+    ).resolves.toMatchObject({
+      assessmentReference: "TA-assessment-456",
+    });
+
+    expect(schemaRequests).toBe(2);
+    expect(callsFor(fetchMock, "/associations/key/")).toHaveLength(2);
+    expect(callsFor(fetchMock, "/records/search")).toHaveLength(1);
   });
 
   it("fails closed when an assessment is already related to another Contact", async () => {
