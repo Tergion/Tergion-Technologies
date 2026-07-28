@@ -122,7 +122,7 @@ export function FormErrorAlert({
   return (
     <div
       data-form-error-overlay
-      className="pointer-events-none absolute inset-x-4 top-4 z-30 flex justify-end sm:left-auto sm:right-4 sm:w-[min(24rem,calc(100%-2rem))]"
+      className="pointer-events-none absolute inset-x-2 top-2 z-30 flex justify-center sm:inset-x-4"
     >
       <AnimatePresence mode="wait" initial={false}>
         {notification ? (
@@ -137,7 +137,7 @@ export function FormErrorAlert({
             animate={{ opacity: 1, y: 0 }}
             exit={reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -4 }}
             transition={{ duration: reduceMotion ? 0 : 0.18, ease: "easeOut" }}
-            className="pointer-events-auto relative min-h-12 w-full rounded-lg border border-destructive/40 bg-[var(--danger-panel-bg)] py-3 pl-3 pr-12 text-sm leading-6 text-destructive shadow-[0_14px_35px_rgba(19,42,70,0.16)]"
+            className="pointer-events-auto relative min-h-12 w-full rounded-lg border border-destructive/40 bg-[var(--danger-panel-bg)] px-12 py-3 text-center text-sm leading-6 text-destructive shadow-[0_14px_35px_rgba(19,42,70,0.16)] sm:max-w-96"
             onMouseEnter={() => pauseTimer("hover")}
             onMouseLeave={() => resumeTimer("hover")}
             onFocusCapture={() => pauseTimer("focus")}

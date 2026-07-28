@@ -52,7 +52,11 @@ export function FormChoiceGroup<TValues extends FieldValues>({
           className="min-w-0 text-sm font-medium text-foreground"
         >
           {legend}
-          {required ? " *" : ""}
+          {required ? (
+            <span data-required-marker className="text-destructive">
+              {" *"}
+            </span>
+          ) : null}
         </span>
         <FormFieldError
           id={errorId}
