@@ -132,6 +132,7 @@ function expectMappingError(
     expect(error).toBeInstanceOf(GoHighLevelAssessmentMappingError);
     expect((error as GoHighLevelAssessmentMappingError).code).toBe(code);
     expect((error as Error).message).toBe(code);
+    return error as GoHighLevelAssessmentMappingError;
   }
 }
 
@@ -290,10 +291,15 @@ describe("compileAutomationAssessmentMapping", () => {
     const missing = makeSchemaResponse();
     const missingOptions = getField(missing, "monthlyLeadRange").options ?? [];
     missingOptions.shift();
-    expectMappingError(
+    const missingError = expectMappingError(
       () => compileAutomationAssessmentMapping(missing, schemaKey),
       "assessment-schema-option-missing",
     );
+    expect(missingError.context).toEqual({
+      fieldId: "monthlyLeadRange",
+      fieldLabel: "Monthly Lead Range",
+      expectedOptionLabel: "Under 20",
+    });
 
     const duplicateLabel = makeSchemaResponse();
     const duplicateLabelOptions =
@@ -302,19 +308,29 @@ describe("compileAutomationAssessmentMapping", () => {
       ...duplicateLabelOptions[0],
       key: "another-live-key",
     });
-    expectMappingError(
+    const duplicateError = expectMappingError(
       () => compileAutomationAssessmentMapping(duplicateLabel, schemaKey),
       "assessment-schema-option-duplicate",
     );
+    expect(duplicateError.context).toEqual({
+      fieldId: "monthlyLeadRange",
+      fieldLabel: "Monthly Lead Range",
+      expectedOptionLabel: "Under 20",
+    });
 
     const duplicateKey = makeSchemaResponse();
     const duplicateKeyOptions =
       getField(duplicateKey, "monthlyLeadRange").options ?? [];
     duplicateKeyOptions[1].key = duplicateKeyOptions[0].key;
-    expectMappingError(
+    const duplicateKeyError = expectMappingError(
       () => compileAutomationAssessmentMapping(duplicateKey, schemaKey),
       "assessment-schema-option-key-duplicate",
     );
+    expect(duplicateKeyError.context).toEqual({
+      fieldId: "monthlyLeadRange",
+      fieldLabel: "Monthly Lead Range",
+      expectedOptionLabel: "20–50",
+    });
   });
 });
 

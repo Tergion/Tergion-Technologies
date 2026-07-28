@@ -1,6 +1,10 @@
 import "server-only";
 
-import { GoHighLevelAssessmentMappingError } from "@/features/leads/gohighlevel-assessment-mapping";
+import {
+  automationAssessmentFieldContract,
+  GoHighLevelAssessmentMappingError,
+  type GoHighLevelAssessmentMappingErrorContext,
+} from "@/features/leads/gohighlevel-assessment-mapping";
 import { GoHighLevelAssessmentPersistenceError } from "@/features/leads/gohighlevel-assessment";
 import { ContactResolutionError } from "@/features/leads/gohighlevel-contact";
 import { GoHighLevelRequestError } from "@/features/leads/gohighlevel-client";
@@ -37,11 +41,45 @@ type SafeFailureDetails = {
   providerStage?: GoHighLevelRequestError["stage"];
   providerStatus?: number;
   providerKind?: GoHighLevelRequestError["kind"];
+  fieldId?: GoHighLevelAssessmentMappingErrorContext["fieldId"];
+  fieldLabel?: string;
+  expectedOptionLabel?: string;
 };
+
+function getTrustedMappingContext(
+  context: GoHighLevelAssessmentMappingError["context"],
+) {
+  if (!context) {
+    return {};
+  }
+
+  const contract = automationAssessmentFieldContract[context.fieldId];
+
+  if (
+    !contract ||
+    contract.label !== context.fieldLabel ||
+    !("options" in contract) ||
+    !contract.options.some(
+      (option) => option.label === context.expectedOptionLabel,
+    )
+  ) {
+    return {};
+  }
+
+  return {
+    fieldId: context.fieldId,
+    fieldLabel: context.fieldLabel,
+    expectedOptionLabel: context.expectedOptionLabel,
+  };
+}
 
 function classifyLeadProcessingFailure(error: unknown): SafeFailureDetails {
   if (error instanceof GoHighLevelAssessmentMappingError) {
-    return { errorCode: error.code, provider: "gohighlevel" };
+    return {
+      errorCode: error.code,
+      provider: "gohighlevel",
+      ...getTrustedMappingContext(error.context),
+    };
   }
 
   if (error instanceof GoHighLevelAssessmentPersistenceError) {
@@ -99,6 +137,11 @@ export function logLeadProcessingFailure(args: {
       : {}),
     ...(details.providerKind
       ? { providerKind: details.providerKind }
+      : {}),
+    ...(details.fieldId ? { fieldId: details.fieldId } : {}),
+    ...(details.fieldLabel ? { fieldLabel: details.fieldLabel } : {}),
+    ...(details.expectedOptionLabel
+      ? { expectedOptionLabel: details.expectedOptionLabel }
       : {}),
   });
 }

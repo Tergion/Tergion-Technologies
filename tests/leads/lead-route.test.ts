@@ -1092,11 +1092,19 @@ describe("/api/leads", () => {
     );
   });
 
-  it("logs a safe assessment schema failure code", async () => {
+  it("logs the exact missing assessment option", async () => {
     setGoHighLevelEnv();
     const schema = makeGoHighLevelAssessmentSchemaResponse();
-    schema.fields = schema.fields.filter(
-      (field) => field.name !== "Industry",
+    const monthlyLeadRange = schema.fields.find(
+      (field) => field.name === "Monthly Lead Range",
+    );
+
+    if (!monthlyLeadRange?.options) {
+      throw new Error("Synthetic monthly lead field is missing options.");
+    }
+
+    monthlyLeadRange.options = monthlyLeadRange.options.filter(
+      (option) => option.label !== "20–50",
     );
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -1122,15 +1130,18 @@ describe("/api/leads", () => {
     expect(response.status).toBe(500);
     expect(body).toMatchObject({ ok: false });
     expect(JSON.stringify(body)).not.toContain(
-      "assessment-schema-field-missing",
+      "assessment-schema-option-missing",
     );
     expect(errorLog).toHaveBeenCalledWith(
       "Lead submission processing failed",
       expect.objectContaining({
         stage: "sync-gohighlevel",
-        errorCode: "assessment-schema-field-missing",
+        errorCode: "assessment-schema-option-missing",
         submissionType: "automation_assessment",
         provider: "gohighlevel",
+        fieldId: "monthlyLeadRange",
+        fieldLabel: "Monthly Lead Range",
+        expectedOptionLabel: "20–50",
       }),
     );
   });

@@ -233,18 +233,32 @@ export const goHighLevelAssessmentMappingErrorCodes = [
 export type GoHighLevelAssessmentMappingErrorCode =
   (typeof goHighLevelAssessmentMappingErrorCodes)[number];
 
+export type GoHighLevelAssessmentMappingErrorContext = Readonly<{
+  fieldId: AutomationAssessmentFieldId;
+  fieldLabel: string;
+  expectedOptionLabel: string;
+}>;
+
 export class GoHighLevelAssessmentMappingError extends Error {
   readonly code: GoHighLevelAssessmentMappingErrorCode;
+  readonly context?: GoHighLevelAssessmentMappingErrorContext;
 
-  constructor(code: GoHighLevelAssessmentMappingErrorCode) {
+  constructor(
+    code: GoHighLevelAssessmentMappingErrorCode,
+    context?: GoHighLevelAssessmentMappingErrorContext,
+  ) {
     super(code);
     this.name = "GoHighLevelAssessmentMappingError";
     this.code = code;
+    this.context = context ? Object.freeze({ ...context }) : undefined;
   }
 }
 
-function fail(code: GoHighLevelAssessmentMappingErrorCode): never {
-  throw new GoHighLevelAssessmentMappingError(code);
+function fail(
+  code: GoHighLevelAssessmentMappingErrorCode,
+  context?: GoHighLevelAssessmentMappingErrorContext,
+): never {
+  throw new GoHighLevelAssessmentMappingError(code, context);
 }
 
 export function parseGoHighLevelAssessmentSchemaResponse(
@@ -276,6 +290,7 @@ function getShortPropertyKey(fieldKey: string, schemaKey: string) {
 }
 
 function compileOptionKeys(
+  fieldId: AutomationAssessmentFieldId,
   field: GoHighLevelAssessmentSchemaResponse["fields"][number],
   contract: Extract<
     AssessmentFieldContract,
@@ -290,19 +305,24 @@ function compileOptionKeys(
       field.options?.filter(
         (liveOption) => liveOption.label === expectedOption.label,
       ) ?? [];
+    const context = {
+      fieldId,
+      fieldLabel: contract.label,
+      expectedOptionLabel: expectedOption.label,
+    } as const;
 
     if (!matches.length) {
-      fail("assessment-schema-option-missing");
+      fail("assessment-schema-option-missing", context);
     }
 
     if (matches.length !== 1) {
-      fail("assessment-schema-option-duplicate");
+      fail("assessment-schema-option-duplicate", context);
     }
 
     const optionKey = matches[0].key;
 
     if (usedKeys.has(optionKey)) {
-      fail("assessment-schema-option-key-duplicate");
+      fail("assessment-schema-option-key-duplicate", context);
     }
 
     usedKeys.add(optionKey);
@@ -374,6 +394,7 @@ export function compileAutomationAssessmentMapping(
       optionKeys:
         contract.dataType === "SINGLE_OPTIONS"
           ? compileOptionKeys(
+              fieldId,
               field,
               contract as Extract<
                 AssessmentFieldContract,
