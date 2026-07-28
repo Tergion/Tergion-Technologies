@@ -74,6 +74,63 @@ describe("lead processing diagnostics", () => {
     );
   });
 
+  it("logs only trusted assessment option metadata", () => {
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    logLeadProcessingFailure({
+      ...baseContext,
+      error: new GoHighLevelAssessmentMappingError(
+        "assessment-schema-option-missing",
+        {
+          fieldId: "monthlyLeadRange",
+          fieldLabel: "Monthly Lead Range",
+          expectedOptionLabel: "20–50",
+        },
+      ),
+    });
+
+    expect(errorLog).toHaveBeenCalledWith(
+      "Lead submission processing failed",
+      {
+        ...baseContext,
+        errorCode: "assessment-schema-option-missing",
+        provider: "gohighlevel",
+        fieldId: "monthlyLeadRange",
+        fieldLabel: "Monthly Lead Range",
+        expectedOptionLabel: "20–50",
+      },
+    );
+  });
+
+  it("rejects untrusted assessment option metadata", () => {
+    const privateProviderDetail = "private-contact@example.com";
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    logLeadProcessingFailure({
+      ...baseContext,
+      error: new GoHighLevelAssessmentMappingError(
+        "assessment-schema-option-missing",
+        {
+          fieldId: "monthlyLeadRange",
+          fieldLabel: privateProviderDetail,
+          expectedOptionLabel: privateProviderDetail,
+        },
+      ),
+    });
+
+    expect(errorLog).toHaveBeenCalledWith(
+      "Lead submission processing failed",
+      {
+        ...baseContext,
+        errorCode: "assessment-schema-option-missing",
+        provider: "gohighlevel",
+      },
+    );
+    expect(JSON.stringify(errorLog.mock.calls)).not.toContain(
+      privateProviderDetail,
+    );
+  });
+
   it("allows only known internal error messages", () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
 
